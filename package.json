@@ -1,0 +1,26 @@
+{
+  "name": "chatproj",
+  "version": "1.0.0",
+  "description": "new chat project attempt (11/3/20)",
+  "main": "index.js",
+  "scripts": {
+    "test": "console.log(\"This works\");"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/S3Prototype/Chat-Project.git"
+  },
+  "keywords": [
+    "chat",
+    "learning-ajax"
+  ],
+  "author": "S3Prototype",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/S3Prototype/Chat-Project/issues"
+  },
+  "homepage": "https://github.com/S3Prototype/Chat-Project#readme",
+  "dependencies": {
+    "npm": "^6.14.8"
+  }
+}
