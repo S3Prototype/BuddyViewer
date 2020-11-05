@@ -1,30 +1,32 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>
-            Test Chatroom
-        </title>
+        <title>Test Chatroom</title>
+        <meta charset="utf-8" />
+        <link rel="stylesheet" href="chat_styles.css" type="text/css" />
     </head>
     <body>
         <h1>Test Chatroom</h1>
-        <button id="get-products"></button>
+        <button id="get-products">BUTTON</button>
         <form id="create-form">
-            <input type="text" id="create-input">>
+            <input type="text" id="create-input">
             <button>CREATE/POST</button>           
         </form>
         <hr>
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-        </table>
-
+        <section class="table-section">
+            <table>
+                <thead>
+                    <tr>
+                        <th class="headrow">ID</th>
+                        <th class="headrow">Name</th>
+                        <th class="headrow">Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
 
     </body>
     <script src="jquery-3.5.1.js"></script>
-    <link rel="text/css" rel="chat_styles.css">
+    <script src="scripts.js"></script>
 </html>

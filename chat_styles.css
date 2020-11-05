@@ -1,0 +1,9 @@
+.table-section {
+    display: flex;
+    justify-content: center;
+}
+
+th.headrow {
+  text-align: center;
+  font-family: Arial, Helvetica, sans-serif;
+}
