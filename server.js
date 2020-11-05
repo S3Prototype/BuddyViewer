@@ -13,6 +13,8 @@ var products = [
     }
 ];
 
+let emptyIds = [];
+
 var currentId = 2;
 
 var port = process.env.PORT || 8084
@@ -27,10 +29,18 @@ app.get('/products', function(req, res){
 
 app.post('/products', function(req, res){
     let productName = req.body.name;
-    currentId++;
+    let idToFill = emptyIds.pop();
+    let idToPass = 0;
+    //check if idtofill is real. if not, increment. if so, fill that.
+    if(idToFill == undefined){
+        currentId++;
+        idToPass = currentId;
+    } else {
+        idToPass = idToFill;
+    }
 
     products.push({
-        id: currentId,
+        id: idToPass,
         name: productName
     });
 
@@ -61,6 +71,7 @@ app.delete('/products/:id', function(req, res){
         if(!found && individualProduct.id === Number(id)){
             products.splice(index, 1);
             found = true;
+            emptyIds.push(Number(id));
         }
     });
 
