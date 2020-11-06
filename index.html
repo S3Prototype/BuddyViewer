@@ -6,13 +6,31 @@
         <link rel="stylesheet" href="chat_styles.css" type="text/css" />
     </head>
     <body>
-        <h1>Test Chatroom</h1>
-        <button id="get-products">BUTTON</button>
-        <form id="create-form">
-            <input type="text" id="create-input">
-            <button>CREATE/POST</button>           
-        </form>
+        <h2 id="chat-name">Test Chatroom</h2>
+        <h3 id="user-name">Billy</h3>
+        <table id="chat-table" class="chat-table">
+            <tbody id="chatbox-tbody" class="chat-tbody">
+                <tr class="name-row">
+                    <td class="name-td">
+                        <form id="name-form">
+                            <input type="text" id="name-input" placeholder="Enter Your Name Here" class="text-input">                            
+                        </form>
+                    </td>
+                </tr>
+            </tbody>            
+        </table>
         <hr>
+        <table class="text-input-table">
+            <tr>
+                <td>
+                    <form id="input-form">
+                        <input type="text" id="message-input" class="text-input">
+                        <button class="send-text">SEND</button>
+                    </form>
+                </td>
+            </tr>   
+        </table>
+        <!-- <button id="get-products">BUTTON</button>
         <section class="table-section">
             <table>
                 <thead>
@@ -24,7 +42,7 @@
                 </thead>
                 <tbody></tbody>
             </table>
-        </section>
+        </section> -->
 
     </body>
     <script src="jquery-3.5.1.js"></script>
