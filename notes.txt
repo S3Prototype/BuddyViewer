@@ -1,0 +1,22 @@
+(11/7/20) These are the logs from our last run. Note how nameToRelease seems to for some reason have the name of the previous messenger. Is that happening on the client side or the server side? Likely server side. Are there global variables I'm not aware of? Is there something going on where the name is not being updated because of certain if conditions?
+
+LOGS:
+NEW MSG(f18ckt): hi from vnc
+Is ANON-f18ckt available?: true
+Can use!!: true
+===============
+NEW MSG(5lx0ll): hi from pc
+Is ANON-5lx0ll available?: true
+Can use!!: true
+===============
+NEW MSG(f18ckt): hi again from vnc
+Is vnc available?: true
+NAME TO RELEASE: ANON-5lx0ll
+NAME WE'RE LOOKING AT: undefined
+NAME TO RELEASE: ANON-5lx0ll
+NAME WE'RE LOOKING AT: ANON-f18ckt
+NAME TO RELEASE: ANON-5lx0ll
+NAME WE'RE LOOKING AT: ANON-5lx0ll
+TAKEN NAME: ANON-5lx0ll Name to release: ANON-5lx0ll
+Can use!!: true
+===============
