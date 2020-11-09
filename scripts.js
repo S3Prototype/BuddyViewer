@@ -26,7 +26,8 @@ $(function(){
             method: 'GET',
             contentType: 'application/json',
             success: function (response){
-                const incMessage = response.message;
+                let incMessage = response.message;
+                incMessage.fromAnotherUser = true;
                 if(incMessage.message_id){
                     let localID = parseInt(incMessage.message_id);
                     if(incMessage.name != nameOnServer && !seenArray[localID]){
@@ -43,24 +44,29 @@ $(function(){
     setInterval(checkForMessages, 500);
 
     function addMessageToChat(response){
-
         const chatMessage = response.message;
+        let localTimeStamp = new Date().toLocaleTimeString();
         if(chatMessage && chatMessage.name == localName){
             //If we were allowed to keep the name
             nameOnServer = chatMessage.name;
             //And we no longer have a name to remove.
             nameToRemove = null;
             messageInput.val(''); //clear the input field
-        } else {
-            //if we weren't allowed the name, clear it.
-            $('#name-input').val('');
-        }
+        } else {      
+            if(chatMessage.fromAnotherUser){                                
+                //If it's from another user
+            } else {                
+                //if we weren't allowed the name, clear it.
+                $('#name-input').val('');
+            }
+        }//else
+  
 
         //Now we insert the data into the table.
         //console.log("YOU KNOW WHO IT IS");
         let chatHTML = '\
                 <tr class="chat-row"><td class="chatter-timestamp">['+
-                chatMessage.timestamp +']</td>\
+                localTimeStamp +']</td>\
                 <td class="chatter-name">' + chatMessage.name +
                 ': </td><td class="chatter-message">' +
                 chatMessage.message_data + '</td></tr>';
@@ -217,5 +223,24 @@ $(function(){
             }
         });
     });
+
+    window.onbeforeunload = function() {
+        //if the user closes the window
+        let nameToRemove = {
+            "name" : nameOnServer,
+            "id" : userID
+        };
+
+        $.ajax({
+            url: '/messages',
+            method: 'DELETE',
+            contentType: 'application/json',
+            data: JSON.stringify(nameToRemove, null, 2),
+            success: function(response){
+                console.log(this.url);
+                //$('#get-products').click();
+            }
+        });
+    };
 
 });

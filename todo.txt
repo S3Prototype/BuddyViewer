@@ -1,13 +1,15 @@
 DOING:
-
+* Add max amount size for username, both in client-side JS code, and in the actual CSS for the entry field.
 
 TODO:
-* Add code to the client side that detects if the name the user is trying to take matches any of the names currently in the chat. If so, block the attempt there instead of pinging the server.
+*Shrink the height of the chat to make space for an expanding text input field. Or just make the text input field float above everything when the message exceeds a certain length.
+* Make it so your username appears above the chat.
+* This will ultimately be a watch2gether clone. I think it's possible to do by having the client catch when the user changes the time on the embeded video, then send that new set time to the server, then send that to the other viewers' clients.
+* Make the message entry field go to a new line, or pop out/expand when the text exceeds a certain amount of words. ((May need to leave this for when you're putting the final touches on the UI.))
 * Add a serverlist, with everyone currently logged in
 * Add private messaging functionality
 * Add error handling. For example, currently (11/8/20), if your name for some reason is never released after you choose a new one, the code has no way of recognizing that issue. That's a serious issue because the name can never be used again, even by you.
 * Blocking name copying should account for case.
-* Consider sending an object containing two objects: 1) The message object and 2) the username+userid object. This allows me to verify the username in the same function as the message is sent, so I'm not making 2 requests to the server for every 1 message.
 * Change the way messageID's are generated. Generate them in the server, still, but make them random numbers (or strings) rather than sequential.
 * For some reason when the "error choose a new name" message is sent, it jumps you to the top of the chat? Fix that
 * Another glitch: Every time a user submits a message, it submits for EVERYONE in the chatroom.
@@ -15,11 +17,20 @@ TODO:
 * Make it so people can't have the same name.
 * Consider changing the fact that it pastes the entirety of the chat history when you load in.
 * For some reason the chatrooms connecting from the outside seem to stop being able to send messages, until they receive a new message.
-* Timestamps show the time of the person sending the message. Make it consistently convert all timestamps to that of the client, so it always looks the same.
 * Add the ability to @ someone.
 * Add a function that occurs at an interval. Its job is to shrink down the takenNames array, possibly by creating a copy that takes only the non-null entries. Then rename that copy to takenNames and be done with the old array. Save memory.
+* When done with this whole list, refactor the code before proceeding with the next phase of development.
+
+~~~~~~~~~~~
+===========
+~~~~~~~~~~~
 
 DONE:
+* Put the name field above the message entry field
+* Change it so you never add or remove the ANON names on the server, because they're protected on the client side.
+* Names are not being released when the user closes the browser (disconnects). Have to learn how to code that interaction. Probably need to set a timer, and if a certain username hasn't been used since that last ping, release it. Or maybe it's time to just set up a database. Probably send a cookie to the browser containing their userID so when they come back they have the name. [Ended up just setting code that hits the server when the user closes the window.]
+* Timestamps show the time of the person sending the message. Make it consistently convert all timestamps to that of the client, so it always looks the same.
+* Consider sending an object containing two objects: 1) The message object and 2) the username+userid object. This allows me to verify the username in the same function as the message is sent, so I'm not making 2 requests to the server for every 1 message.
 * Block a user's ability to steal someone's anonName, on the client side.
 * As it stands, if you change your name to one that is already taken, and then send a message, does it release the name you tried to change away from? It should. I've already set it to clear the value of #name-input if the server denies your name, so the user is safe there.
 * New glitch: When you change your name, for some reason it makes the previous user's name available, defeating the purpose of storing the names. It's possible that when user A posts a message, their name is getting stored in nameToRelease. So when user B changes his name and posts a message, A's name is getting released instead. Make sure the nameToRelease var is not being touched if the name hasn't been changed.

@@ -17,9 +17,7 @@ let defaultMessage = {
 };
 
 let messages = [{}];//was: JSON.parse(rawData);
-
 let takenNames = [{}];
-
 var products = [
     {
         id:1,
@@ -30,11 +28,8 @@ var products = [
         name: 'microwave'
     }
 ];
-
 let emptyIds = [];
-
 var currentId = 2;
-
 var port = process.env.PORT || 8090
 
 function isNameAvailable(thisMessage){
@@ -65,7 +60,8 @@ function makeNameAvailable(nameToRelease){
             console.log("NAME WE'RE LOOKING AT: "+takenNames[i].name);
             console.log("~~~~~~~~~~~~");
             if(takenNames[i].name == nameToRelease.name){
-                console.log("TAKEN NAME: "+takenNames[i].name+" Name to release: "+nameToRelease.name);
+                console.log("RELEASING: "+takenNames[i].name);
+                console.log("BECAUSE IT MATCHED: "+nameToRelease.name);
                 delete takenNames[i];
                 nameWasFound = true;
             }
@@ -73,20 +69,37 @@ function makeNameAvailable(nameToRelease){
     }//for
 }
 
+function addToTakenNames(thisMessage){
+    takenNames.push({name : thisMessage.name, id : thisMessage.user_id});
+}
+
 function validateName(thisMessage, nameToRelease){
         /*First make sure the current username is safe,
         because the user may have changed their name before
         sending this message.*/
-    //let userIsChangingName = nameToRelease ? true : false;
-    let canUseName = isNameAvailable(thisMessage);
-
-    console.log("Is "+thisMessage.name+" available?: "+canUseName);
+    if(nameToRelease &&
+       nameToRelease.name.substr(0, 5) == 'ANON-' ||
+       thisMessage.name.substr(0, 5) == 'ANON-'){
+        /*If it's an anon-name, don't even check.
+        Other users can't have the same anon name
+        anyway.*/
+        return true;
+    }
+        
     if (nameToRelease){
         /*If there is a nameToRelease,
-        make that name available to the server.*/
-        makeNameAvailable(nameToRelease);             
+        make that name available to the server.*/       
+        makeNameAvailable(nameToRelease);        
     }
+        //let userIsChangingName = nameToRelease ? true : false;
+    let canUseName = isNameAvailable(thisMessage);
+    console.log('Is '+thisMessage.name+ ' available?: \
+    '+canUseName);
 
+    if(canUseName){
+        addToTakenNames(thisMessage);
+    }
+    
     return canUseName;
 }
 
@@ -127,7 +140,7 @@ app.post('/messages', function(req, res){
         we MAY need userIDs to be tracked, but we could also
         just pass the old name along with the request perhaps*/
 
-        takenNames.push({name : thisMessage.name, id : thisMessage.user_id});
+        //takenNames.push({name : thisMessage.name, id : thisMessage.user_id});
         thisMessage.message_id = messages.length;
         messages.push(thisMessage);
         //console.log(messages.length + " mostrecent: " + req.body_data);
@@ -137,7 +150,7 @@ app.post('/messages', function(req, res){
         //if the name is taken
         req.body.message = {
             "name": "Error",
-            "message_id": thisMessage.message_id,
+            "message_id": -1,
             "timestamp": thisMessage.timestamp,
             "message_data": "Choose a new name! That one is already in use!",
             "user_id" : thisMessage.user_id
@@ -154,6 +167,18 @@ app.put('/messages/:id', function(req, res){
     res.send("This is a PUT request");
 });
 
+app.delete('/messages', function(req, res){
+    //remove the user's name from the server
+    if (!req.body){
+        //if there's nothing there, just end the call.
+        return;
+    }
+
+    const nameToRelease = req.body;
+
+    makeNameAvailable(nameToRelease);
+    res.send("Delete succeeded.");
+});
 app.delete('/products/:id', function(req, res){
     let id = req.params.id;
     let found = false;
