@@ -1,14 +1,8 @@
 DOING:
-* Add max amount size for username, both in client-side JS code, and in the actual CSS for the entry field.
 
 TODO:
-*Shrink the height of the chat to make space for an expanding text input field. Or just make the text input field float above everything when the message exceeds a certain length.
-* Make it so your username appears above the chat.
-* This will ultimately be a watch2gether clone. I think it's possible to do by having the client catch when the user changes the time on the embeded video, then send that new set time to the server, then send that to the other viewers' clients.
-* Make the message entry field go to a new line, or pop out/expand when the text exceeds a certain amount of words. ((May need to leave this for when you're putting the final touches on the UI.))
-* Add a serverlist, with everyone currently logged in
+* Refreshing the page does not remove the username from the list.
 * Add private messaging functionality
-* Add error handling. For example, currently (11/8/20), if your name for some reason is never released after you choose a new one, the code has no way of recognizing that issue. That's a serious issue because the name can never be used again, even by you.
 * Blocking name copying should account for case.
 * Change the way messageID's are generated. Generate them in the server, still, but make them random numbers (or strings) rather than sequential.
 * For some reason when the "error choose a new name" message is sent, it jumps you to the top of the chat? Fix that
@@ -19,13 +13,27 @@ TODO:
 * For some reason the chatrooms connecting from the outside seem to stop being able to send messages, until they receive a new message.
 * Add the ability to @ someone.
 * Add a function that occurs at an interval. Its job is to shrink down the takenNames array, possibly by creating a copy that takes only the non-null entries. Then rename that copy to takenNames and be done with the old array. Save memory.
+* Make the message entry field go to a new line, or pop out/expand when the text exceeds a certain amount of words. ((May need to leave this for when you're putting the final touches on the UI.))
 * When done with this whole list, refactor the code before proceeding with the next phase of development.
+* This will ultimately be a watch2gether clone. I think it's possible to do by having the client catch when the user changes the time on the embeded video, then send that new set time to the server, then send that to the other viewers' clients.
+* Add error handling. For example, currently (11/8/20), if your name for some reason is never released after you choose a new one, the code has no way of recognizing that issue. That's a serious issue because the name can never be used again, even by you.
 
 ~~~~~~~~~~~
 ===========
 ~~~~~~~~~~~
 
 DONE:
+* TakenNames is still broke. Still. Right now because if(canUseName) calls addToTakenNames and creates a new userlist, literally every time you send a message your name is being added to the list, which of course breaks the point. [Should be fixed now]
+* Add a serverlist, with everyone currently logged in. This is basically going to be a smaller version of the chat table. Whenever a user changes their name, change it (but in parenthises, put their userID)
+    ** As of now, for some reason it keeps infinitely adding to the list. Also if I try to check for the existence of "response.name" prior to adding stuff to the list, it stops working altogether. Also none of the text is actually visible in the userlist.
+    ** Have to set an interval, then do a get request to the server seeking a list of all users, then just update the list with new names.
+    ** Should be able to just use takenNames. But if I do, that means I must undo the code that blocks the Anon names from being stored there, since they must appear in order to be listed.
+    ** This is the plan. Just cycle through the whole thing, add them to an empty local array, pass that local array. On scripts side, check if the array length is greater than 0. IF so, there's something there. Add it to the list table. Create a new separate variable in the server side. A random number. Give it a new value every time a name is pushed into taken names. Set the userlist array that we're sending to the client to have its own property, which equals that randomly generated number. That way every time we send the array, we can check that number, and if it's changed, then we can update the user list.
+    ** You also gotta erase the existing list in the HTML and repopulate it every single time.
+    ** Now just fix takenNames, because that still, STILL is buggy and fucked.
+*Shrink the height of the chat to make space for an expanding text input field. [Or just make the text input field float above everything when the message exceeds a certain length.]{{Ended up just switching the message input field to a textarea. Will fix the frontend stuff later. Focus on backend for now.}}
+* Why does the first message start one spot below the top? Fix it.
+* Add max amount size for username in client-side JS code.
 * Put the name field above the message entry field
 * Change it so you never add or remove the ANON names on the server, because they're protected on the client side.
 * Names are not being released when the user closes the browser (disconnects). Have to learn how to code that interaction. Probably need to set a timer, and if a certain username hasn't been used since that last ping, release it. Or maybe it's time to just set up a database. Probably send a cookie to the browser containing their userID so when they come back they have the name. [Ended up just setting code that hits the server when the user closes the window.]

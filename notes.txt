@@ -1,3 +1,7 @@
+
+
+
+
 (11/7/20) These are the logs from our last run. Note how nameToRelease seems to for some reason have the name of the previous messenger. Is that happening on the client side or the server side? Likely server side. Are there global variables I'm not aware of? Is there something going on where the name is not being updated because of certain if conditions?
 
 LOGS:

@@ -2,7 +2,30 @@ body {
     color: white;
     background-color: #190165;
     font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+}
 
+.userlist-table {
+    background-color: white;
+    color: black;
+    width: 25%;
+    height: 19em;
+    display: inline-block;
+    overflow: auto;
+    margin-left: 1em;
+    font-family: Georgia, 'Times New Roman', Times, serif;
+}
+
+.userlist-name {
+    display: inline-block;
+}
+
+.chat-table {
+    align-self: center;
+    background-color: white;
+    width: 70%;
+    height: 19em;
+    display: inline-block;
+    overflow: auto;
 }
 
 .name-row {
@@ -15,9 +38,9 @@ body {
     width: 100%;
 }
 
-.name-input {
+#name-input {
     display: inline-block;
-    width: 100%;
+    width: 15em;
 }
 
 .chat-tbody {
@@ -28,22 +51,14 @@ body {
     color: black;
 }
 
-.chatter-timestamp {
-    font-family: monospace;
-    display: inline-block;
-}
-
 #chat-name {
     margin-bottom: 0;
     margin-top: 5px;
 }
 
-.chat-table {
-    background-color: white;
-    width: 100%;
-    height: 300px;
-    display: block;
-    overflow: auto;
+.chatter-timestamp {
+    font-family: monospace;
+    display: inline-block;
 }
 
 .chatter-name {
@@ -52,6 +67,27 @@ body {
 
 .chatter-message {
     display: inline-block;
+}
+
+#input-form {
+    display: flexbox;
+}
+
+#message-input {
+    display: inline-block;
+    font-family: inherit;
+    height: 5em;
+    width: 86%;
+    word-wrap: default;
+    resize: none;
+}
+
+.send-text {
+    position: relative;
+    width:10%;
+    height:2em;
+    margin-left: 1em;
+    top: -2em;
 }
 
 #user-name {
@@ -65,11 +101,6 @@ body {
 
 .text-input {
     width: 85%;
-}
-
-.send-text {
-    width:10%;
-    margin-left: 10px;
 }
 
 .table-section {

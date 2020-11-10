@@ -17,22 +17,17 @@ let defaultMessage = {
 };
 
 let messages = [{}];//was: JSON.parse(rawData);
-let takenNames = [{}];
-var products = [
-    {
-        id:1,
-        name: 'laptop'
-    },
-    {
-        id:2,
-        name: 'microwave'
-    }
-];
-let emptyIds = [];
-var currentId = 2;
-var port = process.env.PORT || 8090
+let takenNames = [];
+
+userListID = 0;
+
+// let userList = [{}];
+// userList.hasChanged = false;
+
+var port = process.env.PORT || 8090;
 
 function isNameAvailable(thisMessage){
+    console.log("%%Is Name Available called%%");
     let nameAvailable = true;
     for (i = 0; nameAvailable == true && i < takenNames.length; i++){
         if (takenNames[i] && takenNames[i].name == thisMessage.name){
@@ -52,9 +47,9 @@ function isNameAvailable(thisMessage){
 }
 
 function makeNameAvailable(nameToRelease){
+    console.log("**Make name available called**")
     let nameWasFound = false;
-    for(i = 0; !nameWasFound && i < takenNames.length; i++){
-        
+    for(i = 0; !nameWasFound && i < takenNames.length; i++){        
         if(takenNames[i]){
             console.log("NAME TO RELEASE: "+nameToRelease.name);        
             console.log("NAME WE'RE LOOKING AT: "+takenNames[i].name);
@@ -70,34 +65,41 @@ function makeNameAvailable(nameToRelease){
 }
 
 function addToTakenNames(thisMessage){
+    // userList.push({name : thisMessage.name, id : thisMessage.user_id});
+    // userList.hasChanged = true;
     takenNames.push({name : thisMessage.name, id : thisMessage.user_id});
+    console.log("USER LIST ID: "+userListID);
 }
 
 function validateName(thisMessage, nameToRelease){
         /*First make sure the current username is safe,
         because the user may have changed their name before
         sending this message.*/
-    if(nameToRelease &&
-       nameToRelease.name.substr(0, 5) == 'ANON-' ||
-       thisMessage.name.substr(0, 5) == 'ANON-'){
-        /*If it's an anon-name, don't even check.
-        Other users can't have the same anon name
-        anyway.*/
-        return true;
-    }
+        // console.log("BEFORE ANY CHECKS, THIS");
+        // console.log("IS THE NAME TO RELEASE: " + nameToRelease.name);
+
         
     if (nameToRelease){
-        /*If there is a nameToRelease,
-        make that name available to the server.*/       
-        makeNameAvailable(nameToRelease);        
+        // console.log("MAKING NAME AVAILABLE: "+nameToRelease.name);
+        if(nameToRelease.name.substr(0, 5) != 'ANON-'){
+            // console.log("MAKING NAME AVAILABLE: "+nameToRelease.name);
+            /*If it's not an anon-name.
+             Other users can't have the same anon name
+             anyway.*/
+            /*If there is a nameToRelease,
+            make that name available to the server.*/       
+            makeNameAvailable(nameToRelease);  
+         }      
     }
         //let userIsChangingName = nameToRelease ? true : false;
     let canUseName = isNameAvailable(thisMessage);
     console.log('Is '+thisMessage.name+ ' available?: \
     '+canUseName);
 
-    if(canUseName){
+    if(canUseName && nameToRelease){
+        //If you're changing your name
         addToTakenNames(thisMessage);
+        userListID = Math.floor(Math.random()* 10000);
     }
     
     return canUseName;
@@ -121,6 +123,22 @@ app.get('/messages', function(req, res){
     res.send(req.body);
 });
 
+app.get('/user-list', function(req, res){
+    // let nameLength = takenNames.length;
+    let listToSend = [];
+
+    takenNames.forEach(function(name, index){
+        listToSend.push(name);
+    });
+
+    // for(i = 0; nameLength > 0 && i < nameLength; i++){        
+    //     if(takenNames[i]){
+    //     }
+    // }
+
+    res.send({list : listToSend, listID : userListID});
+});
+
 app.post('/messages', function(req, res){
     
     const thisMessage = req.body.message;
@@ -128,7 +146,7 @@ app.post('/messages', function(req, res){
     // if(nameToRemove){
     //     removeName(thisMessage);
     // }
-    console.log("NEW MSG("+thisMessage.user_id+"): "+ thisMessage.message_data);
+    console.log("NEW MSG("+thisMessage.user_id+")["+ thisMessage.name+"]: "+ thisMessage.message_data);
     let canUseName = validateName(thisMessage, nameToRelease);
     // let canUseName = checkIfNameInUse(thisMessage);    
     console.log("Can use!!: " + canUseName);
@@ -178,20 +196,6 @@ app.delete('/messages', function(req, res){
 
     makeNameAvailable(nameToRelease);
     res.send("Delete succeeded.");
-});
-app.delete('/products/:id', function(req, res){
-    let id = req.params.id;
-    let found = false;
-
-    products.forEach(function(individualProduct, index){
-        if(!found && individualProduct.id === Number(id)){
-            products.splice(index, 1);
-            found = true;
-            emptyIds.push(Number(id));
-        }
-    });
-
-    res.send('successfully deleted product');
 });
 
 app.listen(port, function(){
