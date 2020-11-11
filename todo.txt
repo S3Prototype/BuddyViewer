@@ -1,7 +1,5 @@
 DOING:
-* Refreshing the page does not remove the username from the list. Will have to use a cookie to do that. (Closing the browser does work)
-* Make it add people to the serverlist as soon as they log in, not when they send a message.
-    ** That's done! But now that name is not updated when you change your name. It's stored in takenNames but it's not treated like it's the user's takenName.
+* Refreshing the page does not remove the username from the list. Will have to use a cookie to do that. (Closing the browser does work) [But it does work on chrome and similar browsers. So you just need to implement the existing solution in a way that's browser-independent]
 
 TODO:
 * Add private messaging functionality
@@ -20,6 +18,8 @@ THOUGHTS:
 ~~~~~~~~~~~
 
 DONE:
+* Make it add people to the serverlist as soon as they log in, not when they send a message.
+    ** That's done! But now that name is not updated when you change your name. It's stored in takenNames but it's not treated like it's the user's takenName.
 * Consider changing the fact that it pastes the entirety of the chat history when you load in.
 * Anon names don't show up in the server list, unless you change to your anon-name FROM a specified name. If you simply enter the chat and enter a message, anon-name does not go into the server list. This implies that when you change your name back to anon, it's getting entered into the takenNames array.
     ** It may be required to put the AnonNames back into the takenNames array. Let them be added. Just on the client side, stop people from spoofing anon names and we should be fine.

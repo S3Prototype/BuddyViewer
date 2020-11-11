@@ -38,9 +38,6 @@ $(function(){
 
     let mostRecentListID = 0;
 
-
-
-
     messageInput.keypress(function(event){
         let code = (event.keyCode ? event.keyCode : event.which);
         if (code == 13 && !event.shiftKey){

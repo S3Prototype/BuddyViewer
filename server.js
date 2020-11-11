@@ -21,6 +21,8 @@ let takenNames = [];
 
 userListID = 0;
 
+let nameBelongsToUser = false;
+
 // let userList = [{}];
 // userList.hasChanged = false;
 
@@ -36,6 +38,7 @@ function isNameAvailable(thisMessage){
             if (takenNames[i].id == thisMessage.user_id){
                 /*if the name is already in use, and it's
                 being used by this user, then we're done.*/
+                nameBelongsToUser = true;
                 break;
             } else {
                 nameAvailable = false;
@@ -86,6 +89,7 @@ function validateName(thisMessage, nameToRelease){
         // console.log("BEFORE ANY CHECKS, THIS");
         // console.log("IS THE NAME TO RELEASE: " + nameToRelease.name);
 
+    nameBelongsToUser = false;
         
     if(nameToRelease){
         // console.log("MAKING NAME AVAILABLE: "+nameToRelease.name);
@@ -104,15 +108,20 @@ function validateName(thisMessage, nameToRelease){
     console.log('Is '+thisMessage.name+ ' available?: \
     '+canUseName);
 
-    if(canUseName){//was && nameToRelease
+    if(canUseName && !nameBelongsToUser){//was && nameToRelease
         //If you're changing your name
         //if(thisMessage.name.substr(0, 5) != 'ANON-'){
             addToTakenNames(thisMessage);
-            generateNewListID();        
+            generateNewListID();
         //}
     }
     
     return canUseName;
+}
+
+function addMessageToDatabase(thisMessage){
+    thisMessage.message_id = generateNewMessageID();
+    messages.push(thisMessage);
 }
 
 app.use(express.static(__dirname));
@@ -134,9 +143,12 @@ app.get('/messages', function(req, res){
 });
 
 app.post('/initialize', function(req, res){
+
+    let nameValidated = false;
     if(req.body){
-        validateName(req.body, null);
+        nameValidated = validateName(req.body, null);
     }
+
     res.send("SUCCESS");
 });
 
@@ -175,8 +187,9 @@ app.post('/messages', function(req, res){
         just pass the old name along with the request perhaps*/
 
         //takenNames.push({name : thisMessage.name, id : thisMessage.user_id});
-        thisMessage.message_id = generateNewMessageID();
-        messages.push(thisMessage);
+        // thisMessage.message_id = generateNewMessageID();
+        // messages.push(thisMessage);
+        addMessageToDatabase(thisMessage);
         //console.log(messages.length + " mostrecent: " + req.body_data);
         //console.log(thisMessage.user_id +" Sending: " + thisMessage.message_data);
         // res.send(req.body);
