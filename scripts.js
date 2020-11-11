@@ -5,9 +5,14 @@ $(function(){
     $("#name-input").attr("maxlength", maxNameLength);
     let letterArray = ["a", "b", "c", "x", "y", "z"];
     let localName = '';
-    let userID = Math.random().toString(36).substring(7);
+    const userID = Math.random().toString(36).substring(7);
     const anonName = 'ANON-' + userID;
     let nameOnServer = anonName;
+
+        /*Used for verifying if we need to send the
+        anonName to the serverlist, typically because
+        we've just loaded the page.*/
+    let serverListInitialized = false;
 
     let foundAClientSideError = false;
     //Set of clientside errors:
@@ -32,6 +37,9 @@ $(function(){
     const messageDefaultzIndex = 0;
 
     let mostRecentListID = 0;
+
+
+
 
     messageInput.keypress(function(event){
         let code = (event.keyCode ? event.keyCode : event.which);
@@ -63,12 +71,17 @@ $(function(){
 
     function checkForUserList(){
 
+        let checkData = {
+            "name" : nameOnServer,
+            "user_id" : userID,
+            "initialized" : serverListInitialized
+        }
         $.ajax({
             url: '/user-list',
             method: 'GET',
             contentType: 'application/json',
-            data: JSON.stringify({id : userID}, null, 2),
-            success: function (response){   
+            data: JSON.stringify(checkData, null, 2),
+            success: function (response){                  
                 const incUserList = response.list;             
                 const listID = response.listID;
                 // if(listID != mostRecentListID){
@@ -102,6 +115,26 @@ $(function(){
                 }//if
             }//success: function
         });      
+        serverListInitialized = true;
+    }
+
+    const initializeInterval = setInterval(initializeServerList, 300);
+
+    function initializeServerList(){
+        console.log("HI!");
+        if(!serverListInitialized){
+            $.ajax({
+                url: '/initialize',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({"name" : anonName, "user_id" : userID}, null, 2),
+                success: function (response){
+                    serverListInitialized = true;
+                }
+            });
+        } else {
+            clearInterval(initializeInterval);
+        }
     }
 
     setInterval(checkForMessages, 500);
@@ -244,28 +277,12 @@ $(function(){
             });       
     });
 
-    //DELETE
-    $('table').on('click', '.delete-button', function(){
-        let rowEl = $(this).closest('tr');
-        let id = rowEl.find('.id').text();
-
-        $.ajax({
-            url: '/products/' + id,
-            method: 'DELETE',
-            contentType: 'application/json',
-            success: function(response){
-                console.log(this.url);
-                $('#get-products').click();
-            }
-        });
-    });
-
     window.onbeforeunload = function(event){
         //if the user closes the window
 
-        if(nameOnServer == anonName){
-            return;//If it's the anonName, nothing to do
-        }
+        // if(nameOnServer == anonName){
+        //     return;//If it's the anonName, nothing to do
+        // }
         let nameToRelease = {
             "name" : nameOnServer,
             "id" : userID

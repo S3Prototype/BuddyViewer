@@ -1,13 +1,12 @@
 DOING:
 * Refreshing the page does not remove the username from the list. Will have to use a cookie to do that. (Closing the browser does work)
-* Anon names don't show up in the server list, unless you change to your anon-name FROM a specified name. If you simply enter the chat and enter a message, anon-name does not go into the server list. This implies that when you change your name back to anon, it's getting entered into the takenNames array.
+* Make it add people to the serverlist as soon as they log in, not when they send a message.
+    ** That's done! But now that name is not updated when you change your name. It's stored in takenNames but it's not treated like it's the user's takenName.
 
 TODO:
-* Make it add people to the serverlist as soon as they log in, not when they send a message.
 * Add private messaging functionality
 * Blocking name copying should account for case.
-* Change the way messageID's are generated. Generate them in the server, still, but make them random numbers (or strings) rather than sequential. This will take a deep rewrite. Lots of the code is designed assuming message_id will be an int. For example, seenArray[] etc. 
-* Consider changing the fact that it pastes the entirety of the chat history when you load in.
+* Change the way messageID's are generated. Generate them in the server, still, but make them random numbers (or strings) rather than sequential. This will take a deep rewrite. Lots of the code is designed assuming message_id will be an int. For example, seenArray[] etc.
 * Add the ability to @ someone.
 * Add a function that occurs at an interval (on the server). Its job is to shrink down the takenNames array, possibly by creating a copy that takes only the non-null entries. Then rename that copy to takenNames and be done with the old array. Save memory.
 
@@ -21,6 +20,9 @@ THOUGHTS:
 ~~~~~~~~~~~
 
 DONE:
+* Consider changing the fact that it pastes the entirety of the chat history when you load in.
+* Anon names don't show up in the server list, unless you change to your anon-name FROM a specified name. If you simply enter the chat and enter a message, anon-name does not go into the server list. This implies that when you change your name back to anon, it's getting entered into the takenNames array.
+    ** It may be required to put the AnonNames back into the takenNames array. Let them be added. Just on the client side, stop people from spoofing anon names and we should be fine.
 * Make the message entry field go to a new line, or pop out/expand when the text exceeds a certain amount of words. ((May need to leave this for when you're putting the final touches on the UI.))[[For now it's a textarea, so it's fine]]
 * For some reason when the "error choose a new name" message is sent, it jumps you to the top of the chat? Fix that [[Current fix is that scrollTop() is set to element.height() * seenArray.length. Likely any refactoring that eliminates SeenArray will destroy this solution.]]
 * Make it so people can't have the same name.

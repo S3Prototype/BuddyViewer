@@ -87,9 +87,9 @@ function validateName(thisMessage, nameToRelease){
         // console.log("IS THE NAME TO RELEASE: " + nameToRelease.name);
 
         
-    if (nameToRelease){
+    if(nameToRelease){
         // console.log("MAKING NAME AVAILABLE: "+nameToRelease.name);
-        if(nameToRelease.name.substr(0, 5) != 'ANON-'){
+        // if(nameToRelease.name.substr(0, 5) != 'ANON-'){
             // console.log("MAKING NAME AVAILABLE: "+nameToRelease.name);
             /*If it's not an anon-name.
              Other users can't have the same anon name
@@ -97,17 +97,19 @@ function validateName(thisMessage, nameToRelease){
             /*If there is a nameToRelease,
             make that name available to the server.*/       
             makeNameAvailable(nameToRelease);  
-         }      
+        //  }      
     }
         //let userIsChangingName = nameToRelease ? true : false;
     let canUseName = isNameAvailable(thisMessage);
     console.log('Is '+thisMessage.name+ ' available?: \
     '+canUseName);
 
-    if(canUseName && nameToRelease){
+    if(canUseName){//was && nameToRelease
         //If you're changing your name
-        addToTakenNames(thisMessage);
-        generateNewListID();        
+        //if(thisMessage.name.substr(0, 5) != 'ANON-'){
+            addToTakenNames(thisMessage);
+            generateNewListID();        
+        //}
     }
     
     return canUseName;
@@ -131,6 +133,13 @@ app.get('/messages', function(req, res){
     res.send(req.body);
 });
 
+app.post('/initialize', function(req, res){
+    if(req.body){
+        validateName(req.body, null);
+    }
+    res.send("SUCCESS");
+});
+
 app.get('/user-list', function(req, res){
     // let nameLength = takenNames.length;
     let listToSend = [];
@@ -143,7 +152,6 @@ app.get('/user-list', function(req, res){
     //     if(takenNames[i]){
     //     }
     // }
-
     res.send({list : listToSend, listID : userListID});
 });
 
