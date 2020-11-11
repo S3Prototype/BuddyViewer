@@ -71,9 +71,9 @@ $(function(){
             success: function (response){   
                 const incUserList = response.list;             
                 const listID = response.listID;
-                if(listID != mostRecentListID){
-                    console.log('LIST: '+incUserList.length+' ID: '+listID);
-                }
+                // if(listID != mostRecentListID){
+                //     console.log('LIST: '+incUserList.length+' ID: '+listID);
+                // }
                 let i = 0;
                 if(incUserList && incUserList.length > 0
                    && listID != mostRecentListID){
@@ -137,7 +137,8 @@ $(function(){
                 chatMessage.message_data + '</td></tr>';
              
         chatTbody.append(chatHTML.toString());
-        chatTable.scrollTop(chatTable.height() * chatMessage.message_id);                        
+        // chatTable.scrollTop(chatTable.height() * chatMessage.message_id);                        
+        chatTable.scrollTop(chatTable.height() * seenArray.length);                        
         let messageID = parseInt(chatMessage.message_id);
         console.log("Above message's ID: "+messageID);
         seenArray[messageID] = true;                 
@@ -259,9 +260,13 @@ $(function(){
         });
     });
 
-    window.onbeforeunload = function() {
+    window.onbeforeunload = function(event){
         //if the user closes the window
-        let nameToRemove = {
+
+        if(nameOnServer == anonName){
+            return;//If it's the anonName, nothing to do
+        }
+        let nameToRelease = {
             "name" : nameOnServer,
             "id" : userID
         };
@@ -270,12 +275,12 @@ $(function(){
             url: '/messages',
             method: 'DELETE',
             contentType: 'application/json',
-            data: JSON.stringify(nameToRemove, null, 2),
+            data: JSON.stringify(nameToRelease, null, 2),
             success: function(response){
                 console.log(this.url);
                 //$('#get-products').click();
             }
-        });
-    };
+        });//$.ajax
+    }
 
 });

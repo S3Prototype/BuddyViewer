@@ -1,19 +1,17 @@
 DOING:
+* Refreshing the page does not remove the username from the list. Will have to use a cookie to do that. (Closing the browser does work)
+* Anon names don't show up in the server list, unless you change to your anon-name FROM a specified name. If you simply enter the chat and enter a message, anon-name does not go into the server list. This implies that when you change your name back to anon, it's getting entered into the takenNames array.
 
 TODO:
-* Refreshing the page does not remove the username from the list.
+* Make it add people to the serverlist as soon as they log in, not when they send a message.
 * Add private messaging functionality
 * Blocking name copying should account for case.
-* Change the way messageID's are generated. Generate them in the server, still, but make them random numbers (or strings) rather than sequential.
-* For some reason when the "error choose a new name" message is sent, it jumps you to the top of the chat? Fix that
-* Another glitch: Every time a user submits a message, it submits for EVERYONE in the chatroom.
-* If the message is too long, it gets cut off to the last parts of it. Fix that.
-* Make it so people can't have the same name.
+* Change the way messageID's are generated. Generate them in the server, still, but make them random numbers (or strings) rather than sequential. This will take a deep rewrite. Lots of the code is designed assuming message_id will be an int. For example, seenArray[] etc. 
 * Consider changing the fact that it pastes the entirety of the chat history when you load in.
-* For some reason the chatrooms connecting from the outside seem to stop being able to send messages, until they receive a new message.
 * Add the ability to @ someone.
-* Add a function that occurs at an interval. Its job is to shrink down the takenNames array, possibly by creating a copy that takes only the non-null entries. Then rename that copy to takenNames and be done with the old array. Save memory.
-* Make the message entry field go to a new line, or pop out/expand when the text exceeds a certain amount of words. ((May need to leave this for when you're putting the final touches on the UI.))
+* Add a function that occurs at an interval (on the server). Its job is to shrink down the takenNames array, possibly by creating a copy that takes only the non-null entries. Then rename that copy to takenNames and be done with the old array. Save memory.
+
+THOUGHTS:
 * When done with this whole list, refactor the code before proceeding with the next phase of development.
 * This will ultimately be a watch2gether clone. I think it's possible to do by having the client catch when the user changes the time on the embeded video, then send that new set time to the server, then send that to the other viewers' clients.
 * Add error handling. For example, currently (11/8/20), if your name for some reason is never released after you choose a new one, the code has no way of recognizing that issue. That's a serious issue because the name can never be used again, even by you.
@@ -23,6 +21,12 @@ TODO:
 ~~~~~~~~~~~
 
 DONE:
+* Make the message entry field go to a new line, or pop out/expand when the text exceeds a certain amount of words. ((May need to leave this for when you're putting the final touches on the UI.))[[For now it's a textarea, so it's fine]]
+* For some reason when the "error choose a new name" message is sent, it jumps you to the top of the chat? Fix that [[Current fix is that scrollTop() is set to element.height() * seenArray.length. Likely any refactoring that eliminates SeenArray will destroy this solution.]]
+* Make it so people can't have the same name.
+* If the message is too long, it gets cut off to the last parts of it. Fix that.
+* For some reason the chatrooms connecting from the outside seem to stop being able to send messages, until they receive a new message.
+* Another glitch: Every time a user submits a message, it submits for EVERYONE in the chatroom.
 * TakenNames is still broke. Still. Right now because if(canUseName) calls addToTakenNames and creates a new userlist, literally every time you send a message your name is being added to the list, which of course breaks the point. [Should be fixed now]
 * Add a serverlist, with everyone currently logged in. This is basically going to be a smaller version of the chat table. Whenever a user changes their name, change it (but in parenthises, put their userID)
     ** As of now, for some reason it keeps infinitely adding to the list. Also if I try to check for the existence of "response.name" prior to adding stuff to the list, it stops working altogether. Also none of the text is actually visible in the userlist.

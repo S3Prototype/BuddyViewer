@@ -71,6 +71,14 @@ function addToTakenNames(thisMessage){
     console.log("USER LIST ID: "+userListID);
 }
 
+function generateNewListID(){
+    userListID = Math.floor(Math.random()* 10000);
+}
+
+function generateNewMessageID(){
+    return Math.floor(Math.random()* 10000);
+}
+
 function validateName(thisMessage, nameToRelease){
         /*First make sure the current username is safe,
         because the user may have changed their name before
@@ -99,7 +107,7 @@ function validateName(thisMessage, nameToRelease){
     if(canUseName && nameToRelease){
         //If you're changing your name
         addToTakenNames(thisMessage);
-        userListID = Math.floor(Math.random()* 10000);
+        generateNewListID();        
     }
     
     return canUseName;
@@ -159,7 +167,7 @@ app.post('/messages', function(req, res){
         just pass the old name along with the request perhaps*/
 
         //takenNames.push({name : thisMessage.name, id : thisMessage.user_id});
-        thisMessage.message_id = messages.length;
+        thisMessage.message_id = generateNewMessageID();
         messages.push(thisMessage);
         //console.log(messages.length + " mostrecent: " + req.body_data);
         //console.log(thisMessage.user_id +" Sending: " + thisMessage.message_data);
@@ -187,14 +195,15 @@ app.put('/messages/:id', function(req, res){
 
 app.delete('/messages', function(req, res){
     //remove the user's name from the server
+    const nameToRelease = req.body;
+    console.log(nameToRelease.name+" DELETED");
     if (!req.body){
         //if there's nothing there, just end the call.
         return;
     }
 
-    const nameToRelease = req.body;
-
     makeNameAvailable(nameToRelease);
+    generateNewListID();
     res.send("Delete succeeded.");
 });
 
