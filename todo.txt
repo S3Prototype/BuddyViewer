@@ -3,6 +3,7 @@ DOING:
 
 TODO:
 * Add private messaging functionality
+    ** Have to create tabs within the webpage, one for each chat that's open (general, privatechat1, privatechat2, etc). The tabs exist above the chat. In private chats, the serverlist lists everyone included in the private chat.
 * Blocking name copying should account for case.
 * Change the way messageID's are generated. Generate them in the server, still, but make them random numbers (or strings) rather than sequential. This will take a deep rewrite. Lots of the code is designed assuming message_id will be an int. For example, seenArray[] etc.
 * Add the ability to @ someone.

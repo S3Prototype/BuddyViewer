@@ -21,8 +21,6 @@ let takenNames = [];
 
 userListID = 0;
 
-let nameBelongsToUser = false;
-
 // let userList = [{}];
 // userList.hasChanged = false;
 
@@ -30,6 +28,7 @@ var port = process.env.PORT || 8090;
 
 function isNameAvailable(thisMessage){
     console.log("%%Is Name Available called%%");
+    let doesUserOwnIt = false;
     let nameAvailable = true;
     for (i = 0; nameAvailable == true && i < takenNames.length; i++){
         if (takenNames[i] && takenNames[i].name == thisMessage.name){
@@ -38,7 +37,7 @@ function isNameAvailable(thisMessage){
             if (takenNames[i].id == thisMessage.user_id){
                 /*if the name is already in use, and it's
                 being used by this user, then we're done.*/
-                nameBelongsToUser = true;
+                doesUserOwnIt = true;
                 break;
             } else {
                 nameAvailable = false;
@@ -46,25 +45,26 @@ function isNameAvailable(thisMessage){
         }//if (takenNames ...
     }//for
 
-    return nameAvailable;
+    return {canUse : nameAvailable, alreadyOwnedByUser: doesUserOwnIt};
 }
 
 function makeNameAvailable(nameToRelease){
-    console.log("**Make name available called**")
-    let nameWasFound = false;
-    for(i = 0; !nameWasFound && i < takenNames.length; i++){        
-        if(takenNames[i]){
-            console.log("NAME TO RELEASE: "+nameToRelease.name);        
-            console.log("NAME WE'RE LOOKING AT: "+takenNames[i].name);
-            console.log("~~~~~~~~~~~~");
-            if(takenNames[i].name == nameToRelease.name){
-                console.log("RELEASING: "+takenNames[i].name);
-                console.log("BECAUSE IT MATCHED: "+nameToRelease.name);
-                delete takenNames[i];
-                nameWasFound = true;
-            }
-        }  
-    }//for
+    if(!nameToRelease) return;
+    // let nameWasFound = false;
+
+    for(name of takenNames){
+        if(name && name.name == nameToRelease.name){
+            delete takenNames[i];
+        }
+    }
+
+    // for(i = 0; !nameWasFound && i < takenNames.length; i++){        
+    //     if(takenNames[i] && takenNames[i].name == nameToRelease.name){
+    //             console.log("RELEASING: "+takenNames[i].name+" BECAUSE IT MATCHED: "+nameToRelease.name);
+    //             delete takenNames[i];
+    //             nameWasFound = true;
+    //     }
+    // }
 }
 
 function addToTakenNames(thisMessage){
@@ -88,10 +88,8 @@ function validateName(thisMessage, nameToRelease){
         sending this message.*/
         // console.log("BEFORE ANY CHECKS, THIS");
         // console.log("IS THE NAME TO RELEASE: " + nameToRelease.name);
-
-    nameBelongsToUser = false;
         
-    if(nameToRelease){
+    // if(nameToRelease){
         // console.log("MAKING NAME AVAILABLE: "+nameToRelease.name);
         // if(nameToRelease.name.substr(0, 5) != 'ANON-'){
             // console.log("MAKING NAME AVAILABLE: "+nameToRelease.name);
@@ -102,13 +100,13 @@ function validateName(thisMessage, nameToRelease){
             make that name available to the server.*/       
             makeNameAvailable(nameToRelease);  
         //  }      
-    }
+    // }
         //let userIsChangingName = nameToRelease ? true : false;
-    let canUseName = isNameAvailable(thisMessage);
+    const currentName = isNameAvailable(thisMessage);// returns an object
     console.log('Is '+thisMessage.name+ ' available?: \
-    '+canUseName);
+    '+currentName.canUse);
 
-    if(canUseName && !nameBelongsToUser){//was && nameToRelease
+    if(currentName.canUse && !currentName.alreadyOwnedByUser){//was && nameToRelease
         //If you're changing your name
         //if(thisMessage.name.substr(0, 5) != 'ANON-'){
             addToTakenNames(thisMessage);
@@ -116,7 +114,7 @@ function validateName(thisMessage, nameToRelease){
         //}
     }
     
-    return canUseName;
+    return currentName.canUse;
 }
 
 function addMessageToDatabase(thisMessage){
@@ -130,6 +128,7 @@ app.use(bodyparser.json());
 app.get('/messages', function(req, res){
     // console.log("GET CALLED");
     let messagesLength = messages.length - 1;
+    req.body.message = messages.length > 0 ? messages[messages.length - 1] : messages[0];
     if (messagesLength < 0){
         //If there are no messages:
         messagesLength = 0;
@@ -138,7 +137,7 @@ app.get('/messages', function(req, res){
     //send the latest message.
     //This bullshit will not work when the message
     //id's are not sequential numbers
-    req.body.message = messages[messagesLength];
+    // req.body.message = messages[messagesLength];
     res.send(req.body);
 });
 
@@ -175,7 +174,7 @@ app.post('/messages', function(req, res){
     //     removeName(thisMessage);
     // }
     console.log("NEW MSG("+thisMessage.user_id+")["+ thisMessage.name+"]: "+ thisMessage.message_data);
-    let canUseName = validateName(thisMessage, nameToRelease);
+    const canUseName = validateName(thisMessage, nameToRelease);
     // let canUseName = checkIfNameInUse(thisMessage);    
     console.log("Can use!!: " + canUseName);
     console.log("===============")
