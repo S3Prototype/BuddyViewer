@@ -4,7 +4,8 @@
   "description": "new chat project attempt (11/3/20)",
   "main": "index.js",
   "scripts": {
-    "test": "console.log(\"This works\");"
+    "babel-node": "babel-node --presets='@babel/preset-env' --ignore='foo|bar|baz'",
+    "start": "nodemon server.js"
   },
   "repository": {
     "type": "git",
@@ -21,9 +22,22 @@
   },
   "homepage": "https://github.com/S3Prototype/Chat-Project#readme",
   "dependencies": {
+    "@babel/cli": "^7.12.1",
+    "babel-plugin-syntax-class-properties": "^6.13.0",
+    "babel-plugin-transform-class-properties": "^6.24.1",
     "body-parser": "^1.19.0",
     "express": "^4.17.1",
     "nodemon": "^2.0.6",
     "npm": "^6.14.8"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.12.3",
+    "@babel/node": "^7.12.6",
+    "@babel/plugin-proposal-class-properties": "^7.12.1",
+    "@babel/preset-env": "^7.12.1",
+    "@babel/preset-flow": "^7.12.1",
+    "@babel/preset-react": "^7.12.5",
+    "@babel/preset-typescript": "^7.12.1",
+    "babel-preset-stage-0": "^6.24.1"
   }
 }

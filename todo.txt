@@ -9,6 +9,9 @@ TODO:
 * Add the ability to @ someone.
 * Add a function that occurs at an interval (on the server). Its job is to shrink down the takenNames array, possibly by creating a copy that takes only the non-null entries. Then rename that copy to takenNames and be done with the old array. Save memory.
 
+REFACTORING:
+* In IsNameAvailable(), change the for loop to something cleaner.
+
 THOUGHTS:
 * When done with this whole list, refactor the code before proceeding with the next phase of development.
 * This will ultimately be a watch2gether clone. I think it's possible to do by having the client catch when the user changes the time on the embeded video, then send that new set time to the server, then send that to the other viewers' clients.
