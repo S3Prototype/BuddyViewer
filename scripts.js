@@ -1,13 +1,24 @@
 $(function(){
 
-    $('#name-input').val('');//reset name
+    
     const maxNameLength = 18;
     $("#name-input").attr("maxlength", maxNameLength);
     let letterArray = ["a", "b", "c", "x", "y", "z"];
     let localName = '';
-    const userID = Math.random().toString(36).substring(7);
-    const anonName = 'ANON-' + userID;
+    let userID = Cookies.get('userID');
+    let anonName = 'USER-' + userID;
     let nameOnServer = anonName;
+
+    function validateUserID(){
+        if(!userID){
+            $('#name-input').val('');//reset name
+            userID = Math.random().toString(36).substring(7);
+            anonName = 'USER-' + userID;
+            Cookies.set('userID', userID, {expires: 1/2000, secure: true});
+        }
+    }
+
+    validateUserID();
 
         /*Used for verifying if we need to send the
         anonName to the serverlist, typically because
@@ -46,12 +57,20 @@ $(function(){
     });
 
     function checkForMessages(){
+        validateUserID();
+        let checkData = {
+            "name" : nameOnServer,
+            "user_id" : userID,
+            "initialized" : serverListInitialized
+        }
         $.ajax({
             url: '/messages',
             method: 'GET',
             contentType: 'application/json',
+            data: JSON.stringify(checkData, null, 2),
             success: function (response){
                 let incMessage = response.message;
+                if(!incMessage) return;
                 incMessage.fromAnotherUser = true;
                 if(incMessage.message_id){
                     let localID = parseInt(incMessage.message_id);
@@ -68,6 +87,7 @@ $(function(){
 
     function checkForUserList(){
 
+        validateUserID();
         let checkData = {
             "name" : nameOnServer,
             "user_id" : userID,
@@ -134,6 +154,19 @@ $(function(){
         }
     }
 
+    function pingServer(){
+        $.ajax({
+            url: '/server-ping',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({"name" : nameOnServer, "user_id" : userID}, null, 2),
+            success: function (response){
+            }
+        });
+    }
+
+    setInterval(pingServer, 2500);
+
     setInterval(checkForMessages, 500);
 
     setInterval(checkForUserList, 607);
@@ -189,7 +222,7 @@ $(function(){
 
     function checkNameForErrors(){
         let errorDected = false;
-        if(localName.substr(0, 5) == 'ANON-' && localName != anonName){
+        if(localName.substr(0, 5) == 'USER-' && localName != anonName){
             localName = anonName;
             clientSideChatError(ANON_NAME_ERR);
             errorDected = true;
@@ -273,28 +306,36 @@ $(function(){
                 success: addMessageToChat
             });       
     });
+    
+    // const perfEntries = performance.getEntriesByType("navigation");
+    // for(const perf of perfEntries){
+    //     if (perf.type == "reload"){
+    //         alert("YES!!");
+    //     }
+    // }
 
-    window.onbeforeunload = function(event){
-        //if the user closes the window
+    // window.onbeforeunload = function(event){
+    //     /*doesn't work on IE*/
+    //     //if the user closes the window
+ 
+    //     // if(nameOnServer == anonName){
+    //     //     return;//If it's the anonName, nothing to do
+    //     // }
+    //     let nameToRelease = {
+    //         "name" : nameOnServer,
+    //         "id" : userID
+    //     };
 
-        // if(nameOnServer == anonName){
-        //     return;//If it's the anonName, nothing to do
-        // }
-        let nameToRelease = {
-            "name" : nameOnServer,
-            "id" : userID
-        };
+    //     $.ajax({
+    //         url: '/messages',
+    //         method: 'DELETE',
+    //         contentType: 'application/json',
+    //         data: JSON.stringify(nameToRelease, null, 2),
+    //         success: function(response){
+    //             console.log(this.url);
+    //         }
+    //     });//$.ajax
 
-        $.ajax({
-            url: '/messages',
-            method: 'DELETE',
-            contentType: 'application/json',
-            data: JSON.stringify(nameToRelease, null, 2),
-            success: function(response){
-                console.log(this.url);
-                //$('#get-products').click();
-            }
-        });//$.ajax
-    }
+    // }
 
 });

@@ -1,16 +1,16 @@
 DOING:
-* Refreshing the page does not remove the username from the list. Will have to use a cookie to do that. (Closing the browser does work) [But it does work on chrome and similar browsers. So you just need to implement the existing solution in a way that's browser-independent]
-
-TODO:
 * Add private messaging functionality
     ** Have to create tabs within the webpage, one for each chat that's open (general, privatechat1, privatechat2, etc). The tabs exist above the chat. In private chats, the serverlist lists everyone included in the private chat.
-* Blocking name copying should account for case.
+
+TODO:
 * Change the way messageID's are generated. Generate them in the server, still, but make them random numbers (or strings) rather than sequential. This will take a deep rewrite. Lots of the code is designed assuming message_id will be an int. For example, seenArray[] etc.
 * Add the ability to @ someone.
 * Add a function that occurs at an interval (on the server). Its job is to shrink down the takenNames array, possibly by creating a copy that takes only the non-null entries. Then rename that copy to takenNames and be done with the old array. Save memory.
+* Once all above is instituted, do refactoring. Clean up the code. Once that's done, make simultaneous youtube videos work. Once that's done, set up the database. Once that's done, do the frontend so it looks nice using just css and html5 animations etc.
 
 REFACTORING:
 * In IsNameAvailable(), change the for loop to something cleaner.
+* Set up something similar to: https://stackoverflow.com/questions/36327702/nodejs-express-getting-error-as-referenceerror-bodyparser-is-not-defined
 
 THOUGHTS:
 * When done with this whole list, refactor the code before proceeding with the next phase of development.
@@ -22,6 +22,17 @@ THOUGHTS:
 ~~~~~~~~~~~
 
 DONE:
+* Blocking name copying should account for case.
+* Make it so that when you come into the page with a cookie, it doesn't set the name field to empty, because you do already have a name probably.
+* Refreshing the page does not remove the username from the list. Will have to use a cookie to do that. (Closing the browser does work) [But it does work on chrome and similar browsers. So you just need to implement the existing solution in a way that's browser-independent]
+    ** Write code so that if your ID saved in your cookie is also stored in the names list, it deletes that name from the server. But this would only make it so a name gets released when the person comes back.
+    ** You're just gonnna have to write separate code based on what browser it is, honestly.
+    ** https://developer.mozilla.org/en-US/docs/Web/API/PerformanceNavigationTiming/type#Browser_compatibility
+    ** https://stackoverflow.com/questions/5004978/check-if-page-gets-reloaded-or-refreshed-in-javascript/53307588#53307588
+    ** Every time a user pings the server, change a value. On the server side, check if that value has changed in the last x seconds. If no, change the status on the server list to some kind of "connection lost" situation. Check another 2 times. If still nothing, drop them from the server list because they've DC'd.
+        *** Could also still run code for removing user from list if they close tab, just, if that doesn't work, the server-side stuff goes into action.
+    ** The issue now is if you're idle for a long enough time, your ping fails and your name is deleted. But if you talk, you're good. It's a problem in the scripts.js
+    ** SOLVED: I made the client side ping the server at a certain interval. The serverside checks every so often if it has gotten pinged, and if not, it DC's the users.
 * Make it add people to the serverlist as soon as they log in, not when they send a message.
     ** That's done! But now that name is not updated when you change your name. It's stored in takenNames but it's not treated like it's the user's takenName.
 * Consider changing the fact that it pastes the entirety of the chat history when you load in.

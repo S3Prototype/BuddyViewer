@@ -1,4 +1,15 @@
+(11/17/20)
+This is how you check if the user has reached this page after a browser reload:
+const perfEntries = performance.getEntriesByType("navigation");
+    for(const perf of perfEntries){
+        if (perf.type == "reload"){
+            alert("YES!!");
+        }
+    }
 
+
+(11/16/20)
+nodemon --exec npm run babel-node -- ./server.js
 
 
 

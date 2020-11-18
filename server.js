@@ -1,5 +1,6 @@
 var express = require('express');
 var bodyparser = require('body-parser');
+const router = express.Router();
 var events = require('events');
 const fs = require('fs');
 const e = require('express');
@@ -16,21 +17,28 @@ let defaultMessage = {
     "user_id" : "SERVER_MESSAGE"
 };
 
+var port = process.env.PORT || 8090;
+
+app.use(express.static(__dirname));
+app.use(bodyparser.json());
+app.use(router);
 // let messages = [{}];//was: JSON.parse(rawData);
 // let takenNames = [];
 
 class NameContainer{
     static #takenNames = [];
-    constructor(){ 
-        
-    }
 
-    static initialize(){
-        NameContainer.#takenNames = [];
-    }
+    static #pingList = [];
 
     static addToTakenNames(thisMessage){
-        NameContainer.#takenNames.push({name : thisMessage.name, id : thisMessage.user_id});
+        let nameInfo = {
+            name : thisMessage.name,
+            id : thisMessage.user_id,
+            hasBeenPinged : true,
+            failedCount : 0
+        };
+        NameContainer.#takenNames.push(nameInfo);
+        // NameContainer.#pingList.push(nameInfo);
         //console.log("USER LIST ID: "+userListID);
     }
     static refreshTakenNames(){
@@ -44,13 +52,11 @@ class NameContainer{
     static makeNameAvailable(nameToRelease){
         if(!nameToRelease) return;
         // let nameWasFound = false;
-
         NameContainer.#takenNames = NameContainer.#takenNames.filter(
             function(name){
                 return name && name.name != nameToRelease.name
             }
         );
-
         // NameContainer.#takenNames = newList;
     }
     static isNameAvailable(thisMessage){
@@ -61,7 +67,9 @@ class NameContainer{
         // let tempNames = NameContainer.#takenNames;
         
         for (let i = 0; nameAvailable == true && i < NameContainer.#takenNames.length; i++){
-            if (NameContainer.#takenNames[i] && NameContainer.#takenNames[i].name == thisMessage.name){
+            if (NameContainer.#takenNames[i] &&
+                NameContainer.#takenNames[i].name.toUpperCase() == thisMessage.name.toUpperCase()
+            ){
                 if (NameContainer.#takenNames[i].id == thisMessage.user_id){
                     doesUserOwnIt = true;
                     break;
@@ -90,6 +98,47 @@ class NameContainer{
     }
     static getTakenNames(){
         return NameContainer.#takenNames;
+    }
+    static pingID(idNum){
+        //Check if name and id are in ping list. If not, add it.
+        //nameData.name, nameData.id
+        // let idHasBeenPinged = false;
+        if(!NameContainer.#takenNames) return;
+        console.log("###############");
+        console.log("ID Pinged: "+idNum);
+        let nameFound = false;
+        for(let i = 0; !nameFound && i < NameContainer.#takenNames.length; i++){
+            if(NameContainer.#takenNames[i].id == idNum){
+                console.log("Failed count: "+NameContainer.#takenNames[i].failedCount);
+                NameContainer.#takenNames[i].hasBeenPinged = true;
+                NameContainer.#takenNames[i].failedCount = 0;
+                nameFound = true;
+            }
+        }
+    }
+    static checkPings(){
+        if(!NameContainer.#takenNames) return;
+        for(const pingedName of NameContainer.#takenNames){
+            if(pingedName){
+                if(pingedName.hasBeenPinged){
+                    pingedName.hasBeenPinged = false;
+                    pingedName.failedCount = 0;
+                } else {
+                    //increment the counter.
+                    //and check the counter. if its
+                    //too much, delete the name and ID
+                    //from the server
+                    //But first let's just DC it instantly.
+                    //Implement the counter after we make it work.
+                    if(pingedName.failedCount > 1){
+                        NameContainer.makeNameAvailable(pingedName);
+                        console.log("******************");
+                        console.log("Ping failed! Deleting: "+pingedName.name);
+                    }
+                    pingedName.failedCount++;
+                }
+            }
+        }//for
     }
 }
 
@@ -120,10 +169,6 @@ class UserListContainer{
 }
 
 class MessageContainer{
-    constructor(){
-
-    }
-
     static #messages = [];
 
     static initialize(){
@@ -140,21 +185,17 @@ class MessageContainer{
         return (MessageContainer.#messages.length <= 0)
     }
     static getMessageList(){
-        // const allMessages = MessageContainer.#messages;
         return MessageContainer.#messages;
     }
 }
 
-var port = process.env.PORT || 8090;
-
-app.use(express.static(__dirname));
-app.use(bodyparser.json());
 
 app.get('/messages', function(req, res){
     // console.log("GET CALLED");
     const messageList = MessageContainer.getMessageList()
     const messageIndex = messageList.length > 0 ? messageList.length - 1 : 0;
     req.body.message = messageList[messageIndex];
+    // NameContainer.pingID(req.body.user_id);
     res.send(req.body);
 });
 
@@ -165,6 +206,15 @@ app.post('/initialize', function(req, res){
         nameValidated = NameContainer.validateName(req.body, null);
     }
 
+    NameContainer.pingID(req.body.user_id);
+
+    res.send("SUCCESS");
+});
+
+app.post('/server-ping', function(req, res){
+
+    NameContainer.pingID(req.body.user_id);
+
     res.send("SUCCESS");
 });
 
@@ -173,7 +223,11 @@ app.get('/user-list', function(req, res){
     // let listToSend = [];
 
     UserListContainer.populateUserList(NameContainer.getTakenNames());
+    //Now because they're checking the user list, ping their id.
 
+    // console.log.("________________");
+    // console.log.("PING FROM USERLIST CHECK FOR ID: "+req.body.user_id);
+    // NameContainer.pingID(req.body.user_id);
     // takenNames.forEach(function(name, index){
     //     listToSend.push(name);
     // });
@@ -226,6 +280,8 @@ app.post('/messages', function(req, res){
             "user_id" : thisMessage.user_id
         };
     }
+
+    NameContainer.pingID(thisMessage.user_id);
     res.send(req.body);
 });
 
@@ -241,7 +297,7 @@ app.delete('/messages', function(req, res){
     //remove the user's name from the server
     const nameToRelease = req.body;
     console.log(nameToRelease.name+" DELETED");
-    if (!req.body){
+    if (!nameToRelease){
         //if there's nothing there, just end the call.
         return;
     }
@@ -249,6 +305,8 @@ app.delete('/messages', function(req, res){
     NameContainer.makeNameAvailable(nameToRelease);
     // makeNameAvailable(nameToRelease);
     UserListContainer.generateNewListID();
+
+    NameContainer.pingID(nameToRelease.user_id);
     res.send("Delete succeeded.");
 });
 
@@ -256,4 +314,5 @@ app.listen(port, function(){
     console.log(`Server listening on: ${port}`);
     console.log("Server start date/time: "+new Date().toLocaleDateString() + " / " + new Date().toLocaleTimeString());
     console.log("======");
+    setInterval(NameContainer.checkPings, 5000);
 });
