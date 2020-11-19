@@ -19,6 +19,9 @@ let defaultMessage = {
 
 var port = process.env.PORT || 8090;
 
+let userWhoSent = null;
+let universalSetting = "PAUSE";
+
 app.use(express.static(__dirname));
 app.use(bodyparser.json());
 app.use(router);
@@ -99,16 +102,16 @@ class NameContainer{
     static getTakenNames(){
         return NameContainer.#takenNames;
     }
-    static pingID(idNum){
+    static pingName(pName){
         //Check if name and id are in ping list. If not, add it.
         //nameData.name, nameData.id
         // let idHasBeenPinged = false;
         if(!NameContainer.#takenNames) return;
         console.log("###############");
-        console.log("ID Pinged: "+idNum);
+        console.log("ID Pinged: "+pName);
         let nameFound = false;
         for(let i = 0; !nameFound && i < NameContainer.#takenNames.length; i++){
-            if(NameContainer.#takenNames[i].id == idNum){
+            if(NameContainer.#takenNames[i].name == pName){
                 console.log("Failed count: "+NameContainer.#takenNames[i].failedCount);
                 NameContainer.#takenNames[i].hasBeenPinged = true;
                 NameContainer.#takenNames[i].failedCount = 0;
@@ -130,7 +133,7 @@ class NameContainer{
                     //from the server
                     //But first let's just DC it instantly.
                     //Implement the counter after we make it work.
-                    if(pingedName.failedCount > 1){
+                    if(pingedName.failedCount > 3){
                         NameContainer.makeNameAvailable(pingedName);
                         console.log("******************");
                         console.log("Ping failed! Deleting: "+pingedName.name);
@@ -206,16 +209,41 @@ app.post('/initialize', function(req, res){
         nameValidated = NameContainer.validateName(req.body, null);
     }
 
-    NameContainer.pingID(req.body.user_id);
+    NameContainer.pingName(req.body.name);
 
     res.send("SUCCESS");
 });
 
-app.post('/server-ping', function(req, res){
+app.post('/press-play', function(req, res){
 
-    NameContainer.pingID(req.body.user_id);
+    userWhoSent = req.body;
+    universalSetting = "PLAY";
 
     res.send("SUCCESS");
+});
+
+app.get('/video-state', function(req, res){
+    if(!userWhoSent){
+        userWhoSent = {};
+        userWhoSent.name = "NULL";
+        userWhoSent.user_id = "NULL";
+    }
+    let data = {
+        name: userWhoSent.name, 
+        user_id: userWhoSent.user_id, 
+        setting: universalSetting
+    }
+    res.send(data);
+});
+
+app.post('/server-ping', function(req, res){
+
+    NameContainer.pingName(req.body.name);
+
+    res.send({
+        list : UserListContainer.getUserList(),
+        listID : UserListContainer.getUserListID()
+    });
 });
 
 app.get('/user-list', function(req, res){
@@ -281,7 +309,7 @@ app.post('/messages', function(req, res){
         };
     }
 
-    NameContainer.pingID(thisMessage.user_id);
+    NameContainer.pingName(thisMessage.user_id);
     res.send(req.body);
 });
 
@@ -306,7 +334,7 @@ app.delete('/messages', function(req, res){
     // makeNameAvailable(nameToRelease);
     UserListContainer.generateNewListID();
 
-    NameContainer.pingID(nameToRelease.user_id);
+    NameContainer.pingName(nameToRelease.user_id);
     res.send("Delete succeeded.");
 });
 

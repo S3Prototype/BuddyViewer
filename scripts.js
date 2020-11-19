@@ -6,11 +6,12 @@ $(function(){
     let letterArray = ["a", "b", "c", "x", "y", "z"];
     let localName = '';
     let userID = Cookies.get('userID');
+    userID = userID ? userID : Math.random().toString(36).substring(7);
     let anonName = 'USER-' + userID;
     let nameOnServer = anonName;
 
     function validateUserID(){
-        if(!userID){
+        if(!Cookies.get('userID')){
             $('#name-input').val('');//reset name
             userID = Math.random().toString(36).substring(7);
             anonName = 'USER-' + userID;
@@ -49,12 +50,79 @@ $(function(){
 
     let mostRecentListID = 0;
 
+    // let inputForm = document.getElementById('input-form');
+    // // create a new li node
+    // let vidDiv = document.createElement('div');
+    // vidDiv.setAttribute("id", "player");
+    // // insert a new node after the first list item
+    // inputForm.insertBefore(vidDiv, inputForm.firstElementChild.nextSibling);
+
+    const defaultVideoID = "5C_Px6_TuL4";
+
+    function tellServerToPlay(){
+        $.ajax({
+            url: '/press-play',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({"name" : nameOnServer, "user_id" : userID}, null, 2),
+            success: function (response){
+                updateServerList(response);
+            }
+        });
+    }
+
+    function parseState(event){
+        if (event.data == YT.PlayerState.PLAYING) {
+            tellServerToPlay();
+          }
+    }
+
+    // var tag = document.createElement('script');
+
+    //   tag.src = "https://www.youtube.com/iframe_api";
+    //   var firstScriptTag = document.getElementsByTagName('script')[0];
+    //   firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
     messageInput.keypress(function(event){
         let code = (event.keyCode ? event.keyCode : event.which);
         if (code == 13 && !event.shiftKey){
             $('#input-form').submit();
         }
     });
+
+    function updateServerList(response){
+        const incUserList = response.list;             
+        const listID = response.listID;
+        // if(listID != mostRecentListID){
+        //     console.log('LIST: '+incUserList.length+' ID: '+listID);
+        // }
+        let i = 0;
+        if(incUserList && incUserList.length > 0
+           && listID != mostRecentListID){
+            userListTbody.empty();
+            incUserList.forEach(function(user, index){
+                // let user = incUserList[i];
+                // let userListHTML = '\
+                // <tr class="userlist-row"><td class="userlist-username">'+
+                // user.name +'(</td>\
+                // <td class="userlist-userid">' + user.id +
+                // ')</td> <td class="userlist-index">[' + index +']\
+                // </td></tr>';
+
+                let userListHTML = '\
+                <tr class="userlist-row"><td class="userlist-name">'+
+                user.name +'('+user.id +')</td></tr>'; 
+                userListTbody.append(userListHTML.toString());
+                // userListTable.scrollTop(chatTable.height() * chatMessage.message_id);                        
+                // let messageID = parseInt(chatMessage.message_id);
+                // seenArray[messageID] = true;                          
+                console.log("USER: "+user.name+"("+user.id+") ADDED TO LIST("+i+")");
+                i++;
+            });
+            mostRecentListID = listID;
+            //console.log();
+        }//if
+    }
 
     function checkForMessages(){
         validateUserID();
@@ -73,6 +141,7 @@ $(function(){
                 if(!incMessage) return;
                 incMessage.fromAnotherUser = true;
                 if(incMessage.message_id){
+                    player.playVideo();
                     let localID = parseInt(incMessage.message_id);
                     if(incMessage.name != nameOnServer && !seenArray[localID]){
                         console.log("Response: " + incMessage.message_data);
@@ -86,7 +155,7 @@ $(function(){
     }
 
     function checkForUserList(){
-
+        // player.playVideo()
         validateUserID();
         let checkData = {
             "name" : nameOnServer,
@@ -99,37 +168,7 @@ $(function(){
             contentType: 'application/json',
             data: JSON.stringify(checkData, null, 2),
             success: function (response){                  
-                const incUserList = response.list;             
-                const listID = response.listID;
-                // if(listID != mostRecentListID){
-                //     console.log('LIST: '+incUserList.length+' ID: '+listID);
-                // }
-                let i = 0;
-                if(incUserList && incUserList.length > 0
-                   && listID != mostRecentListID){
-                    userListTbody.empty();
-                    incUserList.forEach(function(user, index){
-                        // let user = incUserList[i];
-                        // let userListHTML = '\
-                        // <tr class="userlist-row"><td class="userlist-username">'+
-                        // user.name +'(</td>\
-                        // <td class="userlist-userid">' + user.id +
-                        // ')</td> <td class="userlist-index">[' + index +']\
-                        // </td></tr>';
-
-                        let userListHTML = '\
-                        <tr class="userlist-row"><td class="userlist-name">'+
-                        user.name +'('+user.id +')</td></tr>'; 
-                        userListTbody.append(userListHTML.toString());
-                        // userListTable.scrollTop(chatTable.height() * chatMessage.message_id);                        
-                        // let messageID = parseInt(chatMessage.message_id);
-                        // seenArray[messageID] = true;                          
-                        console.log("USER: "+user.name+"("+user.id+") ADDED TO LIST("+i+")");
-                        i++;
-                    });
-                    mostRecentListID = listID;
-                    //console.log();
-                }//if
+                updateServerList(response);
             }//success: function
         });      
         serverListInitialized = true;
@@ -161,9 +200,31 @@ $(function(){
             contentType: 'application/json',
             data: JSON.stringify({"name" : nameOnServer, "user_id" : userID}, null, 2),
             success: function (response){
+                updateServerList(response);
             }
         });
     }
+
+    function pingVideoSetting(){
+        // $.ajax({
+        //     url: '/video-state',
+        //     method: 'GET',
+        //     contentType: 'application/json',
+        //     data: JSON.stringify({"name" : nameOnServer, "user_id" : userID}, null, 2),
+        //     success: function (response){
+        //         if(!response || !response.name) return;
+        //         if(response.name != nameOnServer
+        //         && response.user_id != userID && response.setting)
+        //         {
+        //             if(response.setting == "PLAY"){
+        //                 if(player) player.playVideo();
+        //             }
+        //         }
+        //     }
+        // });
+    }
+
+    setInterval(pingVideoSetting, 200);
 
     setInterval(pingServer, 2500);
 
@@ -174,7 +235,10 @@ $(function(){
     function addMessageToChat(response){
         const chatMessage = response.message;
         let localTimeStamp = new Date().toLocaleTimeString();
-        if(chatMessage && chatMessage.name == localName){
+        
+        if(!chatMessage) return;
+
+        if(chatMessage.name == localName){
             //If we were allowed to keep the name
             nameOnServer = chatMessage.name;
             //And we no longer have a name to remove.
@@ -183,6 +247,35 @@ $(function(){
         } else {      
             if(chatMessage.fromAnotherUser){                                
                 //If it's from another user
+                //Check if it's @-ing anyone.
+                const atIndex = chatMessage.message_data.indexOf('@');
+                if(atIndex !== -1){
+                    let endOfAtIndex = chatMessage.message_data.indexOf(' ', atIndex);
+                    if(endOfAtIndex === -1){
+                        //If there is no space after @ is called, then
+                        endOfAtIndex = chatMessage.message_data.length;
+                        //The name that's being @-ed must be the end of the message.
+                    }
+
+                    const attedUser = chatMessage.message_data.substring(atIndex+1, endOfAtIndex);
+                    // let thisUserHasBeenAtted = false;
+                    console.log()
+                    if(attedUser == nameOnServer){
+                        console.log("USER HAS BEEN ATTED! "+attedUser);
+                        //Now we check if we have permission to
+                        //send the @ Notification.
+                        if(Notification.permission !== "granted"){
+                            //If we haven't been granted permission,
+                            // Notification.requestPermission()
+                        }                        
+                        //Now we try to send the @ Notification
+                        const atNotification = new Notification("New Message from Watch2Gether Clone!",{
+                            body : chatMessage.message_data
+                        });
+
+                        window.document.title = "ATTED!";
+                    }
+                }
             } else {                
                 //if we weren't allowed the name, clear it.
                 $('#name-input').val('');
@@ -314,28 +407,30 @@ $(function(){
     //     }
     // }
 
-    // window.onbeforeunload = function(event){
-    //     /*doesn't work on IE*/
-    //     //if the user closes the window
+    player.playVideo();
+
+    window.onbeforeunload = function(event){
+        /*doesn't work on IE*/
+        //if the user closes the window
  
-    //     // if(nameOnServer == anonName){
-    //     //     return;//If it's the anonName, nothing to do
-    //     // }
-    //     let nameToRelease = {
-    //         "name" : nameOnServer,
-    //         "id" : userID
-    //     };
+        // if(nameOnServer == anonName){
+        //     return;//If it's the anonName, nothing to do
+        // }
+        let nameToRelease = {
+            "name" : nameOnServer,
+            "id" : userID
+        };
 
-    //     $.ajax({
-    //         url: '/messages',
-    //         method: 'DELETE',
-    //         contentType: 'application/json',
-    //         data: JSON.stringify(nameToRelease, null, 2),
-    //         success: function(response){
-    //             console.log(this.url);
-    //         }
-    //     });//$.ajax
+        $.ajax({
+            url: '/messages',
+            method: 'DELETE',
+            contentType: 'application/json',
+            data: JSON.stringify(nameToRelease, null, 2),
+            success: function(response){
+                console.log(this.url);
+            }
+        });//$.ajax
 
-    // }
+    }
 
 });

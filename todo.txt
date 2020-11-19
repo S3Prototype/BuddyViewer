@@ -1,11 +1,15 @@
 DOING:
+* Create code that loads a default video for when no video has been added.
+    ** This will have to be code on the actual page.
+TODO:
+* Make it so when I play a video locally, it changes the video on the other users's client. Doesn't necessarily need to play it yet. Just change it.
+* Make the play/pause sync up across two instances.
+* Rewind/fast forward
+
+
 * Add private messaging functionality
     ** Have to create tabs within the webpage, one for each chat that's open (general, privatechat1, privatechat2, etc). The tabs exist above the chat. In private chats, the serverlist lists everyone included in the private chat.
-
-TODO:
-* Change the way messageID's are generated. Generate them in the server, still, but make them random numbers (or strings) rather than sequential. This will take a deep rewrite. Lots of the code is designed assuming message_id will be an int. For example, seenArray[] etc.
-* Add the ability to @ someone.
-* Add a function that occurs at an interval (on the server). Its job is to shrink down the takenNames array, possibly by creating a copy that takes only the non-null entries. Then rename that copy to takenNames and be done with the old array. Save memory.
+* Add the ability to @ someone. (I have implemented very rudimentary code for this.)
 * Once all above is instituted, do refactoring. Clean up the code. Once that's done, make simultaneous youtube videos work. Once that's done, set up the database. Once that's done, do the frontend so it looks nice using just css and html5 animations etc.
 
 REFACTORING:
@@ -16,12 +20,15 @@ THOUGHTS:
 * When done with this whole list, refactor the code before proceeding with the next phase of development.
 * This will ultimately be a watch2gether clone. I think it's possible to do by having the client catch when the user changes the time on the embeded video, then send that new set time to the server, then send that to the other viewers' clients.
 * Add error handling. For example, currently (11/8/20), if your name for some reason is never released after you choose a new one, the code has no way of recognizing that issue. That's a serious issue because the name can never be used again, even by you.
+* Could make it so it stores the status of videos. So when you put in a new video, you can press a "back" button that reverts to the previous video at the time that it was at.
 
 ~~~~~~~~~~~
 ===========
 ~~~~~~~~~~~
 
 DONE:
+* Change the way messageID's are generated. Generate them in the server, still, but make them random numbers (or strings) rather than sequential. This will take a deep rewrite. Lots of the code is designed assuming message_id will be an int. For example, seenArray[] etc.
+* Add a function that occurs at an interval (on the server). Its job is to shrink down the takenNames array, possibly by creating a copy that takes only the non-null entries. Then rename that copy to takenNames and be done with the old array. Save memory.
 * Blocking name copying should account for case.
 * Make it so that when you come into the page with a cookie, it doesn't set the name field to empty, because you do already have a name probably.
 * Refreshing the page does not remove the username from the list. Will have to use a cookie to do that. (Closing the browser does work) [But it does work on chrome and similar browsers. So you just need to implement the existing solution in a way that's browser-independent]

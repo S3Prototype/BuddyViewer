@@ -1,3 +1,5 @@
+player.playVideo()
+
 (11/17/20)
 This is how you check if the user has reached this page after a browser reload:
 const perfEntries = performance.getEntriesByType("navigation");
