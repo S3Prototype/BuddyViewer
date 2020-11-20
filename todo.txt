@@ -1,12 +1,16 @@
 DOING:
-* Create code that loads a default video for when no video has been added.
-    ** This will have to be code on the actual page.
+
 TODO:
-* Make it so when I play a video locally, it changes the video on the other users's client. Doesn't necessarily need to play it yet. Just change it.
-* Make the play/pause sync up across two instances.
-* Rewind/fast forward
+* Set up the youtube playing functionality.
+    ** Pressing play should play the videos of the other users
+    ** Pressing pause should pause the videos of the other users
+    ** Scrubbing should work.
+    ** Changing play speed.
+    ** All other minor functions.
+* Ultimately wrap the youtube div in another div, and create your own controls. That way when the user wants to watch a vid from another site, you just fill that div with their video player.
+* Stretch goal: Let users paste embed codes of any video player, then play it in our video container div.
 
-
+===
 * Add private messaging functionality
     ** Have to create tabs within the webpage, one for each chat that's open (general, privatechat1, privatechat2, etc). The tabs exist above the chat. In private chats, the serverlist lists everyone included in the private chat.
 * Add the ability to @ someone. (I have implemented very rudimentary code for this.)
@@ -27,6 +31,8 @@ THOUGHTS:
 ~~~~~~~~~~~
 
 DONE:
+* Create code that loads a default video for when no video has been added.
+    ** This will have to be code on the actual page.
 * Change the way messageID's are generated. Generate them in the server, still, but make them random numbers (or strings) rather than sequential. This will take a deep rewrite. Lots of the code is designed assuming message_id will be an int. For example, seenArray[] etc.
 * Add a function that occurs at an interval (on the server). Its job is to shrink down the takenNames array, possibly by creating a copy that takes only the non-null entries. Then rename that copy to takenNames and be done with the old array. Save memory.
 * Blocking name copying should account for case.

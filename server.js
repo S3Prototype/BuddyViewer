@@ -17,7 +17,7 @@ let defaultMessage = {
     "user_id" : "SERVER_MESSAGE"
 };
 
-var port = process.env.PORT || 8090;
+var port = process.env.PORT || 8091;
 
 let userWhoSent = null;
 let universalSetting = "PAUSE";
@@ -214,25 +214,32 @@ app.post('/initialize', function(req, res){
     res.send("SUCCESS");
 });
 
+let testPlay = false;
+
 app.post('/press-play', function(req, res){
 
+    testPlay = true;
     userWhoSent = req.body;
     universalSetting = "PLAY";
-
+    console.log("YOU PRESSED PLAY");
     res.send("SUCCESS");
 });
 
 app.get('/video-state', function(req, res){
-    if(!userWhoSent){
-        userWhoSent = {};
-        userWhoSent.name = "NULL";
-        userWhoSent.user_id = "NULL";
-    }
+    //You cannot make modifications from get
+    // if(!userWhoSent){
+    //     userWhoSent = {
+    //         "name" : "NULL",
+    //         "user_id" : "NULL"
+    //     };
+    // }
     let data = {
-        name: userWhoSent.name, 
-        user_id: userWhoSent.user_id, 
-        setting: universalSetting
+        // name: userWhoSent.name, 
+        // user_id: userWhoSent.user_id, 
+        // setting: universalSetting,
+        playit: testPlay
     }
+    // console.log(data.playit);
     res.send(data);
 });
 

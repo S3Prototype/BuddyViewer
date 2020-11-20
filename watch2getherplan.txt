@@ -1,0 +1,13 @@
+Sending video data back and forth thoughts:
+
+Almost certainly will require its own class on the client side. We'll also need some code to prevent commands from repeating, such that if the server tells us the video is playing, we don't keep calling a playVideo function, preventing the user from pausing. On the other end, we'll need a server-side class that stores the "universal" state of the video, as in, it knows whether the video should be playing or not, and can command the clients to get in line. This code will conceptually be straightforward. Every time the server is given some new state of affairs, it updates all the clients at the moment they ping it. Probably means the client will have to hold data about whether or not it's been updated, and the server will change that value, saying either "Okay you're up to date" or "No, you're off track." Might require keeping track of a sequential count of some sort so the server can say, "We are on update 17. Are you on update 17? No? You're on 13? Well, jump to 17."
+
+So we need to:
+
+* Create a function that reacts to a video player state change based on the new state.
+    ** Should also question if the new state is different from the current state.
+* If that new state is play, tell the server that the client just played the video.
+    ** Later we'll also tell it the URL, in case it's a new video. (Eventually have to look up youtube serach API)
+* Have the server receive the message that a video just got played, and change the value of a variable that tells other clients if a video is playing or not.
+* Write client-side code to read the state of the video on the server, and change the state of our video IF it doesn't match. (Will later have to account for if url doesn't match too)
+* Write all of this code in a way that it doesn't matter what the USERID or any of that other stuff is.

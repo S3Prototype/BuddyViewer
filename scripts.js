@@ -59,14 +59,16 @@ $(function(){
 
     const defaultVideoID = "5C_Px6_TuL4";
 
-    function tellServerToPlay(){
+    function tellServerToPlay(event){
+        if(event.data != YT.PlayerState.PLAYING) return;
+        console.log("TELL SERVER TO PLAY");
         $.ajax({
             url: '/press-play',
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify({"name" : nameOnServer, "user_id" : userID}, null, 2),
             success: function (response){
-                updateServerList(response);
+                //updateServerList(response);
             }
         });
     }
@@ -141,7 +143,6 @@ $(function(){
                 if(!incMessage) return;
                 incMessage.fromAnotherUser = true;
                 if(incMessage.message_id){
-                    player.playVideo();
                     let localID = parseInt(incMessage.message_id);
                     if(incMessage.name != nameOnServer && !seenArray[localID]){
                         console.log("Response: " + incMessage.message_data);
@@ -206,23 +207,32 @@ $(function(){
     }
 
     function pingVideoSetting(){
-        // $.ajax({
-        //     url: '/video-state',
-        //     method: 'GET',
-        //     contentType: 'application/json',
-        //     data: JSON.stringify({"name" : nameOnServer, "user_id" : userID}, null, 2),
-        //     success: function (response){
-        //         if(!response || !response.name) return;
-        //         if(response.name != nameOnServer
-        //         && response.user_id != userID && response.setting)
-        //         {
-        //             if(response.setting == "PLAY"){
-        //                 if(player) player.playVideo();
-        //             }
-        //         }
-        //     }
-        // });
+        $.ajax({
+            url: '/video-state',
+            method: 'GET',
+            contentType: 'application/json',
+            data: JSON.stringify({"name" : nameOnServer, "user_id" : userID}, null, 2),
+            success: function (response){
+                // if(!response || !response.name) return;
+                // if(response.name != nameOnServer
+                // && response.user_id != userID && response.setting)
+                // {
+                //     if(response.setting == "PLAY"){
+                //         if(player) player.playVideo();
+                //     }
+                // }
+                // console.log("PLAY IT IS: "+response.playit);             
+                if(response.playit == true){
+                    console.log("PLAY IT IS TRUE");
+                    player.playVideo();
+                }
+            }
+        });
     }
+
+    player.addEventListener("onStateChange", tellServerToPlay);
+
+    console.log(player);
 
     setInterval(pingVideoSetting, 200);
 
@@ -407,8 +417,6 @@ $(function(){
     //     }
     // }
 
-    player.playVideo();
-
     window.onbeforeunload = function(event){
         /*doesn't work on IE*/
         //if the user closes the window
@@ -432,5 +440,13 @@ $(function(){
         });//$.ajax
 
     }
+
+    document.addEventListener('readystatechange', event => { 
+    
+        // When window loaded ( external resources are loaded too- `css`,`src`, etc...) 
+        if (event.target.readyState === "complete") {
+            player.addEventListener("onStateChange", tellServerToPlay);
+        }
+    });
 
 });
