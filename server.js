@@ -210,6 +210,7 @@ class VideoManager{
     // 5 (video cued)
     static universalState = -1;
     static universalTime = 0;
+    static bufferingID = "EMPTY";
 }
 
 app.get('/messages', function(req, res){
@@ -236,20 +237,36 @@ app.post('/initialize', function(req, res){
 let testPlay = false;
 
 app.post('/client-state', function(req, res){
-    VideoManager.universalState = req.body.state;
-    // if(req.body.video_time > VideoManager.universalTime){
-    //     VideoManager.universalTime = req.body.video_time;
-    // }
-
-    if(req.body.video_time > VideoManager.universalTime + 5 ||
-        req.body.video_time < VideoManager.universalTime - 5){
-        VideoManager.universalTime = req.body.video_time;
-        console.log("TIME ON SERVER: "+VideoManager.universalTime);
+    if(req.body.state == CustomYTStates.BUFFERING){
+        //If someone starts buffering, let the server know who.
+        VideoManager.bufferingID = req.body.user_id;
     }
+
+    VideoManager.universalState = req.body.state;
+    VideoManager.universalTime = req.body.video_time;
+
+    
     res.send("SUCCESS");
 });
 
 app.post('/video-state', function(req, res){
+
+    if(req.body.video_time < VideoManager.universalTime - 5 ||
+        req.body.video_time > VideoManager.universalTime + 5){
+        //If it's within the safe space, we don't need to change the time
+        console.log("TIME ON SERVER: "+VideoManager.universalTime);
+    } else {
+        VideoManager.universalTime = req.body.video_time;
+    }
+
+
+        //If the person who started buffering has now finished, and
+        //is paused, then we need to tell everyone to play their videos.
+    if(req.body.state == CustomYTStates.PAUSED &&
+        req.body.user_id == VideoManager.bufferingID){
+            VideoManager.bufferingID = "EMPTY";
+            VideoManager.universalState = CustomYTStates.PLAYING;
+    }
 
     let data = {
         // user_name : null,

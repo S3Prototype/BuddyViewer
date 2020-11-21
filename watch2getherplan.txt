@@ -14,3 +14,5 @@ So we need to:
 
 Thoughts:
 * Right now it can only play for 5 seconds, then it snaps right back to whatever time you skipped to.
+    ** Consider changing code on client so it only changes time if the state is buffer. Because seeking/scrubbing across the timeline seems to always generate the buffer event.
+    ** FIXED

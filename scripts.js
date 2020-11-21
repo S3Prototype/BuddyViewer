@@ -93,20 +93,17 @@ $(function(){
                 } else if(serverState == YT.PlayerState.PAUSED){
                     console.log("PAUSE IS TRUE");
                     player.pauseVideo();
+                } else if(serverState == YT.PlayerState.BUFFERING){
+                    // player.pauseVideo();
                 }
             }
 
-            if(ClientYTPlayer.currentState == YT.PlayerState.BUFFERING &&
-                serverState == YT.PlayerState.PAUSED){
-                    player.playVideo();
-                }
-
-            console.log("TIME SENT BACK: "+response.video_time);
+            // console.log("TIME SENT BACK: "+response.video_time);
             
             const currTime = player.getCurrentTime();
             if(response.video_time > currTime + 5 ||
                 response.video_time < currTime - 5){
-                console.log("TIME SENT FROM SERVER: "+response.video_time);
+                // console.log("TIME SENT FROM SERVER: "+response.video_time);
                 player.seekTo(response.video_time);
                 player.playVideo();                
             }
