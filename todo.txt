@@ -1,7 +1,7 @@
 DOING:
 
 TODO:
-* Set up the youtube playing functionality.
+* Generally to set up the youtube playing functionality:
     ** Pressing play should play the videos of the other users
     ** Pressing pause should pause the videos of the other users
     ** Scrubbing should work.

@@ -11,3 +11,6 @@ So we need to:
 * Have the server receive the message that a video just got played, and change the value of a variable that tells other clients if a video is playing or not.
 * Write client-side code to read the state of the video on the server, and change the state of our video IF it doesn't match. (Will later have to account for if url doesn't match too)
 * Write all of this code in a way that it doesn't matter what the USERID or any of that other stuff is.
+
+Thoughts:
+* Right now it can only play for 5 seconds, then it snaps right back to whatever time you skipped to.

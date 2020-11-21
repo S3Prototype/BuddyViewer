@@ -107,12 +107,12 @@ class NameContainer{
         //nameData.name, nameData.id
         // let idHasBeenPinged = false;
         if(!NameContainer.#takenNames) return;
-        console.log("###############");
-        console.log("ID Pinged: "+pName);
+        // console.log("###############");
+        // console.log("ID Pinged: "+pName);
         let nameFound = false;
         for(let i = 0; !nameFound && i < NameContainer.#takenNames.length; i++){
             if(NameContainer.#takenNames[i].name == pName){
-                console.log("Failed count: "+NameContainer.#takenNames[i].failedCount);
+                // console.log("Failed count: "+NameContainer.#takenNames[i].failedCount);
                 NameContainer.#takenNames[i].hasBeenPinged = true;
                 NameContainer.#takenNames[i].failedCount = 0;
                 nameFound = true;
@@ -135,8 +135,8 @@ class NameContainer{
                     //Implement the counter after we make it work.
                     if(pingedName.failedCount > 3){
                         NameContainer.makeNameAvailable(pingedName);
-                        console.log("******************");
-                        console.log("Ping failed! Deleting: "+pingedName.name);
+                        // console.log("******************");
+                        // console.log("Ping failed! Deleting: "+pingedName.name);
                     }
                     pingedName.failedCount++;
                 }
@@ -192,6 +192,25 @@ class MessageContainer{
     }
 }
 
+class CustomYTStates{
+    static UNSTARTED = -1;
+    static ENDED = 0;
+    static PLAYING = 1;
+    static PAUSED = 2;
+    static BUFFERING = 3;
+    static CUED = 5;
+}
+
+class VideoManager{
+    // -1 (unstarted)
+    // 0 (ended)
+    // 1 (playing)
+    // 2 (paused)
+    // 3 (buffering)
+    // 5 (video cued)
+    static universalState = -1;
+    static universalTime = 0;
+}
 
 app.get('/messages', function(req, res){
     // console.log("GET CALLED");
@@ -216,30 +235,30 @@ app.post('/initialize', function(req, res){
 
 let testPlay = false;
 
-app.post('/press-play', function(req, res){
+app.post('/client-state', function(req, res){
+    VideoManager.universalState = req.body.state;
+    // if(req.body.video_time > VideoManager.universalTime){
+    //     VideoManager.universalTime = req.body.video_time;
+    // }
 
-    testPlay = true;
-    userWhoSent = req.body;
-    universalSetting = "PLAY";
-    console.log("YOU PRESSED PLAY");
+    if(req.body.video_time > VideoManager.universalTime + 5 ||
+        req.body.video_time < VideoManager.universalTime - 5){
+        VideoManager.universalTime = req.body.video_time;
+        console.log("TIME ON SERVER: "+VideoManager.universalTime);
+    }
     res.send("SUCCESS");
 });
 
-app.get('/video-state', function(req, res){
-    //You cannot make modifications from get
-    // if(!userWhoSent){
-    //     userWhoSent = {
-    //         "name" : "NULL",
-    //         "user_id" : "NULL"
-    //     };
-    // }
+app.post('/video-state', function(req, res){
+
     let data = {
-        // name: userWhoSent.name, 
-        // user_id: userWhoSent.user_id, 
-        // setting: universalSetting,
-        playit: testPlay
+        // user_name : null,
+        // user_id : null,
+        // state: -1
+        video_time: VideoManager.universalTime,
+        state: VideoManager.universalState
     }
-    // console.log(data.playit);
+
     res.send(data);
 });
 

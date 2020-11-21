@@ -50,6 +50,71 @@ $(function(){
 
     let mostRecentListID = 0;
 
+    class ClientYTPlayer{
+        static currentState = YT.PlayerState.UNSTARTED;
+        static playerInfo = {
+            user_name : null,
+            user_id : null,
+            video_time: 0,
+            state: -1
+        };
+        static SendStateToServer(event){
+
+            ClientYTPlayer.currentState = event.data;            
+            let sendData = {
+                "name" : nameOnServer,
+                "user_id" : userID,
+                "state" : ClientYTPlayer.currentState,
+                "video_time" : player.getCurrentTime()
+            };
+
+            //Here we check if the state is anything weird.
+
+            console.log("TELL SERVER TO "+player.getPlayerState());
+            $.ajax({
+                url: '/client-state',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(sendData, null, 2),
+                success: function (response){
+                    //updateServerList(response);
+                }
+            });
+        }
+        static alignWithServerState(response){
+            const serverState = response.state;
+            // //If we're already doing the same as the server, return.
+            // if(serverState == ClientYTPlayer.currentState) return;
+                //Now check if we even need to change anything.
+            if(serverState != ClientYTPlayer.currentState){
+                if(serverState == YT.PlayerState.PLAYING){
+                    console.log("PLAY IT IS TRUE");
+                    player.playVideo();
+                } else if(serverState == YT.PlayerState.PAUSED){
+                    console.log("PAUSE IS TRUE");
+                    player.pauseVideo();
+                }
+            }
+
+            if(ClientYTPlayer.currentState == YT.PlayerState.BUFFERING &&
+                serverState == YT.PlayerState.PAUSED){
+                    player.playVideo();
+                }
+
+            console.log("TIME SENT BACK: "+response.video_time);
+            
+            const currTime = player.getCurrentTime();
+            if(response.video_time > currTime + 5 ||
+                response.video_time < currTime - 5){
+                console.log("TIME SENT FROM SERVER: "+response.video_time);
+                player.seekTo(response.video_time);
+                player.playVideo();                
+            }
+            
+            ClientYTPlayer.currentState = serverState;
+        }
+    }
+
     // let inputForm = document.getElementById('input-form');
     // // create a new li node
     // let vidDiv = document.createElement('div');
@@ -58,26 +123,6 @@ $(function(){
     // inputForm.insertBefore(vidDiv, inputForm.firstElementChild.nextSibling);
 
     const defaultVideoID = "5C_Px6_TuL4";
-
-    function tellServerToPlay(event){
-        if(event.data != YT.PlayerState.PLAYING) return;
-        console.log("TELL SERVER TO PLAY");
-        $.ajax({
-            url: '/press-play',
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({"name" : nameOnServer, "user_id" : userID}, null, 2),
-            success: function (response){
-                //updateServerList(response);
-            }
-        });
-    }
-
-    function parseState(event){
-        if (event.data == YT.PlayerState.PLAYING) {
-            tellServerToPlay();
-          }
-    }
 
     // var tag = document.createElement('script');
 
@@ -206,41 +251,43 @@ $(function(){
         });
     }
 
+    function alignWithServerState(response){
+        const serverState = response.state;
+        //If we're already doing the same as the server, return.
+        if(serverState == ClientYTPlayer.currentState) return;
+        
+        if(serverState == YT.PlayerState.PLAYING){
+            console.log("PLAY IT IS TRUE");
+            player.playVideo();
+        } else if(serverState == YT.PlayerState.PAUSED){
+            console.log("PAUSE IS TRUE");
+            player.pauseVideo();
+        }
+
+        if(response.video_time > player.getCurrentTime() + 5){
+            player.seekTo(parseInt(response.video_time));
+        }
+        
+        ClientYTPlayer.currentState = serverState;
+    }
+
     function pingVideoSetting(){
+        const playerData = {
+            "name" : nameOnServer,
+            "user_id" : userID,
+            "state" : ClientYTPlayer.currentState,
+            "video_time": player.getCurrentTime()
+        };
         $.ajax({
             url: '/video-state',
-            method: 'GET',
+            method: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify({"name" : nameOnServer, "user_id" : userID}, null, 2),
+            data: JSON.stringify(playerData, null, 2),
             success: function (response){
-                // if(!response || !response.name) return;
-                // if(response.name != nameOnServer
-                // && response.user_id != userID && response.setting)
-                // {
-                //     if(response.setting == "PLAY"){
-                //         if(player) player.playVideo();
-                //     }
-                // }
-                // console.log("PLAY IT IS: "+response.playit);             
-                if(response.playit == true){
-                    console.log("PLAY IT IS TRUE");
-                    player.playVideo();
-                }
+                ClientYTPlayer.alignWithServerState(response); 
             }
         });
     }
-
-    player.addEventListener("onStateChange", tellServerToPlay);
-
-    console.log(player);
-
-    setInterval(pingVideoSetting, 200);
-
-    setInterval(pingServer, 2500);
-
-    setInterval(checkForMessages, 500);
-
-    setInterval(checkForUserList, 607);
 
     function addMessageToChat(response){
         const chatMessage = response.message;
@@ -445,7 +492,15 @@ $(function(){
     
         // When window loaded ( external resources are loaded too- `css`,`src`, etc...) 
         if (event.target.readyState === "complete") {
-            player.addEventListener("onStateChange", tellServerToPlay);
+
+            setInterval(pingVideoSetting, 200);
+        
+            setInterval(pingServer, 2500);
+        
+            setInterval(checkForMessages, 500);
+        
+            setInterval(checkForUserList, 607);
+            player.addEventListener("onStateChange", ClientYTPlayer.SendStateToServer);
         }
     });
 

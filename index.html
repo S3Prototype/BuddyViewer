@@ -56,7 +56,9 @@
             </table>
         </section> -->
         <!-- 1. The <iframe> (and video player) will replace this <div> tag. -->
-    <div id="player"></div>
+    <div id='container'>
+        <div id="player"></div>
+    </div>
     <script>
       // 2. This code loads the IFrame Player API code asynchronously.
       var tag = document.createElement('script');
@@ -72,11 +74,10 @@
         player = new YT.Player('player', {
           height: '390',
           width: '640',
-          videoId: "5C_Px6_TuL4",
+          videoId: "hjcXNK-zUFg",
           playerVars: {
             enablejsapi: 1,
             autoplay: 1,
-            controls: 0
           }
         });
       }
