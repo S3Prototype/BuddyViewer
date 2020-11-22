@@ -15,6 +15,13 @@ body {
     font-family: Georgia, 'Times New Roman', Times, serif;
 }
 
+#container {
+    width:640;
+    height:450;
+    background-color: black;
+    display: inline-block;
+}
+
 .userlist-name {
     display: inline-block;
 }
@@ -39,6 +46,11 @@ body {
 }
 
 #name-input {
+    display: inline-block;
+    width: 15em;
+}
+
+#ytsearch-input {
     display: inline-block;
     width: 15em;
 }

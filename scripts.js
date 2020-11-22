@@ -50,6 +50,8 @@ $(function(){
 
     let mostRecentListID = 0;
 
+    const youtubeInput = $('#ytsearch-input');
+
     class ClientYTPlayer{
         static currentState = YT.PlayerState.UNSTARTED;
         static playerInfo = {
@@ -58,6 +60,36 @@ $(function(){
             video_time: 0,
             state: -1
         };
+        static clientURL = "hjcXNK-zUFg";
+
+        static extractID(url){
+            const startIndex = url.indexOf('v=') + 2;
+            url = url.substring(startIndex)
+            console.log("YOU entered ID: "+url);
+            if(url.includes('&')){
+                url = url.substring(0, url.indexOf('&'));
+            }
+            return url;
+        }
+        static addNewVideo(){
+            // $('#container').html("<div id='player'></div>");
+            const currURL = ClientYTPlayer.extractID(player.getVideoUrl());
+
+            if(currURL != ClientYTPlayer.clientURL){
+                player.destroy();
+                player = new YT.Player('player', {
+                    height: '390',
+                    width: '640',
+                    videoId: ClientYTPlayer.clientURL,
+                    playerVars: {
+                      enablejsapi: 1,
+                      autoplay: 1,
+                    }
+                  });
+                player.addEventListener("onStateChange", ClientYTPlayer.SendStateToServer);
+                ClientYTPlayer.SendStateToServer({data: YT.PlayerState.PLAYING});
+            }
+        }
         static SendStateToServer(event){
 
             ClientYTPlayer.currentState = event.data;            
@@ -65,7 +97,8 @@ $(function(){
                 "name" : nameOnServer,
                 "user_id" : userID,
                 "state" : ClientYTPlayer.currentState,
-                "video_time" : player.getCurrentTime()
+                "video_time" : player.getCurrentTime(),
+                "video_url": ClientYTPlayer.clientURL
             };
 
             //Here we check if the state is anything weird.
@@ -86,15 +119,26 @@ $(function(){
             // //If we're already doing the same as the server, return.
             // if(serverState == ClientYTPlayer.currentState) return;
                 //Now check if we even need to change anything.
+
             if(serverState != ClientYTPlayer.currentState){
                 if(serverState == YT.PlayerState.PLAYING){
                     console.log("PLAY IT IS TRUE");
+                    if(response.video_url != ClientYTPlayer.clientURL){
+                        ClientYTPlayer.clientURL = response.video_url;
+                        ClientYTPlayer.addNewVideo();
+                    }
                     player.playVideo();
                 } else if(serverState == YT.PlayerState.PAUSED){
                     console.log("PAUSE IS TRUE");
                     player.pauseVideo();
                 } else if(serverState == YT.PlayerState.BUFFERING){
                     // player.pauseVideo();
+                } else if(serverState == YT.PlayerState.UNSTARTED){
+                    if(response.video_url != ClientYTPlayer.clientURL){
+                        ClientYTPlayer.clientURL = response.video_url;
+                        ClientYTPlayer.addNewVideo();
+                    }
+                    player.playVideo();
                 }
             }
 
@@ -112,20 +156,45 @@ $(function(){
         }
     }
 
-    // let inputForm = document.getElementById('input-form');
-    // // create a new li node
-    // let vidDiv = document.createElement('div');
-    // vidDiv.setAttribute("id", "player");
-    // // insert a new node after the first list item
-    // inputForm.insertBefore(vidDiv, inputForm.firstElementChild.nextSibling);
+    function pingVideoSetting(){
+        const playerData = {
+            "name" : nameOnServer,
+            "user_id" : userID,
+            "state" : ClientYTPlayer.currentState,
+            "video_time": player.getCurrentTime(),
+            "video_url": ClientYTPlayer.clientURL
+        };
+        $.ajax({
+            url: '/video-state',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(playerData, null, 2),
+            success: function (response){
+                ClientYTPlayer.alignWithServerState(response); 
+            }
+        });
+    }
 
-    const defaultVideoID = "5C_Px6_TuL4";
+    $('#ytsearch').on('submit', function(event){
+        event.preventDefault();
+        player.seekTo(0);
+        player.stopVideo();            
+        const newVid = youtubeInput.val();
+        if(newVid.includes('youtu.be')){
+            const startIndex = newVid.indexOf('/') + 1;
+            ClientYTPlayer.clientURL = newVid.substring(startIndex);
+        } else if(newVid.includes('v=')){
+            const startIndex = newVid.indexOf('v=') + 2;
+            ClientYTPlayer.clientURL = newVid.substring(startIndex)
+        }
 
-    // var tag = document.createElement('script');
+        if(ClientYTPlayer.clientURL.includes('&')){
+            ClientYTPlayer.clientURL = ClientYTPlayer.clientURL.substring(0, ClientYTPlayer.clientURL.indexOf('&'));
+        }
 
-    //   tag.src = "https://www.youtube.com/iframe_api";
-    //   var firstScriptTag = document.getElementsByTagName('script')[0];
-    //   firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+        // ClientYTPlayer.clientURL = youtubeInput.val();
+        ClientYTPlayer.addNewVideo();
+    });
 
     messageInput.keypress(function(event){
         let code = (event.keyCode ? event.keyCode : event.which);
@@ -244,44 +313,6 @@ $(function(){
             data: JSON.stringify({"name" : nameOnServer, "user_id" : userID}, null, 2),
             success: function (response){
                 updateServerList(response);
-            }
-        });
-    }
-
-    function alignWithServerState(response){
-        const serverState = response.state;
-        //If we're already doing the same as the server, return.
-        if(serverState == ClientYTPlayer.currentState) return;
-        
-        if(serverState == YT.PlayerState.PLAYING){
-            console.log("PLAY IT IS TRUE");
-            player.playVideo();
-        } else if(serverState == YT.PlayerState.PAUSED){
-            console.log("PAUSE IS TRUE");
-            player.pauseVideo();
-        }
-
-        if(response.video_time > player.getCurrentTime() + 5){
-            player.seekTo(parseInt(response.video_time));
-        }
-        
-        ClientYTPlayer.currentState = serverState;
-    }
-
-    function pingVideoSetting(){
-        const playerData = {
-            "name" : nameOnServer,
-            "user_id" : userID,
-            "state" : ClientYTPlayer.currentState,
-            "video_time": player.getCurrentTime()
-        };
-        $.ajax({
-            url: '/video-state',
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify(playerData, null, 2),
-            success: function (response){
-                ClientYTPlayer.alignWithServerState(response); 
             }
         });
     }
@@ -438,7 +469,7 @@ $(function(){
                         "name" : localName,
                         "message_id" : 0,
                         "timestamp" : timeStamp,
-                        "message_data" : messageInput.val(),
+                        "message_data" : messageInput,
                         "user_id": userID
                     },
                 "name" : nameToRemove
@@ -453,13 +484,6 @@ $(function(){
                 success: addMessageToChat
             });       
     });
-    
-    // const perfEntries = performance.getEntriesByType("navigation");
-    // for(const perf of perfEntries){
-    //     if (perf.type == "reload"){
-    //         alert("YES!!");
-    //     }
-    // }
 
     window.onbeforeunload = function(event){
         /*doesn't work on IE*/

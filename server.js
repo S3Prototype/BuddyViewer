@@ -60,6 +60,9 @@ class NameContainer{
                 return name && name.name != nameToRelease.name
             }
         );
+        if(nameToRelease.user_id == VideoManager.bufferingID){
+            VideoManager.bufferingID = "EMPTY";
+        }
         // NameContainer.#takenNames = newList;
     }
     static isNameAvailable(thisMessage){
@@ -211,6 +214,7 @@ class VideoManager{
     static universalState = -1;
     static universalTime = 0;
     static bufferingID = "EMPTY";
+    static universalUrl = "EMPTY";
 }
 
 app.get('/messages', function(req, res){
@@ -241,11 +245,18 @@ app.post('/client-state', function(req, res){
         //If someone starts buffering, let the server know who.
         VideoManager.bufferingID = req.body.user_id;
     }
-
+    
     VideoManager.universalState = req.body.state;
     VideoManager.universalTime = req.body.video_time;
 
+    if(req.body.video_url != VideoManager.universalUrl){
+        VideoManager.universalState = CustomYTStates.UNSTARTED;
+        VideoManager.universalTime = 0;
+    }
     
+    VideoManager.universalUrl = req.body.video_url;
+    
+    console.log("CLIENT HAS SENT STATE");
     res.send("SUCCESS");
 });
 
@@ -264,16 +275,17 @@ app.post('/video-state', function(req, res){
         //is paused, then we need to tell everyone to play their videos.
     if(req.body.state == CustomYTStates.PAUSED &&
         req.body.user_id == VideoManager.bufferingID){
-            VideoManager.bufferingID = "EMPTY";
-            VideoManager.universalState = CustomYTStates.PLAYING;
+        VideoManager.bufferingID = "EMPTY";
+        VideoManager.universalState = CustomYTStates.PLAYING;
     }
 
     let data = {
         // user_name : null,
         // user_id : null,
-        // state: -1
+        // state: -
+        state: VideoManager.universalState,
         video_time: VideoManager.universalTime,
-        state: VideoManager.universalState
+        video_url: VideoManager.universalUrl
     }
 
     res.send(data);

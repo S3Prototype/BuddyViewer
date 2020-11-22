@@ -4,15 +4,22 @@ Almost certainly will require its own class on the client side. We'll also need 
 
 So we need to:
 
-* Create a function that reacts to a video player state change based on the new state.
-    ** Should also question if the new state is different from the current state.
-* If that new state is play, tell the server that the client just played the video.
-    ** Later we'll also tell it the URL, in case it's a new video. (Eventually have to look up youtube serach API)
-* Have the server receive the message that a video just got played, and change the value of a variable that tells other clients if a video is playing or not.
-* Write client-side code to read the state of the video on the server, and change the state of our video IF it doesn't match. (Will later have to account for if url doesn't match too)
-* Write all of this code in a way that it doesn't matter what the USERID or any of that other stuff is.
+* Issues right now:
+    ** When you skip in the timeline it pauses sometimes for some reason
+    ** Sometimes when you press play, it pauses again instantly
+    ** Can't play live video, because the code is set up to skip the time to 0 automatically so all videos start from the beginning. (Actually seems to be an issue with the browser on vnc)
+    ** Obviously need to make it able to take all other types of youtube links pasted in.
+
 
 Thoughts:
+
+Done:
 * Right now it can only play for 5 seconds, then it snaps right back to whatever time you skipped to.
     ** Consider changing code on client so it only changes time if the state is buffer. Because seeking/scrubbing across the timeline seems to always generate the buffer event.
     ** FIXED
+* Write all of this code in a way that it doesn't matter what the USERID or any of that other stuff is.
+* Write client-side code to read the state of the video on the server, and change the state of our video IF it doesn't match. (Will later have to account for if url doesn't match too)
+* Have the server receive the message that a video just got played, and change the value of a variable that tells other clients if a video is playing or not.
+* If that new state is play, tell the server that the client just played the video.
+* Create a function that reacts to a video player state change based on the new state.
+    ** Should also question if the new state is different from the current state.

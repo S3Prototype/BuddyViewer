@@ -1,3 +1,6 @@
+(11/21/20)
+YT API Key AIzaSyBTBzkShyHTchB91sk-zFaSNv2qyyA8MXU
+
 (11/20/20)
 Watch2Gether constantly asks you to reconfirm your room in part because youtube requires a user to interact for the "autoplay" functionality to work. It appears youtube's API considers activating the video via javascript to be "autoplay".
 
