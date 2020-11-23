@@ -5,10 +5,12 @@ TODO:
     ** Pressing play should play the videos of the other users
     ** Pressing pause should pause the videos of the other users
     ** Scrubbing should work.
+    ** Searching
     ** Changing play speed.
     ** All other minor functions.
 * Ultimately wrap the youtube div in another div, and create your own controls. That way when the user wants to watch a vid from another site, you just fill that div with their video player.
-* Stretch goal: Let users paste embed codes of any video player, then play it in our video container div.
+* Stretch goal: Let users paste embed codes of any video player <iframe>, then play it in our video container div.
+* Write code that tries to play a video on any site by seeking out the most common tags that hold videos. Maybe grab the mp4 links directly and load those up into a video tag? The code should try as many tactics as possible until it succeeds. Maybe even have a way to ask the viewer "Is this the video? If no, we'll try to find it in the link again. Is this the video?" This requires web scraping.
 
 ===
 * Add private messaging functionality

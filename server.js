@@ -138,8 +138,8 @@ class NameContainer{
                     //Implement the counter after we make it work.
                     if(pingedName.failedCount > 3){
                         NameContainer.makeNameAvailable(pingedName);
-                        // console.log("******************");
-                        // console.log("Ping failed! Deleting: "+pingedName.name);
+                        console.log("******************");
+                        console.log("Ping failed! Deleting: "+pingedName.name);
                     }
                     pingedName.failedCount++;
                 }
@@ -238,15 +238,26 @@ app.post('/initialize', function(req, res){
     res.send("SUCCESS");
 });
 
-let testPlay = false;
-
 app.post('/client-state', function(req, res){
-    if(req.body.state == CustomYTStates.BUFFERING){
+    console.log("CLIENT("+req.body.user_id+") "+"HAS SENT STATE: "+req.body.state);
+    if(req.body.state == CustomYTStates.BUFFERING &&
+        VideoManager.bufferingID == "EMPTY"){
         //If someone starts buffering, let the server know who.
         VideoManager.bufferingID = req.body.user_id;
     }
+
+    if(req.body.state == CustomYTStates.PAUSED){
+        if(VideoManager.universalState == CustomYTStates.BUFFERING &&
+            VideoManager.bufferingID == req.body.user_id){
+                VideoManager.universalState = CustomYTStates.PLAYING;
+                VideoManager.bufferingID = "EMPTY";
+        } else {
+            VideoManager.universalState = CustomYTStates.PAUSED;
+        }
+    } else {
+        VideoManager.universalState = req.body.state;
+    }
     
-    VideoManager.universalState = req.body.state;
     VideoManager.universalTime = req.body.video_time;
 
     if(req.body.video_url != VideoManager.universalUrl){
@@ -255,8 +266,17 @@ app.post('/client-state', function(req, res){
     }
     
     VideoManager.universalUrl = req.body.video_url;
+
+    NameContainer.pingName(req.body.name);
+
+    const data = {
+        name: req.body.name,
+        user_id: req.body.user_id,
+        state: VideoManager.universalState,
+        video_url: VideoManager.universalUrl,
+        video_time: VideoManager.universalTime        
+    }
     
-    console.log("CLIENT HAS SENT STATE");
     res.send("SUCCESS");
 });
 
@@ -287,6 +307,8 @@ app.post('/video-state', function(req, res){
         video_time: VideoManager.universalTime,
         video_url: VideoManager.universalUrl
     }
+
+    NameContainer.pingName(req.body.name);
 
     res.send(data);
 });
