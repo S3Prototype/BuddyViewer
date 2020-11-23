@@ -126,6 +126,10 @@ $(function(){
             if(serverState != ClientYTPlayer.currentState){
                 if(serverState == YT.PlayerState.PLAYING){
                     console.log("PLAY IT IS TRUE");
+                    if(response.video_url != ClientYTPlayer.clientURL){
+                        ClientYTPlayer.clientURL = response.video_url;
+                        ClientYTPlayer.addNewVideo();
+                    }
                     player.playVideo();
                 } else if(serverState == YT.PlayerState.PAUSED){
                     console.log("PAUSE IS TRUE");
