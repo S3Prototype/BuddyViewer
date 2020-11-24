@@ -286,10 +286,14 @@ app.post('/video-state', function(req, res){
         req.body.video_time > VideoManager.universalTime + 5){
         //If it's within the safe space, we don't need to change the time
         console.log("TIME ON SERVER: "+VideoManager.universalTime);
+            if(VideoManager.universalState == CustomYTStates.CUED){
+                //If someone just used the seekTo function, set the
+                //time anyway.
+                VideoManager.universalTime = req.body.video_time;                
+            }
     } else {
         VideoManager.universalTime = req.body.video_time;
     }
-
 
         //If the person who started buffering has now finished, and
         //is paused, then we need to tell everyone to play their videos.

@@ -16,14 +16,9 @@ So we need to:
 
 
 Thoughts:
-The video is playing.
-- Try to pause
-TELL SERVER TO 2 scripts.js:106:21
-PLAY IT IS TRUE scripts.js:125:29
-TELL SERVER TO 1
-- Try to pause again
-TELL SERVER TO 2
-[Pause was successful]
+** You can't change the video without clicking play on the default video first for some reason.
+** Whenever a client receives the command to change its play state, it does so, and then it immediately triggers its own onStateChange event, which then pings the server.
+** When you try to pause after adding a new video, it plays again. Weird little very specific glitch.
 
 ** Try making the onsuccess of SendStateToServer call alignwithserver(response)
 ** I believe a race condition is happening here, or something like it. When you press a button, sometimes that happens exactly as pingVideoSetting is happening. That means even though you tell the server to pause it, pingVideoSetting reports back that the server's universal state is PLAYING, which it is at the time that it arrives. When sending info to the server (on button presses, pauses, plays, seeks, etc), we need to pause all other code until the result comes back. So we need an AJAX promise to be executed either on the SendStateToServer code, or on the pingVideoSetting. Probably on pingVideoSetting.

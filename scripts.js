@@ -62,14 +62,28 @@ $(function(){
         };
         static currentlySendingData = false;
         static clientURL = "hjcXNK-zUFg";
+        static pingInterval = null;
 
+        static initNewPlayer(event){
+            event.target.addEventListener("onStateChange", ClientYTPlayer.SendStateToServer);
+            event.target.playVideo();
+            // ClientYTPlayer.SendStateToServer(event);
+            ClientYTPlayer.pingInterval = setInterval(pingVideoSetting, 200);
+        }
         static extractID(url){
             const startIndex = url.indexOf('v=') + 2;
-            url = url.substring(startIndex)
+            if(url.includes('v=')){
+                url = url.substring(url.indexOf('v=') + 2)
+            } else if(url.includes('youtu.be')){
+                url = url.substring(url.indexOf('youtu.be/') + 9);
+            } else if (url.includes('/embed/')){
+                url = url.substring(url.indexOf('/embed/') + 7);
+            }
+
             console.log("YOU entered ID: "+url);
             if(url.includes('&')){
                 url = url.substring(0, url.indexOf('&'));
-            }
+            } 
             return url;
         }
         static addNewVideo(){
@@ -78,17 +92,20 @@ $(function(){
 
             if(currURL != ClientYTPlayer.clientURL){
                 player.destroy();
+                clearInterval(ClientYTPlayer.pingInterval);
                 player = new YT.Player('player', {
                     height: '390',
                     width: '640',
                     videoId: ClientYTPlayer.clientURL,
+                    events: {
+                      'onReady': ClientYTPlayer.initNewPlayer
+                    },        
                     playerVars: {
                       enablejsapi: 1,
                       autoplay: 1,
+                      rel: 0
                     }
                   });
-                player.addEventListener("onStateChange", ClientYTPlayer.SendStateToServer);
-                ClientYTPlayer.SendStateToServer({data: YT.PlayerState.PLAYING});
             }
         }
         static SendStateToServer(event){
@@ -124,12 +141,13 @@ $(function(){
                 //Now check if we even need to change anything.
 
             if(serverState != ClientYTPlayer.currentState){
+                if(response.video_url != ClientYTPlayer.clientURL){
+                    ClientYTPlayer.clientURL = response.video_url;
+                    ClientYTPlayer.addNewVideo();
+                }
+
                 if(serverState == YT.PlayerState.PLAYING){
                     console.log("PLAY IT IS TRUE");
-                    if(response.video_url != ClientYTPlayer.clientURL){
-                        ClientYTPlayer.clientURL = response.video_url;
-                        ClientYTPlayer.addNewVideo();
-                    }
                     player.playVideo();
                 } else if(serverState == YT.PlayerState.PAUSED){
                     console.log("PAUSE IS TRUE");
@@ -143,22 +161,28 @@ $(function(){
                     // player.pauseVideo();
                     console.log("BUFFERING IS TRUE");
                 } else if(serverState == YT.PlayerState.UNSTARTED){
-                    if(response.video_url != ClientYTPlayer.clientURL){
-                        ClientYTPlayer.clientURL = response.video_url;
-                        ClientYTPlayer.addNewVideo();
-                    }
+                    // if(response.video_url != ClientYTPlayer.clientURL){
+                    //     ClientYTPlayer.clientURL = response.video_url;
+                    //     ClientYTPlayer.addNewVideo();
+                    // }
                     player.playVideo();
+                } else if(serverState == YT.PlayerState.CUED){
+
                 }
             }
 
             // console.log("TIME SENT BACK: "+response.video_time);
+
+            function mustAdjustTime(serverTime, currTime){
+                return(serverTime > currTime + 5 || serverTime < currTime - 5)
+            }
             
-            const currTime = player.getCurrentTime();
-            if(response.video_time > currTime + 5 ||
-                response.video_time < currTime - 5){
+            // const currTime = player.getCurrentTime();
+            if(mustAdjustTime(response.video_time, player.getCurrentTime()) ||
+                serverState == YT.PlayerState.CUED){
                 // console.log("TIME SENT FROM SERVER: "+response.video_time);
-                player.seekTo(response.video_time);
-                player.playVideo();                
+                player.seekTo(response.video_time); // sends vide_cued (5) event
+                // player.playVideo();                
             }
             
             ClientYTPlayer.currentState = serverState;
@@ -190,17 +214,21 @@ $(function(){
         player.seekTo(0);
         player.stopVideo();            
         const newVid = youtubeInput.val();
-        if(newVid.includes('youtu.be')){
-            const startIndex = newVid.indexOf('/') + 1;
-            ClientYTPlayer.clientURL = newVid.substring(startIndex);
-        } else if(newVid.includes('v=')){
-            const startIndex = newVid.indexOf('v=') + 2;
-            ClientYTPlayer.clientURL = newVid.substring(startIndex)
-        }
+        // if(newVid.includes('youtu.be/')){
+        //     const startIndex = newVid.indexOf('youtu.be/') + 9;
+        //     ClientYTPlayer.clientURL = newVid.substring(startIndex);
+        // } else if(newVid.includes('v=')){
+        //     const startIndex = newVid.indexOf('v=') + 2;
+        //     ClientYTPlayer.clientURL = newVid.substring(startIndex)
+        // } else if (newVid.includes('/embed/')){
+        //     ClientYTPlayer.clientURL = newVid.substring(newVid.indexOf('/embed/') + 7);
+        // }
 
-        if(ClientYTPlayer.clientURL.includes('&')){
-            ClientYTPlayer.clientURL = ClientYTPlayer.clientURL.substring(0, ClientYTPlayer.clientURL.indexOf('&'));
-        }
+        // if(ClientYTPlayer.clientURL.includes('&')){
+        //     ClientYTPlayer.clientURL = ClientYTPlayer.clientURL.substring(0, ClientYTPlayer.clientURL.indexOf('&'));
+        // }
+
+        ClientYTPlayer.clientURL = ClientYTPlayer.extractID(youtubeInput.val());
 
         // ClientYTPlayer.clientURL = youtubeInput.val();
         ClientYTPlayer.addNewVideo();
@@ -522,9 +550,9 @@ $(function(){
     document.addEventListener('readystatechange', event => { 
     
         // When window loaded ( external resources are loaded too- `css`,`src`, etc...) 
-        if (event.target.readyState === "complete") {
+        if(event.target.readyState === "complete") {
 
-            setInterval(pingVideoSetting, 200);
+            ClientYTPlayer.pingInterval = setInterval(pingVideoSetting, 200);
         
             setInterval(pingServer, 2500);
         
