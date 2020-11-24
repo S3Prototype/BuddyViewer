@@ -63,6 +63,9 @@ $(function(){
         static currentlySendingData = false;
         static clientURL = "hjcXNK-zUFg";
         static pingInterval = null;
+        static CustomState = {
+            SEEKING: 6
+        };
 
         static initNewPlayer(event){
             event.target.addEventListener("onStateChange", ClientYTPlayer.SendStateToServer);
@@ -108,6 +111,14 @@ $(function(){
                   });
             }
         }
+        static getYTPlayerState(){
+            if(ClientYTPlayer.currentState == ClientYTPlayer.CustomState.SEEKING){
+                return ClientYTPlayer.CustomState.SEEKING;
+            } else {
+                ClientYTPlayer.currentState = player.getPlayerState();
+                return player.getPlayerState();
+            }
+        }
         static SendStateToServer(event){
 
             ClientYTPlayer.currentlySendingData = true;
@@ -115,16 +126,16 @@ $(function(){
             let sendData = {
                 "name" : nameOnServer,
                 "user_id" : userID,
-                "state" : player.getPlayerState(),
+                "state" : ClientYTPlayer.getYTPlayerState(),
                 "video_time" : player.getCurrentTime(),
                 "video_url": ClientYTPlayer.clientURL
             };
 
             //Here we check if the state is anything weird.
 
-            console.log("TELL SERVER TO "+player.getPlayerState());
+            console.log("TELL SERVER TO "+sendData.state);
             $.ajax({
-                url: '/client-state',
+                url: '/client-state-changed',
                 method: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify(sendData, null, 2),
@@ -168,7 +179,10 @@ $(function(){
                     player.playVideo();
                 } else if(serverState == YT.PlayerState.CUED){
 
+                } else if(serverState == ClientYTPlayer.CustomState.SEEKING){
+                    player.seekTo(response.video_time);                    
                 }
+
             }
 
             // console.log("TIME SENT BACK: "+response.video_time);
@@ -178,19 +192,27 @@ $(function(){
             }
             
             // const currTime = player.getCurrentTime();
-            if(mustAdjustTime(response.video_time, player.getCurrentTime()) ||
-                serverState == YT.PlayerState.CUED){
-                // console.log("TIME SENT FROM SERVER: "+response.video_time);
-                player.seekTo(response.video_time); // sends vide_cued (5) event
-                // player.playVideo();                
+            if(mustAdjustTime(response.video_time, player.getCurrentTime())){
+                if(serverState == YT.PlayerState.PAUSED &&
+                    ClientYTPlayer.currentState == YT.PlayerState.PAUSED){
+                        //If everyone is paused and I'm seeking, tell the
+                        //server to make everyone jump to my time but stay
+                        //paused.
+                        ClientYTPlayer.currentState = ClientYTPlayer.CustomState.SEEKING;
+                        ClientYTPlayer.SendStateToServer(null);
+                } else {
+                    // console.log("TIME SENT FROM SERVER: "+response.video_time);
+                    player.seekTo(response.video_time); 
+                    // player.playVideo();
+                }
             }
             
-            ClientYTPlayer.currentState = serverState;
+            ClientYTPlayer.currentState = player.getPlayerState();
         }
     }
 
     function pingVideoSetting(){
-        // if(ClientYTPlayer.currentlySendingData) return;
+        if(ClientYTPlayer.currentlySendingData) return;
         const playerData = {
             "name" : nameOnServer,
             "user_id" : userID,

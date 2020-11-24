@@ -202,6 +202,8 @@ class CustomYTStates{
     static PAUSED = 2;
     static BUFFERING = 3;
     static CUED = 5;
+    //Below are my custom values
+    static SEEKING = 6;
 }
 
 class VideoManager{
@@ -215,6 +217,7 @@ class VideoManager{
     static universalTime = 0;
     static bufferingID = "EMPTY";
     static universalUrl = "EMPTY";
+    static seekingID = "";
 }
 
 app.get('/messages', function(req, res){
@@ -238,7 +241,7 @@ app.post('/initialize', function(req, res){
     res.send("SUCCESS");
 });
 
-app.post('/client-state', function(req, res){
+app.post('/client-state-changed', function(req, res){
     console.log("CLIENT("+req.body.user_id+") "+"HAS SENT STATE: "+req.body.state);
     if(req.body.state == CustomYTStates.BUFFERING &&
         VideoManager.bufferingID == "EMPTY"){
@@ -256,6 +259,15 @@ app.post('/client-state', function(req, res){
         }
     } else {
         VideoManager.universalState = req.body.state;
+    }
+
+    if(req.body.state == CustomYTStates.CUED){
+        console.log("CUED to "+req.body.video_time);
+        VideoManager.universalState = req.body.state;
+    }
+
+    if(req.body.state == CustomYTStates.SEEKING){
+        VideoManager.seekingID = req.body.user_id;
     }
     
     VideoManager.universalTime = req.body.video_time;
@@ -282,13 +294,16 @@ app.post('/client-state', function(req, res){
 
 app.post('/video-state', function(req, res){
 
-    if(req.body.video_time < VideoManager.universalTime - 5 ||
+    if(req.body.state != CustomYTStates.SEEKING &&
+        req.body.video_time < VideoManager.universalTime - 5 ||
         req.body.video_time > VideoManager.universalTime + 5){
         //If it's within the safe space, we don't need to change the time
         console.log("TIME ON SERVER: "+VideoManager.universalTime);
             if(VideoManager.universalState == CustomYTStates.CUED){
                 //If someone just used the seekTo function, set the
                 //time anyway.
+                //Probably need the ID of whoever just used seekTo
+                //so it's only based on them
                 VideoManager.universalTime = req.body.video_time;                
             }
     } else {
@@ -301,6 +316,16 @@ app.post('/video-state', function(req, res){
         req.body.user_id == VideoManager.bufferingID){
         VideoManager.bufferingID = "EMPTY";
         VideoManager.universalState = CustomYTStates.PLAYING;
+    }
+
+        //If the person who started seeking is done
+    if(req.body.state != VideoManager.universalState &&
+        VideoManager.universalState == CustomYTStates.SEEKING){
+            if(req.body.user_id == VideoManager.seekingID){
+                //If they finished seeking and switched state, switch
+                //the universal state to match it.
+                VideoManager.universalState = req.body.state;
+            }
     }
 
     let data = {

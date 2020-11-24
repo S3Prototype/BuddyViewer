@@ -5,26 +5,28 @@ Almost certainly will require its own class on the client side. We'll also need 
 So we need to:
 
 * Issues right now:
-    ** When a user is released, if their ID is in the buffer ID, buffer ID should be cleared.
+    ** Probably the forced playing/refused pausing thing is an issue with the server-side buffering code, but who knows.
+    ** For some reason literally the first time you press pause it plays again.
     ** Alternatively, consider not pausing the video when it buffers. Just, if the video's time is outside the safe zone, jump to it. What's really annoying is when a video goes from buffering to pause for no reason after a user seeks to a new time on the timeline.
     ** When you skip in the timeline it pauses sometimes for some reason
     ** Sometimes when you press play, it pauses again instantly
     ** Can't play live video, because the code is set up to skip the time to 0 automatically so all videos start from the beginning. (Actually seems to be an issue with the browser on vnc)
     ** Obviously need to make it able to take all other types of youtube links pasted in.
-    ** When paused, you can't seek. Why? It just jumps back to the existing time and then plays.
-* 
-
 
 Thoughts:
 ** You can't change the video without clicking play on the default video first for some reason.
 ** Whenever a client receives the command to change its play state, it does so, and then it immediately triggers its own onStateChange event, which then pings the server.
 ** When you try to pause after adding a new video, it plays again. Weird little very specific glitch.
+** None of the code in the extractID method matters because once you institute the youtube search API you'll be importing videos based on search result.
+** Still probably better to create and destroy an iframe every time.
 
-** Try making the onsuccess of SendStateToServer call alignwithserver(response)
 ** I believe a race condition is happening here, or something like it. When you press a button, sometimes that happens exactly as pingVideoSetting is happening. That means even though you tell the server to pause it, pingVideoSetting reports back that the server's universal state is PLAYING, which it is at the time that it arrives. When sending info to the server (on button presses, pauses, plays, seeks, etc), we need to pause all other code until the result comes back. So we need an AJAX promise to be executed either on the SendStateToServer code, or on the pingVideoSetting. Probably on pingVideoSetting.
 
 
 Done:
+    ** When paused, you can't seek. Why? It just jumps back to the existing time and then plays. The info about seekTo firing the cued event is bullshit. So. **FIXED
+** When a user is released, if their ID is in the buffer ID, buffer ID should be cleared.
+** Try making the onsuccess of SendStateToServer call alignwithserver(response)
 * Right now it can only play for 5 seconds, then it snaps right back to whatever time you skipped to.
     ** Consider changing code on client so it only changes time if the state is buffer. Because seeking/scrubbing across the timeline seems to always generate the buffer event.
     ** FIXED
