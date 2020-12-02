@@ -1,0 +1,46 @@
+.video_container {
+    background-color: black;
+    display: inline-grid;
+    grid-template-columns: [play-button] 1fr [time-code] 2fr [blank-space] 5fr [settings-icon] 1fr [volume-bar] 3fr;
+    grid-template-rows: [video-player] 400px [progress-bar] 20px [video-controls] 20px;
+}
+
+.video_controls {
+    grid-column-start: play-button;
+    grid-column-end: volume-bar;
+    grid-row-start: video-controls;
+    grid-row-end: -1;
+}
+
+#seek-tooltip {
+    grid-column-start: time-code;
+    grid-column-end: blank-space;
+    grid-row-start: video-controls;
+    grid-row-end: -1;
+    padding-left:10px;
+    color: white;
+}
+
+#play-pause-button {
+    grid-column-start: play-button;
+    grid-column-end: time-code;
+    grid-row-start: video-controls;
+    grid-row-end: -1;
+}
+
+#player {
+    grid-column-start: 1;
+    grid-column-end: -1;
+    grid-row-start: video-player;
+    grid-row-end: progress-bar;
+}
+
+.video_progress {
+    grid-column: 1 / -1;
+    grid-row: progress-bar / video-controls;
+}
+
+#progress-bar {
+    grid-column: 1 / -1;
+    width: 100%;
+}

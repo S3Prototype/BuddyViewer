@@ -4,6 +4,7 @@
         <title>Test Chatroom</title>
         <meta charset="utf-8" />
         <link rel="stylesheet" href="chat_styles.css" type="text/css" />
+        <link rel="stylesheet" href="video_controls.css" type="text/css" />
     </head>
     <body>
         <h2 id="chat-name">Watch2Gether CLONE!!</h2>
@@ -56,19 +57,28 @@
             </table>
         </section> -->
         <!-- 1. The <iframe> (and video player) will replace this <div> tag. -->
-    <div id='container'>
+    <div class='video_container'>
         <div id="player"></div>
+        <div class="video_progress">
+            <progress id="progress-bar" value="0" min="0"></progress>
+        </div>
+        <div class='video_controls'>
+        </div>
+        <button data-title="Play/Pause" class="play-pause-button" id="play-pause-button">            
+            <span id="play-pause-icon" class="fas fa-play"></span>
+        </button>
+        <span class="seek-tooltip" id="seek-tooltip">00:00</span>
     </div>
     <form id="ytsearch">
         <input type="text" id="ytsearch-input" placeholder="Paste a Youtube link here">                            
     </form>
     <script>
       // 2. This code loads the IFrame Player API code asynchronously.
-      var tag = document.createElement('script');
+    //   var tag = document.createElement('script');
 
-      tag.src = "https://www.youtube.com/iframe_api";
-      var firstScriptTag = document.getElementsByTagName('script')[0];
-      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+    //   tag.src = "https://www.youtube.com/iframe_api";
+    //   var firstScriptTag = document.getElementsByTagName('script')[0];
+    //   firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
       // 3. This function creates an <iframe> (and YouTube player)
       //    after the API code downloads.
@@ -81,15 +91,18 @@
           playerVars: {
             enablejsapi: 1,
             autoplay: 1,
-            rel: 0
+            rel: 0,
+            controls: 0,
+            origin: 'http://localhost:8092'
           }
         });
       }
     </script>
 
     </body>
-    <script src="https://apis.google.com/js/api.js"></script>
-    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="https://kit.fontawesome.com/ab8bbc25ce.js" crossorigin="anonymous"></script>
+    <script src="http://apis.google.com/js/api.js"></script>
+    <script src="http://www.youtube.com/iframe_api"></script>
     <script src="jquery-3.5.1.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/js-cookie@rc/dist/js.cookie.min.js"></script>
     <script src="scripts.js"></script>

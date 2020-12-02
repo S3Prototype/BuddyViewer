@@ -17,7 +17,7 @@ let defaultMessage = {
     "user_id" : "SERVER_MESSAGE"
 };
 
-var port = process.env.PORT || 8091;
+var port = process.env.PORT || 8092;
 
 let userWhoSent = null;
 let universalSetting = "PAUSE";
@@ -89,8 +89,8 @@ class NameContainer{
     static validateName(thisMessage, nameToRelease){   
         NameContainer.makeNameAvailable(nameToRelease);
         const currentName = NameContainer.isNameAvailable(thisMessage);// returns an object
-        console.log('Is '+thisMessage.name+ ' available?: \
-        '+currentName.canUse+'| Already owned? '+currentName.alreadyOwnedByUser);
+        console.log('Is '+thisMessage.name+ ' avail?'+currentName.canUse);
+        console.log('| Already owned by this user? '+currentName.alreadyOwnedByUser);
 
         if(currentName.canUse){//was && nameToRelease
             //If you're changing your name
