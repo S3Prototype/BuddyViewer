@@ -1,7 +1,7 @@
 .video_container {
     background-color: black;
     display: inline-grid;
-    grid-template-columns: [play-button] 1fr [time-code] 2fr [blank-space] 5fr [settings-icon] 1fr [volume-bar] 3fr;
+    grid-template-columns: [play-button] 1fr [time-code] 2fr [mute-button] 1fr [volume-slider] 4fr [settings-button] 1fr;
     grid-template-rows: [video-player] 400px [progress-bar] 20px [video-controls] 20px;
 }
 
@@ -43,4 +43,21 @@
 #progress-bar {
     grid-column: 1 / -1;
     width: 100%;
+}
+
+#mute-button {
+    grid-column-start: mute-button;
+    grid-column-end: volume-slider;
+    grid-row-start: video-controls;
+    grid-row-end: -1;
+}
+
+#mute-icon {
+}
+
+#volume-slider {
+    grid-column-start: volume-slider;
+    grid-column-end: settings-button;
+    grid-row-start: video-controls;
+    grid-row-end: -1;
 }

@@ -124,7 +124,7 @@ class NameContainer{
     }
     static checkPings(){
         if(!NameContainer.#takenNames) return;
-        for(const pingedName of NameContainer.#takenNames){
+        for(let pingedName of NameContainer.#takenNames){
             if(pingedName){
                 if(pingedName.hasBeenPinged){
                     pingedName.hasBeenPinged = false;
@@ -213,11 +213,13 @@ class VideoManager{
     // 2 (paused)
     // 3 (buffering)
     // 5 (video cued)
-    static universalState = -1;
+    static universalState = CustomYTStates.UNSTARTED;
     static universalTime = 0;
     static bufferingID = "EMPTY";
-    static universalUrl = "EMPTY";
+    static universalUrl = "hjcXNK-zUFg";
     static seekingID = "";
+    static settingsAltered = false;
+    static alterID = "";
 }
 
 app.get('/messages', function(req, res){
@@ -241,34 +243,38 @@ app.post('/initialize', function(req, res){
     res.send("SUCCESS");
 });
 
-app.post('/client-state-changed', function(req, res){
+app.post('/alter-video-settings', function(req, res){
     console.log("CLIENT("+req.body.user_id+") "+"HAS SENT STATE: "+req.body.state);
-    if(req.body.state == CustomYTStates.BUFFERING &&
-        VideoManager.bufferingID == "EMPTY"){
-        //If someone starts buffering, let the server know who.
-        VideoManager.bufferingID = req.body.user_id;
-    }
+    // if(req.body.state == CustomYTStates.BUFFERING &&
+    //     VideoManager.bufferingID == "EMPTY"){
+    //     //If someone starts buffering, let the server know who.
+    //     VideoManager.bufferingID = req.body.user_id;
+    // }
 
-    if(req.body.state == CustomYTStates.PAUSED){
-        if(VideoManager.universalState == CustomYTStates.BUFFERING &&
-            VideoManager.bufferingID == req.body.user_id){
-                VideoManager.universalState = CustomYTStates.PLAYING;
-                VideoManager.bufferingID = "EMPTY";
-        } else {
-            VideoManager.universalState = CustomYTStates.PAUSED;
-        }
-    } else {
-        VideoManager.universalState = req.body.state;
-    }
+    // if(req.body.state == CustomYTStates.PAUSED){
+    //     if(VideoManager.universalState == CustomYTStates.BUFFERING &&
+    //         VideoManager.bufferingID == req.body.user_id){
+    //             VideoManager.universalState = CustomYTStates.PLAYING;
+    //             VideoManager.bufferingID = "EMPTY";
+    //     } else {
+    //         VideoManager.universalState = CustomYTStates.PAUSED;
+    //     }
+    // } else {
+    //     VideoManager.universalState = req.body.state;
+    // }
 
-    if(req.body.state == CustomYTStates.CUED){
-        console.log("CUED to "+req.body.video_time);
-        VideoManager.universalState = req.body.state;
-    }
+    // if(req.body.state == CustomYTStates.CUED){
+    //     console.log("CUED to "+req.body.video_time);
+    //     VideoManager.universalState = req.body.state;
+    // }
 
-    if(req.body.state == CustomYTStates.SEEKING){
-        VideoManager.seekingID = req.body.user_id;
-    }
+    // if(req.body.state == CustomYTStates.SEEKING){
+    //     VideoManager.seekingID = req.body.user_id;
+    // }
+
+    VideoManager.alterID = req.body.user_id;
+
+    VideoManager.universalState = req.body.state;
     
     VideoManager.universalTime = req.body.video_time;
 
@@ -286,47 +292,49 @@ app.post('/client-state-changed', function(req, res){
         user_id: req.body.user_id,
         state: VideoManager.universalState,
         video_url: VideoManager.universalUrl,
-        video_time: VideoManager.universalTime        
+        video_time: VideoManager.universalTime,
+        alter_id: VideoManager.alterID        
     }
     
     res.send("SUCCESS");
 });
 
-app.post('/video-state', function(req, res){
+app.post('/check-server-video-state', function(req, res){
 
-    if(req.body.state != CustomYTStates.SEEKING &&
-        req.body.video_time < VideoManager.universalTime - 5 ||
-        req.body.video_time > VideoManager.universalTime + 5){
-        //If it's within the safe space, we don't need to change the time
-        console.log("TIME ON SERVER: "+VideoManager.universalTime);
-            if(VideoManager.universalState == CustomYTStates.CUED){
-                //If someone just used the seekTo function, set the
-                //time anyway.
-                //Probably need the ID of whoever just used seekTo
-                //so it's only based on them
-                VideoManager.universalTime = req.body.video_time;                
-            }
-    } else {
-        VideoManager.universalTime = req.body.video_time;
-    }
+    // if(req.body.state != CustomYTStates.SEEKING &&
+    //     (req.body.video_time < VideoManager.universalTime - 5 ||
+    //     req.body.video_time > VideoManager.universalTime + 5)){
+    //     //If it's within the safe space, we don't need to change the time
+    //     // console.log("TIME ON SERVER: "+VideoManager.universalTime);
+    //         if(VideoManager.universalState == CustomYTStates.CUED){
+    //             //If someone just used the seekTo function, set the
+    //             //time anyway.
+    //             //Probably need the ID of whoever just used seekTo
+    //             //so it's only based on them
+    //             VideoManager.universalTime = req.body.video_time;                
+    //         }
+    // } else {
+    //     VideoManager.universalTime = req.body.video_time;
+    // }
 
-        //If the person who started buffering has now finished, and
-        //is paused, then we need to tell everyone to play their videos.
-    if(req.body.state == CustomYTStates.PAUSED &&
-        req.body.user_id == VideoManager.bufferingID){
-        VideoManager.bufferingID = "EMPTY";
-        VideoManager.universalState = CustomYTStates.PLAYING;
-    }
+    //     //If the person who started buffering has now finished, and
+    //     //is paused, then we need to tell everyone to play their videos.
+    // if(req.body.state == CustomYTStates.PAUSED &&
+    //     req.body.user_id == VideoManager.bufferingID){
+    //     VideoManager.bufferingID = "EMPTY";
+    //     VideoManager.universalState = CustomYTStates.PLAYING;
+    // }
 
-        //If the person who started seeking is done
-    if(req.body.state != VideoManager.universalState &&
-        VideoManager.universalState == CustomYTStates.SEEKING){
-            if(req.body.user_id == VideoManager.seekingID){
-                //If they finished seeking and switched state, switch
-                //the universal state to match it.
-                VideoManager.universalState = req.body.state;
-            }
-    }
+    //     //If the person who started seeking is done
+    // if(req.body.state != VideoManager.universalState &&
+    //     VideoManager.universalState == CustomYTStates.SEEKING){
+    //         if(req.body.user_id == VideoManager.seekingID){
+    //             //If they finished seeking and switched state, switch
+    //             //the universal state to match it.
+    //             VideoManager.universalState = req.body.state;
+    //         }
+    // }
+
 
     let data = {
         // user_name : null,
@@ -334,7 +342,8 @@ app.post('/video-state', function(req, res){
         // state: -
         state: VideoManager.universalState,
         video_time: VideoManager.universalTime,
-        video_url: VideoManager.universalUrl
+        video_url: VideoManager.universalUrl,
+        alter_id: VideoManager.alterID
     }
 
     NameContainer.pingName(req.body.name);

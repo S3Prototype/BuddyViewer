@@ -1,4 +1,5 @@
 DOING:
+** Make pressing play play the videos of the other users
 
 TODO:
 * Generally to set up the youtube playing functionality:
@@ -8,6 +9,7 @@ TODO:
     ** Searching
     ** Changing play speed.
     ** All other minor functions.
+* Volume settings/mute button
 * Ultimately wrap the youtube div in another div, and create your own controls. That way when the user wants to watch a vid from another site, you just fill that div with their video player.
 * Stretch goal: Let users paste embed codes of any video player <iframe>, then play it in our video container div.
 * Write code that tries to play a video on any site by seeking out the most common tags that hold videos. Maybe grab the mp4 links directly and load those up into a video tag? The code should try as many tactics as possible until it succeeds. Maybe even have a way to ask the viewer "Is this the video? If no, we'll try to find it in the link again. Is this the video?" This requires web scraping.
@@ -33,6 +35,13 @@ THOUGHTS:
 ~~~~~~~~~~~
 
 DONE:
+
+12/2/20
+
+* Do the same for adding a new video
+====
+* Make clicking on the progress bar work (scrubbing/seeking through video)
+* Write server-side code so playing/pausing on one side plays/pauses on the other
 * Create code that loads a default video for when no video has been added.
     ** This will have to be code on the actual page.
 * Change the way messageID's are generated. Generate them in the server, still, but make them random numbers (or strings) rather than sequential. This will take a deep rewrite. Lots of the code is designed assuming message_id will be an int. For example, seenArray[] etc.

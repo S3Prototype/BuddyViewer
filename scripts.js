@@ -4,18 +4,18 @@ $(function(){
     $("#name-input").attr("maxlength", maxNameLength);
     let letterArray = ["a", "b", "c", "x", "y", "z"];
     let localName = '';
-    let userID = Cookies.get('userID') || Math.random().toString(36).substring(7);
+    let userID = localStorage.getItem('userID') || Math.random().toString(36).substring(7);
     let anonName = 'USER-' + userID;
     let nameOnServer = anonName;
     console.log(userID+" Is the ID");
 
 
     function validateUserID(){
-        if(!userID && !Cookies.get('userID')){
+        if(!userID && !localStorage.getItem('userID')){
             $('#name-input').val('');//reset name
             userID = Math.random().toString(36).substring(7);
             anonName = 'USER-' + userID;
-            Cookies.set('userID', userID, {expires: 1/2000, secure: false});
+            localStorage.set('userID', userID);
         }
         console.log(userID+" Is the ID after validate");
     }
@@ -56,6 +56,8 @@ $(function(){
         SEEKING : 6
     };
     let changeTriggeredByControls = false;
+    let progressBarInitialized = false;
+    let playerInitialized = false;
 
     const youtubeInput = $('#ytsearch-input');
 
@@ -76,10 +78,13 @@ $(function(){
         static videoDuration;
 
         static initNewPlayer(event){
-            event.target.addEventListener("onStateChange", ClientYTPlayer.SendStateToServer);
+            // event.target.addEventListener("onStateChange", ClientYTPlayer.SendStateToServer);
             event.target.playVideo();
+            initializeYTProgressBar();
+            ClientYTPlayer.currentState = YT.PlayerState.UNSTARTED;
+            playerInitialized = true;
             // ClientYTPlayer.SendStateToServer(event);
-            ClientYTPlayer.pingInterval = setInterval(pingVideoSetting, 200);
+            // ClientYTPlayer.pingInterval = setInterval(pingVideoSetting, 200);
         }
         static extractID(url){
             const startIndex = url.indexOf('v=') + 2;
@@ -102,33 +107,45 @@ $(function(){
             const currURL = ClientYTPlayer.extractID(player.getVideoUrl());
             if(currURL == ClientYTPlayer.clientURL) return;
                 player.destroy();
+                playerInitialized = false;
                 clearInterval(ClientYTPlayer.pingInterval);
                 player = new YT.Player('player', {
                     height: '390',
                     width: '640',
                     videoId: ClientYTPlayer.clientURL,
                     events: {
-                      'onReady': ClientYTPlayer.initNewPlayer
+                      'onReady': ClientYTPlayer.initNewPlayer,
+                      "onStateChange": stopYTEvent
                     },        
                     playerVars: {
                       enablejsapi: 1,
-                      autoplay: 1,
+                      autoplay: 0,
                       rel: 0,
                       controls: 0,
-                      origin: 'http://localhost:8092'
+                      origin: 'https://www.youtube.com'
                     }
                   });
             ClientYTPlayer.SendStateToServer({});
             
             
         }
-        static getYTPlayerState(){
-            if(ClientYTPlayer.currentState == ClientYTPlayer.CustomState.SEEKING){
-                return ClientYTPlayer.CustomState.SEEKING;
-            } else {
-                ClientYTPlayer.currentState = player.getPlayerState();
-                return player.getPlayerState();
+        static getTime(){
+            if(!player || !playerInitialized){
+                return 0;
+            } else{
+                return player.getCurrentTime();
             }
+        }
+
+        static getYTPlayerState(){
+            // if(ClientYTPlayer.currentState == ClientYTPlayer.CustomState.SEEKING){
+            //     return ClientYTPlayer.CustomState.SEEKING;
+            // } else {
+            //     ClientYTPlayer.currentState = player.getPlayerState();
+            //     return player.getPlayerState();
+            // }
+
+            return ClientYTPlayer.currentState;
         }
         static SendStateToServer(event){
 
@@ -137,113 +154,94 @@ $(function(){
             let sendData = {
                 "name" : nameOnServer,
                 "user_id" : userID,
-                "state" : ClientYTPlayer.getYTPlayerState(),
+                "state" : ClientYTPlayer.currentState,
                 "video_time" : player.getCurrentTime(),
                 "video_url": ClientYTPlayer.clientURL
             };
 
             //Here we check if the state is anything weird.
 
-            console.log("TELL SERVER TO "+sendData.state);
+            console.log("("+ new Date().toLocaleTimeString()+") TELL SERVER TO "+sendData.state);
             $.ajax({
-                url: '/client-state-changed',
+                url: '/alter-video-settings',
                 method: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify(sendData, null, 2),
                 success: function (response){
                     ClientYTPlayer.currentlySendingData = false;
+                    console.log("("+ new Date().toLocaleTimeString()+") Sendstate from this client done.");
                     initializeYTProgressBar();
                     // ClientYTPlayer.clientState = player.getPlayerState();
-                    // ClientYTPlayer.alignWithServerState(response);                    
                 }
             });
         }
         static alignWithServerState(response){
+            //If ytplayer not made yet, or the person who altered server
+            //state last was me, just end it.
             if(!player) return;
             const serverState = response.state;
-            // //If we're already doing the same as the server, return.
-            // if(serverState == ClientYTPlayer.currentState) return;
-                //Now check if we even need to change anything.
-
+            
             if(serverState != ClientYTPlayer.currentState){
-                if(response.video_url != ClientYTPlayer.clientURL){
-                    ClientYTPlayer.clientURL = response.video_url;
-                    ClientYTPlayer.addNewVideo();
-                }
-
+                console.log("("+ new Date().toLocaleTimeString()+") RECEIVED STATE "+serverState);                
+                changeTriggeredByControls = true;
                 if(serverState == YT.PlayerState.PLAYING){
-                    console.log("PLAY IT IS TRUE");
+                    ClientYTPlayer.currentState = serverState;
                     player.playVideo();
+                    document.getElementById('play-pause-icon').className = "fas fa-pause";
                 } else if(serverState == YT.PlayerState.PAUSED){
-                    console.log("PAUSE IS TRUE");
-                    if(ClientYTPlayer.currentState == YT.PlayerState.BUFFERING){
-                        //If we changed from buffering to paused
-                        player.playVideo();
-                    } else {
-                        player.pauseVideo();
-                    }
-                } else if(serverState == YT.PlayerState.BUFFERING){
+                    ClientYTPlayer.currentState = serverState;
                     player.pauseVideo();
-                    console.log("BUFFERING IS TRUE");
-                } else if(serverState == YT.PlayerState.UNSTARTED){
-                    // if(response.video_url != ClientYTPlayer.clientURL){
-                    //     ClientYTPlayer.clientURL = response.video_url;
-                    //     ClientYTPlayer.addNewVideo();
-                    // }
-                    player.playVideo();
-                } else if(serverState == YT.PlayerState.CUED){
-
-                } else if(serverState == ClientYTPlayer.CustomState.SEEKING){
-                    // player.seekTo(response.video_time);
-                    ClientYTPlayer.currentState = player.getPlayerState();                    
+                    document.getElementById('play-pause-icon').className = "fas fa-play";
                 }
-
-            }
-
-            // console.log("TIME SENT BACK: "+response.video_time);
-
-            function mustAdjustTime(serverTime, currTime){
-                return(serverTime > currTime + 5 || serverTime < currTime - 5)
             }
             
             // const currTime = player.getCurrentTime();
-            if(mustAdjustTime(response.video_time, player.getCurrentTime())){
-                if(serverState == YT.PlayerState.PAUSED &&
-                    ClientYTPlayer.currentState == YT.PlayerState.PAUSED){
-                        //If everyone is paused and I'm seeking, tell the
-                        //server to make everyone jump to my time but stay
-                        //paused.
-                        ClientYTPlayer.currentState = ClientYTPlayer.CustomState.SEEKING;
-                        ClientYTPlayer.SendStateToServer({});
-                } else {
-                    // console.log("TIME SENT FROM SERVER: "+response.video_time);
-                    player.seekTo(response.video_time); 
-                    // player.playVideo();
-                }
-            }
+            // const serverTime = response.video_time;
+            // if(serverTime > currTime + 5 || serverTime < currTime - 5){
+            //     if(serverState == YT.PlayerState.PAUSED &&
+            //         ClientYTPlayer.currentState == YT.PlayerState.PAUSED){
+            //             //If everyone is paused and I'm seeking, tell the
+            //             //server to make everyone jump to my time but stay
+            //             //paused.
+            //             ClientYTPlayer.currentState = ClientYTPlayer.CustomState.SEEKING;
+            //             ClientYTPlayer.SendStateToServer({});
+            //     } else {
+            //         // console.log("TIME SENT FROM SERVER: "+response.video_time);
+            //         changeTriggeredByControls = true;
+            //         player.seekTo(response.video_time);                    
+            //         // player.playVideo();
+            //     }
+            // }
+
+            // function mustAdjustTime(serverTime, currTime){
+            //     return(serverTime > currTime + 5 || serverTime < currTime - 5)
+            // }
             
-            ClientYTPlayer.currentState = player.getPlayerState();
+            // ClientYTPlayer.currentState = player.getPlayerState();
         }
     }
 
     function pingVideoSetting(){
-        // if(ClientYTPlayer.currentlySendingData) return;
-        // const playerData = {
-        //     "name" : nameOnServer,
-        //     "user_id" : userID,
-        //     "state" : ClientYTPlayer.getYTPlayerState(),
-        //     "video_time": player.getCurrentTime(),
-        //     "video_url": ClientYTPlayer.clientURL
-        // };
-        // $.ajax({
-        //     url: '/video-state',
-        //     method: 'POST',
-        //     contentType: 'application/json',
-        //     data: JSON.stringify(playerData, null, 2),
-        //     success: function (response){
-        //         ClientYTPlayer.alignWithServerState(response); 
-        //     }
-        // });
+        if(!player) return;
+        if(ClientYTPlayer.currentlySendingData) return;
+
+        const playerData = {
+            "name" : nameOnServer,
+            "user_id" : userID,
+            "state" : ClientYTPlayer.currentState,
+            "video_time": ClientYTPlayer.getTime(),
+            "video_url": ClientYTPlayer.clientURL
+        };
+        $.ajax({
+            url: '/check-server-video-state',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(playerData, null, 2),
+            success: function (response){
+                if(ClientYTPlayer.currentlySendingData) return;
+                ClientYTPlayer.alignWithServerState(response); 
+            }
+        });
     }
 
     $('#ytsearch').on('submit', function(event){
@@ -271,32 +269,37 @@ $(function(){
         ClientYTPlayer.addNewVideo();
     });
 
-    $('#play-pause-button').click(function(){
+    $('#play-pause-button').click(function(event){
         if(!player){
             console.log("PLAY BUTTON FAILED")
             return;  
         }
 
-        if(player.getPlayerState() == YT.PlayerState.PLAYING){
-            changeTriggeredByControls = true;
+        if(!progressBarInitialized) initializeYTProgressBar();
+
+        changeTriggeredByControls = true;
+        if(ClientYTPlayer.currentState == YT.PlayerState.PLAYING){
+            ClientYTPlayer.currentState = YT.PlayerState.PAUSED;
             player.pauseVideo();
             document.getElementById('play-pause-icon').className = "fas fa-play";
-        } else if(player.getPlayerState() == YT.PlayerState.UNSTARTED){
-            changeTriggeredByControls = true;
+            ClientYTPlayer.SendStateToServer({});
+        } else if(ClientYTPlayer.currentState == YT.PlayerState.UNSTARTED){
+            ClientYTPlayer.currentState = YT.PlayerState.PLAYING;
             player.playVideo();
             document.getElementById('play-pause-icon').className = "fas fa-pause";
-        } else if(player.getPlayerState() == YT.PlayerState.PAUSED){
-            changeTriggeredByControls = true;
+            ClientYTPlayer.SendStateToServer({});
+        } else if(ClientYTPlayer.currentState == YT.PlayerState.PAUSED){
+            ClientYTPlayer.currentState = YT.PlayerState.PLAYING;
             player.playVideo();
             document.getElementById('play-pause-icon').className = "fas fa-pause";
+            ClientYTPlayer.SendStateToServer({});
         }
-
     });
 
     function updateYTVideoTime(){
         if(!player ||
-            player.getPlayerState() == YT.PlayerState.ENDED ||
-            player.getPlayerState() == YT.PlayerState.UNSTARTED){
+            ClientYTPlayer.currentState == YT.PlayerState.ENDED ||
+            ClientYTPlayer.currentState == YT.PlayerState.UNSTARTED){
                 return;
         }
         const playerTime = player.getCurrentTime();
@@ -308,6 +311,8 @@ $(function(){
     }
 
     function updateYTProgressBar(updateTime){
+        //You can just pass the value because youtube's
+        //.getCurrentTime() always returns the value in seconds
         progressBar.value = updateTime;
     }
 
@@ -322,8 +327,58 @@ $(function(){
         seekToolTip.textContent = minutes+":"+seconds;
     }
 
+    function progressBarYTScrub(event) {
+        if(!progressBarInitialized) initializeYTProgressBar();
+        const scrubTime = (event.offsetX / progressBar.offsetWidth) * player.getDuration();
+        changeTriggeredByControls = true;
+        player.seekTo(scrubTime);        
+    }
+
     function initializeYTProgressBar(){
+        if(!player.getDuration()){
+            progressBarInitialized = false;
+            return;
+        }
         progressBar.setAttribute('max', player.getDuration());
+        progressBarInitialized = true;
+    }
+
+    function stopYTEvent(event){
+        playerInitialized = true;
+        // console.log("BEFORE anything: "+event.data);
+        // if(event.data == YT.PlayerState.BUFFERING){                    
+        //     return;
+        // }
+
+        //     //If event is what the state already is, that's fine.
+        // if(ClientYTPlayer.currentState == event.data){
+        //     return;
+        // } else {    
+        //     //If event doesn't match state, it's been triggered
+        //     //externally, so we do the reverse.
+        //     switch(event.data){
+        //         case YT.PlayerState.PLAYING:
+        //             event.target.pauseVideo();
+        //             break;
+        //         case YT.PlayerState.PAUSED:
+        //             event.target.playVideo();
+        //             break;
+        //     }
+        // }
+        // if(changeTriggeredByControls){
+        //     changeTriggeredByControls = false;
+        //     return;                
+        // }
+
+        // if(event.data == YT.PlayerState.PLAYING){
+        //     changeTriggeredByControls = true;
+        //     console.log("PAUSING");
+        //     event.target.pauseVideo();                    
+        // } else if (event.data == YT.PlayerState.PAUSED){
+        //     changeTriggeredByControls = true;
+        //     console.log("PLAYING");
+        //     event.target.playVideo();
+        // }
     }
 
     messageInput.keypress(function(event){
@@ -454,14 +509,15 @@ $(function(){
         // console.log("THE MESSAGE IS "+chatMessage.message_data);
 
         if(chatMessage.name == localName){
-            //If we were allowed to keep the name
+            //If we were allowed to keep the name we sent,
             nameOnServer = chatMessage.name;
+            $('#name-input').attr('placeholder', 'Enter Your Name Here');
             //And we no longer have a name to remove.
             nameToRemove = null;
             messageInput.val(''); //clear the input field
         } else {      
             if(chatMessage.fromAnotherUser){                                
-                //If it's from another user
+                //If message is from another user
                 //Check if it's @-ing anyone.
                 const atIndex = chatMessage.message_data.indexOf('@');
                 if(atIndex !== -1){
@@ -494,6 +550,7 @@ $(function(){
             } else {                
                 //if we weren't allowed the name, clear it.
                 $('#name-input').val('');
+                $('#name-input').attr('placeholder', 'Sorry! Try another name!');
             }
         }//else
   
@@ -653,23 +710,13 @@ $(function(){
             setInterval(checkForMessages, 500);
         
             setInterval(checkForUserList, 607);
-            player.addEventListener("onStateChange", (event) => {
-                if(changeTriggeredByControls){
-                    changeTriggeredByControls = false;
-                    return;                
-                } 
-
-                if(event.data == YT.PlayerState.PLAYING){
-                    event.target.pauseVideo();
-                } else if (event.data == YT.PlayerState.PAUSED){
-                    event.target.playVideo();
-                }
-            });
+            player.addEventListener("onStateChange", stopYTEvent);
             ClientYTPlayer.currentState = YT.PlayerState.UNSTARTED;
 
             setInterval(updateYTVideoTime, 500);
 
-            initializeYTProgressBar();
+            //initializeYTProgressBar();
+            progressBar.addEventListener('click', progressBarYTScrub);
         }
     });
 
