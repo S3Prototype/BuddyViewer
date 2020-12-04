@@ -60,9 +60,6 @@ class NameContainer{
                 return name && name.name != nameToRelease.name
             }
         );
-        if(nameToRelease.user_id == VideoManager.bufferingID){
-            VideoManager.bufferingID = "EMPTY";
-        }
         // NameContainer.#takenNames = newList;
     }
     static isNameAvailable(thisMessage){
@@ -195,7 +192,7 @@ class MessageContainer{
     }
 }
 
-class CustomYTStates{
+class CustomStates{
     static UNSTARTED = -1;
     static ENDED = 0;
     static PLAYING = 1;
@@ -213,13 +210,61 @@ class VideoManager{
     // 2 (paused)
     // 3 (buffering)
     // 5 (video cued)
-    static universalState = CustomYTStates.UNSTARTED;
+    static universalState = CustomStates.UNSTARTED;
+    static previousUniversalState = CustomStates.UNSTARTED;
     static universalTime = 0;
+
+    static timeIsWithinRange(time){
+        const uniTime = VideoManager.universalTime;
+        const bufferRange = 2;
+        return time > uniTime - bufferRange && time < uniTime + bufferRange;
+    }
     static bufferingID = "EMPTY";
     static universalUrl = "hjcXNK-zUFg";
-    static seekingID = "";
     static settingsAltered = false;
     static alterID = "";
+    static #seekingIDList = [];
+    static seekingIDListEmpty = true;
+    static #viewerIDList = [];
+    static isSeekingIDListEmpty(){
+        return VideoManager.#seekingIDList.length <= 0;
+    }
+    static createSeekingIDList(exemptID){
+        VideoManager.#seekingIDList = VideoManager.#viewerIDList.filter(
+            function(id){
+                return id && id != exemptID;
+            }
+        );
+    }
+    static removeFromSeekingIDList(idToRemove){
+        VideoManager.#seekingIDList = VideoManager.#seekingIDList.filter(
+            function(id){
+                return id && id != idToRemove;
+            }
+        );
+    }
+    static isInSeekingIDList(idToCheck){
+        return VideoManager.#seekingIDList.includes(idToCheck);
+    }
+    static destroySeekingIDList(){
+        VideoManager.#seekingIDList = [];
+    }
+    static isViewerIdListEmpty(){
+        return VideoManager.#viewerIDList.length <= 0;
+    }
+    static addToViewerIDList(idToAdd){
+        VideoManager.#viewerIDList.push(idToAdd);
+    }
+    static removeFromViewerIDList(idToRemove){
+        VideoManager.#viewerIDList = VideoManager.#viewerIDList.filter(
+            function(id){
+                return id && id != idToRemove;
+            }
+        );            
+    }
+    static isInViewerIDList(idToCheck){
+        return VideoManager.#viewerIDList.includes(idToCheck);
+    }
 }
 
 app.get('/messages', function(req, res){
@@ -245,41 +290,20 @@ app.post('/initialize', function(req, res){
 
 app.post('/alter-video-settings', function(req, res){
     console.log("CLIENT("+req.body.user_id+") "+"HAS SENT STATE: "+req.body.state);
-    // if(req.body.state == CustomYTStates.BUFFERING &&
-    //     VideoManager.bufferingID == "EMPTY"){
-    //     //If someone starts buffering, let the server know who.
-    //     VideoManager.bufferingID = req.body.user_id;
-    // }
-
-    // if(req.body.state == CustomYTStates.PAUSED){
-    //     if(VideoManager.universalState == CustomYTStates.BUFFERING &&
-    //         VideoManager.bufferingID == req.body.user_id){
-    //             VideoManager.universalState = CustomYTStates.PLAYING;
-    //             VideoManager.bufferingID = "EMPTY";
-    //     } else {
-    //         VideoManager.universalState = CustomYTStates.PAUSED;
-    //     }
-    // } else {
-    //     VideoManager.universalState = req.body.state;
-    // }
-
-    // if(req.body.state == CustomYTStates.CUED){
-    //     console.log("CUED to "+req.body.video_time);
-    //     VideoManager.universalState = req.body.state;
-    // }
-
-    // if(req.body.state == CustomYTStates.SEEKING){
-    //     VideoManager.seekingID = req.body.user_id;
-    // }
 
     VideoManager.alterID = req.body.user_id;
+
+    if(req.body.state == CustomStates.SEEKING){
+        VideoManager.previousUniversalState = VideoManager.universalState;
+        VideoManager.createSeekingIDList(req.body.user_id);
+    }
 
     VideoManager.universalState = req.body.state;
     
     VideoManager.universalTime = req.body.video_time;
 
     if(req.body.video_url != VideoManager.universalUrl){
-        VideoManager.universalState = CustomYTStates.UNSTARTED;
+        VideoManager.universalState = CustomStates.UNSTARTED;
         VideoManager.universalTime = 0;
     }
     
@@ -301,49 +325,32 @@ app.post('/alter-video-settings', function(req, res){
 
 app.post('/check-server-video-state', function(req, res){
 
-    // if(req.body.state != CustomYTStates.SEEKING &&
-    //     (req.body.video_time < VideoManager.universalTime - 5 ||
-    //     req.body.video_time > VideoManager.universalTime + 5)){
-    //     //If it's within the safe space, we don't need to change the time
-    //     // console.log("TIME ON SERVER: "+VideoManager.universalTime);
-    //         if(VideoManager.universalState == CustomYTStates.CUED){
-    //             //If someone just used the seekTo function, set the
-    //             //time anyway.
-    //             //Probably need the ID of whoever just used seekTo
-    //             //so it's only based on them
-    //             VideoManager.universalTime = req.body.video_time;                
-    //         }
-    // } else {
-    //     VideoManager.universalTime = req.body.video_time;
-    // }
-
-    //     //If the person who started buffering has now finished, and
-    //     //is paused, then we need to tell everyone to play their videos.
-    // if(req.body.state == CustomYTStates.PAUSED &&
-    //     req.body.user_id == VideoManager.bufferingID){
-    //     VideoManager.bufferingID = "EMPTY";
-    //     VideoManager.universalState = CustomYTStates.PLAYING;
-    // }
-
-    //     //If the person who started seeking is done
-    // if(req.body.state != VideoManager.universalState &&
-    //     VideoManager.universalState == CustomYTStates.SEEKING){
-    //         if(req.body.user_id == VideoManager.seekingID){
-    //             //If they finished seeking and switched state, switch
-    //             //the universal state to match it.
-    //             VideoManager.universalState = req.body.state;
-    //         }
-    // }
-
+    if(!VideoManager.isInViewerIDList(req.body.user_id)){
+        VideoManager.addToViewerIDList(req.body.user_id);
+    }
 
     let data = {
-        // user_name : null,
-        // user_id : null,
-        // state: -
         state: VideoManager.universalState,
         video_time: VideoManager.universalTime,
         video_url: VideoManager.universalUrl,
         alter_id: VideoManager.alterID
+    }
+
+    if(VideoManager.universalState == CustomStates.SEEKING){
+        if(VideoManager.isSeekingIDListEmpty()){
+            VideoManager.universalState = VideoManager.previousUniversalState;
+            data.state = VideoManager.previousUniversalState;
+        } else {
+            if(!VideoManager.isInSeekingIDList(req.body.user_id)){
+                data.state = VideoManager.previousUniversalState;
+            } else if(VideoManager.timeIsWithinRange(req.body.video_time)) {
+                VideoManager.removeFromSeekingIDList(req.body.user_id);
+                data.state = VideoManager.previousUniversalState;
+            }
+        }
+    } else {
+        VideoManager.universalTime = req.body.video_time;
+        data.video_time = req.body.video_time;
     }
 
     NameContainer.pingName(req.body.name);
@@ -439,7 +446,7 @@ app.put('/messages/:id', function(req, res){
 app.delete('/messages', function(req, res){
     //remove the user's name from the server
     const nameToRelease = req.body;
-    console.log(nameToRelease.name+" DELETED");
+    console.log("USER "+nameToRelease.name+"left the room. Name DELETED");
     if (!nameToRelease){
         //if there's nothing there, just end the call.
         return;
@@ -449,7 +456,10 @@ app.delete('/messages', function(req, res){
     // makeNameAvailable(nameToRelease);
     UserListContainer.generateNewListID();
 
-    NameContainer.pingName(nameToRelease.user_id);
+    VideoManager.removeFromViewerIDList(req.body.user_id);
+
+    // NameContainer.pingName(nameToRelease.user_id);
+
     res.send("Delete succeeded.");
 });
 

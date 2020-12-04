@@ -1,7 +1,12 @@
 DOING:
-** Make pressing play play the videos of the other users
+
+* What's going on with the volume??? It's too low.
+* Now just have to test everything thoroughly. All features.
+* If they're working well enough, we have to implement code to remove the user's ability to press the player and make stuff happen. It'll screw everything up.
+* Big scary thing is how much the youtube API is still checking for me. Like after it seeks, even though it was just playing, it might pause locally. That would not trigger an event on the server. Theoretically, if I seek while playing, the server remembers we were just playing, and when I'm done seeking, it sets me back to playing no matter what. But if I'm still buffering and the server tries to make me play, youtube API might reject the playVideo() call and leave me buffering. What then? I'm left to my fate, because my clientYTPlayer.currentState is still == PLAYING, but I'm not playing.
 
 TODO:
+* "ServerList is initialized!" message is printed 2x at once. Why?
 * Generally to set up the youtube playing functionality:
     ** Pressing play should play the videos of the other users
     ** Pressing pause should pause the videos of the other users
@@ -13,6 +18,7 @@ TODO:
 * Ultimately wrap the youtube div in another div, and create your own controls. That way when the user wants to watch a vid from another site, you just fill that div with their video player.
 * Stretch goal: Let users paste embed codes of any video player <iframe>, then play it in our video container div.
 * Write code that tries to play a video on any site by seeking out the most common tags that hold videos. Maybe grab the mp4 links directly and load those up into a video tag? The code should try as many tactics as possible until it succeeds. Maybe even have a way to ask the viewer "Is this the video? If no, we'll try to find it in the link again. Is this the video?" This requires web scraping.
+* Write
 
 ===
 * Add private messaging functionality
@@ -35,7 +41,25 @@ THOUGHTS:
 ~~~~~~~~~~~
 
 DONE:
+12/3/20
+* Make scrubbing work
+    * Seek
+    * Set our own state to seeking
+    * Send the "SEEKING" state to server
+    * Tell server to set seeking on other clients
+        1. When player sets state to seeking, save the current universal state as a previousState val.
+        2. Now store all active ID's in a seeking array
+        3. When a client checks in, if the universal state is seeking, and their ID is in the array, set their state to seeking, and send them to the seeking time.
+        4. When the client checks in again, if the state is still seeking, and their ID is in the array, but their time is within the buffer, remove them from the seeking array and set their state to previous state.
+            ** This buffer is different from the buffer we'll use on the client. On the client, we'll always be checking to see if we're behind by x amount of seconds. If so, jump ahead. But not if we're ahead already. Don't check for that. This client-side buffer is merely for keeping things synced. The serverside buffer is for allowing for margins of error when checking if we've seeked properly, because sometimes buffering can happen.
+        5. After every removal, check if the array is empty. If so, set the universal state to the previous state.
+    * Save the seek time on the server
+    * When client checks state, if it's seeking, and it's outside our safety buffer, then seek to that time. After it's done, set local state to whatever it was prior to the seeking coming in.
+** Make pressing play play the videos of the other users
+    x Maybe make it so when you send state by triggering an event, the server saves the user ID
+    x Idea is, whenever client-state-changed is accessed, if anything is changed, set a server-side boolean to true and then attach the userID to it. When you then ping the server's video-state, if your ID does not match the stored ID, you have to change. If it does, you don't.
 
+====
 12/2/20
 
 * Do the same for adding a new video

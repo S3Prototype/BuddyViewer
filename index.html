@@ -65,13 +65,16 @@
         <div class='video_controls'>
         </div>
         <button data-title="Play/Pause" class="play-pause-button" id="play-pause-button">            
-            <span id="play-pause-icon" class="fas fa-play"></span>
+            <span id="play-pause-icon" class="fas fa-play" ></span>
         </button>
-        <span class="seek-tooltip" id="seek-tooltip">00:00</span>
+        <span class="seek-tooltip" id="seek-tooltip">00:00 | 00:00</span>
             <button data-title="Mute (m)" class="mute-button" id="mute-button">
                 <span id="mute-icon" class="fas fa-volume-up"></span>
             </button>          
-            <input class="volume-slider" id="volume-slider" value="0.3" type="range" max="1" min="0" step="0.01">
+            <input class="volume-slider" id="volume-slider" value="50" type="range" max="95" min="0" step="1">
+            <button id="fullscreen-button" class="fullscreen-button">
+                <span id="fullscreen-icon" class="fas fa-expand"></span>
+            </button>
     </div>
     <form id="ytsearch">
         <input type="text" id="ytsearch-input" placeholder="Paste a Youtube link here">                            

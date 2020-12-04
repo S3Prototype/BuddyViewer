@@ -1,22 +1,22 @@
 .video_container {
     background-color: black;
     display: inline-grid;
-    grid-template-columns: [play-button] 1fr [time-code] 2fr [mute-button] 1fr [volume-slider] 4fr [settings-button] 1fr;
-    grid-template-rows: [video-player] 400px [progress-bar] 20px [video-controls] 20px;
+    grid-template-columns: [play-button] 1fr [time-code] 2fr [mute-button] 1fr [volume-slider] 3fr [settings-button] 1fr [fullscreen-button] 1fr;
+    grid-template-rows: [video-player] 400px [progress-bar] 20px [controls-gap] 10px [video-controls] 20px [bottom-row] 10px;    
 }
 
 .video_controls {
     grid-column-start: play-button;
     grid-column-end: volume-bar;
     grid-row-start: video-controls;
-    grid-row-end: -1;
+    grid-row-end: bottom-row;
 }
 
 #seek-tooltip {
     grid-column-start: time-code;
     grid-column-end: blank-space;
     grid-row-start: video-controls;
-    grid-row-end: -1;
+    grid-row-end: bottom-row;
     padding-left:10px;
     color: white;
 }
@@ -25,7 +25,13 @@
     grid-column-start: play-button;
     grid-column-end: time-code;
     grid-row-start: video-controls;
-    grid-row-end: -1;
+    grid-row-end: bottom-row;
+    background:none;
+    border:none;
+}
+
+#play-pause-icon{
+    color: white;
 }
 
 #player {
@@ -38,26 +44,59 @@
 .video_progress {
     grid-column: 1 / -1;
     grid-row: progress-bar / video-controls;
+    color: white;
 }
 
 #progress-bar {
     grid-column: 1 / -1;
     width: 100%;
+    border:none;
+    color:whitesmoke;
+    background-color: gray;
 }
+
+/* For Firefox */ 
+#progress-bar::-moz-progress-bar { 
+    background:whitesmoke;
+    color: gray;
+} 
+
+/* For Chrome or Safari */ 
+#progress-bar::-webkit-progress-value { 
+    background:whitesmoke; 
+    color: gray;
+} 
 
 #mute-button {
     grid-column-start: mute-button;
     grid-column-end: volume-slider;
     grid-row-start: video-controls;
-    grid-row-end: -1;
+    grid-row-end: bottom-row;
+    background:none;
+    border:none;
 }
 
 #mute-icon {
+    color: white;
 }
 
 #volume-slider {
     grid-column-start: volume-slider;
     grid-column-end: settings-button;
     grid-row-start: video-controls;
-    grid-row-end: -1;
+    grid-row-end: bottom-row;
+    background:none;
+    border:none;
+    color: white;
+}
+
+#fullscreen-button{
+    grid-column: fullscreen-button / -1;
+    grid-row: video-controls / bottom-row;
+    background:none;
+    border:none;
+}
+
+#fullscreen-icon{
+    color: white;
 }
