@@ -303,9 +303,12 @@ app.post('/alter-video-settings', function(req, res){
     VideoManager.universalTime = req.body.video_time;
 
     if(req.body.video_url != VideoManager.universalUrl){
-        VideoManager.universalState = CustomStates.UNSTARTED;
+        // VideoManager.universalState = CustomStates.PLAYING;
         VideoManager.universalTime = 0;
     }
+
+    console.log("SERVER URL: "+VideoManager.universalUrl);
+    console.log("CLIENT URL: "+req.body.video_url);
     
     VideoManager.universalUrl = req.body.video_url;
 

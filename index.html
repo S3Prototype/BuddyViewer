@@ -7,78 +7,62 @@
         <link rel="stylesheet" href="video_controls.css" type="text/css" />
     </head>
     <body>
-        <h2 id="chat-name">Watch2Gether CLONE!!</h2>
-        <table id="chat-table" class="chat-table">
-            <tbody id="chatbox-tbody" class="chat-tbody">
-                <!-- <tr class="name-row">
-                    <td class="name-td">                        
-                    </td>
-                </tr> -->
-            </tbody>            
-        </table>
-        <table id="userlist-table" class="userlist-table">
-            <tbody id="userlist-tbody" class="userlist-tbody">
-                <!-- <tr class="name-row">
-                    <td class="name-td">                        
-                    </td>
-                </tr> -->
-            </tbody>            
-        </table>
-        <hr>
-        <h3 id="user-name">
-            <form id="name-form">
-                <input type="text" id="name-input" placeholder="Enter Your Name Here">                            
-            </form>
-        </h3>
-        <!-- <table class="text-input-table">
-            <tr>
-                <td> -->
-                    <form id="input-form">
-                        <textarea type="text" id="message-input" class="text-input"
-                        placeholder="Enter your message here">
-
-                        </textarea>
-                        <button class="send-text">SEND</button>
-                    </form>
-                <!-- </td>
-            </tr>   
-        </table> -->
-        <!-- <button id="get-products">BUTTON</button>
-        <section class="table-section">
-            <table>
-                <thead>
-                    <tr>
-                        <th class="headrow">ID</th>
-                        <th class="headrow">Name</th>
-                        <th class="headrow">Actions</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </section> -->
-        <!-- 1. The <iframe> (and video player) will replace this <div> tag. -->
-    <div class='video_container'>
-        <div id="player"></div>
-        <div class="video_progress">
-            <progress id="progress-bar" value="0" min="0"></progress>
-        </div>
-        <div class='video_controls'>
-        </div>
-        <button data-title="Play/Pause" class="play-pause-button" id="play-pause-button">            
-            <span id="play-pause-icon" class="fas fa-play" ></span>
-        </button>
-        <span class="seek-tooltip" id="seek-tooltip">00:00 | 00:00</span>
-            <button data-title="Mute (m)" class="mute-button" id="mute-button">
-                <span id="mute-icon" class="fas fa-volume-up"></span>
-            </button>          
-            <input class="volume-slider" id="volume-slider" value="50" type="range" max="95" min="0" step="1">
-            <button id="fullscreen-button" class="fullscreen-button">
-                <span id="fullscreen-icon" class="fas fa-expand"></span>
+        <div class='video_container'>
+            <div id="player"></div>
+            <div class="video_progress">
+                <progress id="progress-bar" value="0" min="0"></progress>
+            </div>
+            <div class='video_controls'>
+            </div>
+            <button data-title="Play/Pause" class="play-pause-button" id="play-pause-button">            
+                <span id="play-pause-icon" class="fas fa-play" ></span>
             </button>
-    </div>
-    <form id="ytsearch">
-        <input type="text" id="ytsearch-input" placeholder="Paste a Youtube link here">                            
-    </form>
+            <span class="seek-tooltip" id="seek-tooltip">00:00 | 00:00</span>
+                <button data-title="Mute (m)" class="mute-button" id="mute-button">
+                    <span id="mute-icon" class="fas fa-volume-up"></span>
+                </button>          
+                <input class="volume-slider" id="volume-slider" value="50" type="range" max="100" min="0" step="1">
+                <button id="closed-captions-button" class="closed-captions-button">
+                    <span id="closed-captions-icon" class="far fa-closed-captioning"></span>
+                </button>
+                <button id="fullscreen-button" class="fullscreen-button">
+                    <span id="fullscreen-icon" class="fas fa-expand"></span>
+                </button>
+                <form id="ytsearch">
+                    <input type="text" id="ytsearch-input" placeholder="Paste a Youtube link here">                            
+                </form>
+        </div>
+        <!-- <h2 id="chat-name">Watch2Gether CLONE!!</h2> -->
+        <div id="chat-area-container">
+            <table id="chat-table" class="chat-table">
+                <tbody id="chatbox-tbody" class="chat-tbody">
+                    <!-- <tr class="name-row">
+                        <td class="name-td">                        
+                        </td>
+                    </tr> -->
+                </tbody>            
+            </table>
+            <table id="userlist-table" class="userlist-table">
+                <tbody id="userlist-tbody" class="userlist-tbody">
+                    <!-- <tr class="name-row">
+                        <td class="name-td">                        
+                        </td>
+                    </tr> -->
+                </tbody>            
+            </table>
+            <hr>
+            <h3 id="user-name">
+                <form id="name-form">
+                    <input type="text" id="name-input" placeholder="Enter Your Name Here">                            
+                </form>
+            </h3>
+            <form id="input-form">
+                <textarea type="text" id="message-input" class="text-input"
+                        placeholder="Enter your message here">
+                </textarea>
+                <button class="send-text">SEND</button>
+            </form>
+        </div>
     <script>
       // 2. This code loads the IFrame Player API code asynchronously.
     //   var tag = document.createElement('script');
@@ -92,8 +76,8 @@
       var player;
       function onYouTubeIframeAPIReady() {
         player = new YT.Player('player', {
-          height: '390',
-          width: '640',
+          height: '100%',
+          width: '100%',
           videoId: "hjcXNK-zUFg",    
           playerVars: {
             enablejsapi: 1,

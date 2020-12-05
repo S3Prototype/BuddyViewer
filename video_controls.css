@@ -1,22 +1,35 @@
 .video_container {
     background-color: black;
     display: inline-grid;
-    grid-template-columns: [play-button] 1fr [time-code] 2fr [mute-button] 1fr [volume-slider] 3fr [settings-button] 1fr [fullscreen-button] 1fr;
-    grid-template-rows: [video-player] 400px [progress-bar] 20px [controls-gap] 10px [video-controls] 20px [bottom-row] 10px;    
+    grid-template-columns: [play-button] .5fr [time-code] 1fr [mute-button] .5fr [volume-slider] 1.5fr [closed-captions-button] .5fr [settings-button] 1fr [fullscreen-button] .5fr;
+    grid-template-rows: [video-player] 400px [progress-bar] 20px [video-controls] 20px [search-box] 20px [bottom-row] 10px;    
+
+    /*Below code aligns it in the page grid*/
+    grid-column: main / right-sidebar;
+    grid-row: video-area / chat-area;
+    row-gap: 5px;
+}
+
+#ytsearch{
+    grid-row: search-box / bottom-row;
+    grid-column: time-code / fullscreen-button;
+}
+
+#ytsearch-input {
+    width: 100%;
 }
 
 .video_controls {
     grid-column-start: play-button;
     grid-column-end: volume-bar;
     grid-row-start: video-controls;
-    grid-row-end: bottom-row;
+    grid-row-end: search-box;
 }
 
 #seek-tooltip {
-    grid-column-start: time-code;
-    grid-column-end: blank-space;
+    grid-column: time-code / mute-button;
     grid-row-start: video-controls;
-    grid-row-end: bottom-row;
+    grid-row-end: search-box;
     padding-left:10px;
     color: white;
 }
@@ -25,12 +38,23 @@
     grid-column-start: play-button;
     grid-column-end: time-code;
     grid-row-start: video-controls;
-    grid-row-end: bottom-row;
+    grid-row-end: search-box;
     background:none;
     border:none;
 }
 
 #play-pause-icon{
+    color: white;
+}
+
+#closed-captions-button{
+    grid-column: closed-captions-button / settings-button;
+    grid-row: video-controls / search-box;
+    background:none;
+    border:none;
+}
+
+#closed-captions-icon{
     color: white;
 }
 
@@ -71,7 +95,7 @@
     grid-column-start: mute-button;
     grid-column-end: volume-slider;
     grid-row-start: video-controls;
-    grid-row-end: bottom-row;
+    grid-row-end: search-box;
     background:none;
     border:none;
 }
@@ -81,10 +105,9 @@
 }
 
 #volume-slider {
-    grid-column-start: volume-slider;
-    grid-column-end: settings-button;
+    grid-column: volume-slider / closed-captions-button;
     grid-row-start: video-controls;
-    grid-row-end: bottom-row;
+    grid-row-end: search-box;
     background:none;
     border:none;
     color: white;
@@ -92,7 +115,7 @@
 
 #fullscreen-button{
     grid-column: fullscreen-button / -1;
-    grid-row: video-controls / bottom-row;
+    grid-row: video-controls / search-box;
     background:none;
     border:none;
 }

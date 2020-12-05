@@ -77,6 +77,15 @@ $(function(){
             video_time: 0,
             state: -1
         };
+        static options = {
+            enablejsapi: 1,
+            autoplay: 0,
+            rel: 0,
+            controls: 0,
+            origin: 'https://www.youtube.com',
+            cc_load_policy: 0,
+            cc_lang_pref: 'en'
+        }
         static videoTime = 0;
         static currentlySendingData = false;
         static clientURL = "hjcXNK-zUFg";
@@ -86,15 +95,29 @@ $(function(){
         // };
         static videoDuration;
 
+        static timeShouldBeSaved = false;
+
         static initNewPlayer(event){
             // event.target.addEventListener("onStateChange", ClientYTPlayer.SendStateToServer);
             event.target.playVideo();
             initializeYTProgressBar();
             initializeToolTip();
-            ClientYTPlayer.currentState = YT.PlayerState.PLAYING;
+            ClientYTPlayer.currentState = CustomStates.PLAYING;
             document.getElementById('play-pause-icon').className = "fas fa-pause";
+            player.setVolume(parseInt(volumeSlider.value));
             playerInitialized = true;
+            if(ClientYTPlayer.timeShouldBeSaved){
+                //if we're changing the closedcaptions, basically
+                player.seekTo(ClientYTPlayer.videoTime);
+                ClientYTPlayer.updateTimeUI(ClientYTPlayer.videoTime);
+                ClientYTPlayer.timeShouldBeSaved = false;
+            } else {
+                    //If we're not changing the closedcaptions, set
+                    //it to playing
+                ClientYTPlayer.currentState = CustomStates.PLAYING;
+            }
             // ClientYTPlayer.SendStateToServer(event);
+            ClientYTPlayer.SendStateToServer(event);
             ClientYTPlayer.pingInterval = setInterval(pingVideoSetting, 200);
         }
         static extractID(url){
@@ -115,26 +138,20 @@ $(function(){
         }
         static addNewVideo(){
             // $('#container').html("<div id='player'></div>");
-            const currURL = ClientYTPlayer.extractID(player.getVideoUrl());
-            if(currURL == ClientYTPlayer.clientURL) return;
+            // const currURL = ClientYTPlayer.extractID(player.getVideoUrl());
+            // if(currURL == ClientYTPlayer.clientURL) return;
                 player.destroy();
                 playerInitialized = false;
                 clearInterval(ClientYTPlayer.pingInterval);
                 player = new YT.Player('player', {
-                    height: '390',
-                    width: '640',
+                    height: '100%',
+                    width: '100%',
                     videoId: ClientYTPlayer.clientURL,
                     events: {
                       'onReady': ClientYTPlayer.initNewPlayer,
                       "onStateChange": stopYTEvent
                     },        
-                    playerVars: {
-                      enablejsapi: 1,
-                      autoplay: 0,
-                      rel: 0,
-                      controls: 0,
-                      origin: 'https://www.youtube.com'
-                    }
+                    playerVars: ClientYTPlayer.options
                   });
             // ClientYTPlayer.SendStateToServer({});
         }
@@ -145,6 +162,7 @@ $(function(){
                 return player.getCurrentTime();
             }
         }
+        static updateTimeInterval = null;
         static updateTimeUI(time){
             ClientYTPlayer.videoTime = time;
             updateYTProgressBar(time);
@@ -197,7 +215,7 @@ $(function(){
             const serverTime = response.video_time;
             const serverURL = response.video_url;
             if(serverURL != ClientYTPlayer.clientURL){
-                ClientYTPlayer.clientURL = serverURL;
+                ClientYTPlayer.clientURL = ClientYTPlayer.extractID(serverURL);
                 ClientYTPlayer.addNewVideo();
                 return;
             }
@@ -223,8 +241,8 @@ $(function(){
             }
                 
             const currTime = ClientYTPlayer.videoTime;
-            if(serverTime > currTime + 5 || serverTime < currTime - 5){
-                    player.seekTo(response.video_time);
+            if(currTime > serverTime + 5 || currTime < serverTime - 5){
+                    player.seekTo(serverTime);
                     ClientYTPlayer.updateTimeUI(serverTime);                    
             }
             
@@ -256,29 +274,17 @@ $(function(){
     }
 
     $('#ytsearch').on('submit', function(event){
-        event.preventDefault();
-        // player.seekTo(0);
-        // player.stopVideo();            
+        event.preventDefault();           
         const newVid = youtubeInput.val();
-        // if(newVid.includes('youtu.be/')){
-        //     const startIndex = newVid.indexOf('youtu.be/') + 9;
-        //     ClientYTPlayer.clientURL = newVid.substring(startIndex);
-        // } else if(newVid.includes('v=')){
-        //     const startIndex = newVid.indexOf('v=') + 2;
-        //     ClientYTPlayer.clientURL = newVid.substring(startIndex)
-        // } else if (newVid.includes('/embed/')){
-        //     ClientYTPlayer.clientURL = newVid.substring(newVid.indexOf('/embed/') + 7);
-        // }
+        if(newVid.length <= 0) return;
+        const currURL = ClientYTPlayer.extractID(newVid);
+        console.log("BEFORE NEW VIDEO SET. URL: "+currURL);
+        if(currURL != ClientYTPlayer.clientURL){
+            ClientYTPlayer.clientURL = currURL;
+            ClientYTPlayer.addNewVideo();
+            console.log("AFTER NEW VIDEO SET. URL: "+currURL);
 
-        // if(ClientYTPlayer.clientURL.includes('&')){
-        //     ClientYTPlayer.clientURL = ClientYTPlayer.clientURL.substring(0, ClientYTPlayer.clientURL.indexOf('&'));
-        // }
-
-        ClientYTPlayer.clientURL = ClientYTPlayer.extractID(youtubeInput.val());
-
-        // ClientYTPlayer.clientURL = youtubeInput.val();
-        ClientYTPlayer.addNewVideo();
-        ClientYTPlayer.SendStateToServer({});
+        }
     });
 
     $('#fullscreen-button').click(function(event){
@@ -286,7 +292,21 @@ $(function(){
         let requestFullScreen = playerElement.requestFullScreen || playerElement.mozRequestFullScreen || playerElement.webkitRequestFullScreen;
         if (requestFullScreen) {
             requestFullScreen.bind(playerElement)();
+            // document.getElementById('fullscreen-icon').class = "fas fa-compress";
         }
+    });
+
+    $('#closed-captions-button').click(function(event){
+        if(ClientYTPlayer.options.cc_load_policy != 1){
+            ClientYTPlayer.options.cc_load_policy = 1;
+            ClientYTPlayer.options.cc_lang_pref = "en";
+            document.getElementById('closed-captions-icon').className = "fas fa-closed-captioning";
+        } else {
+            ClientYTPlayer.options.cc_load_policy = 0;
+            document.getElementById('closed-captions-icon').className = "far fa-closed-captioning";
+        }
+        ClientYTPlayer.timeShouldBeSaved = true;
+        ClientYTPlayer.addNewVideo();
     });
 
     $('#mute-button').click(function(event){
@@ -308,7 +328,10 @@ $(function(){
         if(!progressBarInitialized){
             initializeYTProgressBar();
         }
-        if(!tooltipInitialized) initializeToolTip();
+        if(!tooltipInitialized){
+            initializeToolTip();
+            player.setVolume(parseInt(volumeSlider.value));
+        }
 
         changeTriggeredByControls = true;
         if(ClientYTPlayer.currentState == YT.PlayerState.PLAYING){
@@ -330,7 +353,7 @@ $(function(){
     });
 
     function updateYTVideoTime(){
-        if(!player ||
+        if(!player || !player.getCurrentTime ||
             ClientYTPlayer.currentState == YT.PlayerState.ENDED ||
             ClientYTPlayer.currentState == YT.PlayerState.UNSTARTED){
                 return;
@@ -678,7 +701,7 @@ $(function(){
             player.unMute();
             document.getElementById('mute-icon').className = "fas fa-volume-up";
         }
-        player.setVolume(volumeSlider.value);
+        player.setVolume(parseInt(volumeSlider.value));
     }
 
     $('#name-form').on('submit', function(event){
@@ -760,6 +783,7 @@ $(function(){
             validateUserID();
 
             volumeSlider.addEventListener("change", changeVolume);
+            volumeSlider.addEventListener("input", changeVolume)
             // volumeSlider.addEventListener("mousemove", );
 
             ClientYTPlayer.pingInterval = setInterval(pingVideoSetting, 200);

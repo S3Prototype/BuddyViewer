@@ -1,6 +1,11 @@
 DOING:
 
-* What's going on with the volume??? It's too low.
+* Set up other youtube functions (captions, etc)
+    ** captions
+        *** Users have to press a button, then it will reload the video with the current time and captions enabled.
+* Catch the play/pause events from users clicking on the player
+* Consider what to do about buffering. I guess just ignore it? It's kinda handled by the time buffer and everything.
+* Add code that pings the videowatcher and seekingID lists, same as pingName. When people DC while still in the seeking list, it breaks.
 * Now just have to test everything thoroughly. All features.
 * If they're working well enough, we have to implement code to remove the user's ability to press the player and make stuff happen. It'll screw everything up.
 * Big scary thing is how much the youtube API is still checking for me. Like after it seeks, even though it was just playing, it might pause locally. That would not trigger an event on the server. Theoretically, if I seek while playing, the server remembers we were just playing, and when I'm done seeking, it sets me back to playing no matter what. But if I'm still buffering and the server tries to make me play, youtube API might reject the playVideo() call and leave me buffering. What then? I'm left to my fate, because my clientYTPlayer.currentState is still == PLAYING, but I'm not playing.
@@ -15,7 +20,13 @@ TODO:
     ** Changing play speed.
     ** All other minor functions.
 * Volume settings/mute button
+* Fix it so youtube iframe is generated from js, not on the page.
+* Set up the buffering bar using the getPlayerLoadedFraction() function
+* REFACTOR/CLEAN UP CODE/ORGANIZE FOLDERS
+
 * Ultimately wrap the youtube div in another div, and create your own controls. That way when the user wants to watch a vid from another site, you just fill that div with their video player.
+
+
 * Stretch goal: Let users paste embed codes of any video player <iframe>, then play it in our video container div.
 * Write code that tries to play a video on any site by seeking out the most common tags that hold videos. Maybe grab the mp4 links directly and load those up into a video tag? The code should try as many tactics as possible until it succeeds. Maybe even have a way to ask the viewer "Is this the video? If no, we'll try to find it in the link again. Is this the video?" This requires web scraping.
 * Write
@@ -41,6 +52,13 @@ THOUGHTS:
 ~~~~~~~~~~~
 
 DONE:
+
+12/4/20
+
+* What's going on with the volume??? It's too low.
+    **Seems like that's about as loud as it gets.
+
+=====
 12/3/20
 * Make scrubbing work
     * Seek

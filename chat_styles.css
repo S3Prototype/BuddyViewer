@@ -1,7 +1,16 @@
 body {
     color: white;
-    background-color: #190165;
-    font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+    background-color: rgb(14, 24, 64);
+    font-family: Helvetica, Arial, sans-serif;
+    display: grid;
+    grid-template-columns: [left-sidebar] 1fr [main] 30fr [right-sidebar] 1fr;
+    grid-template-rows: [video-area] 1fr [chat-area] 1fr [bottom-row] 0.1fr;
+    grid-gap: 15px;
+}
+
+#chat-area-container{
+    grid-column: main / right-sidebar;
+    grid-row: chat-area / bottom-row;
 }
 
 .userlist-table {
@@ -43,10 +52,7 @@ body {
     width: 15em;
 }
 
-#ytsearch-input {
-    display: inline-block;
-    width: 15em;
-}
+
 
 .chat-tbody {
     overflow: auto;
