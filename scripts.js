@@ -79,13 +79,15 @@ $(function(){
         };
         static options = {
             enablejsapi: 1,
-            autoplay: 0,
+            autoplay: 1,
             rel: 0,
             controls: 0,
             origin: 'https://www.youtube.com',
             cc_load_policy: 0,
-            cc_lang_pref: 'en'
-        }
+            cc_lang_pref: 'en',
+            disablekb: 1,
+            modestbranding: 1
+        };
         static videoTime = 0;
         static currentlySendingData = false;
         static clientURL = "hjcXNK-zUFg";
@@ -96,6 +98,8 @@ $(function(){
         static videoDuration;
 
         static timeShouldBeSaved = false;
+
+        static shouldSendState = true;
 
         static initNewPlayer(event){
             // event.target.addEventListener("onStateChange", ClientYTPlayer.SendStateToServer);
@@ -117,7 +121,11 @@ $(function(){
                 ClientYTPlayer.currentState = CustomStates.PLAYING;
             }
             // ClientYTPlayer.SendStateToServer(event);
-            ClientYTPlayer.SendStateToServer(event);
+            if(ClientYTPlayer.shouldSendState){
+                ClientYTPlayer.SendStateToServer(event);
+            } else {
+                ClientYTPlayer.shouldSendState = true;
+            }
             ClientYTPlayer.pingInterval = setInterval(pingVideoSetting, 200);
         }
         static extractID(url){
@@ -216,6 +224,7 @@ $(function(){
             const serverURL = response.video_url;
             if(serverURL != ClientYTPlayer.clientURL){
                 ClientYTPlayer.clientURL = ClientYTPlayer.extractID(serverURL);
+                ClientYTPlayer.shouldSendState = false;
                 ClientYTPlayer.addNewVideo();
                 return;
             }
@@ -241,9 +250,11 @@ $(function(){
             }
                 
             const currTime = ClientYTPlayer.videoTime;
-            if(currTime > serverTime + 5 || currTime < serverTime - 5){
-                    player.seekTo(serverTime);
-                    ClientYTPlayer.updateTimeUI(serverTime);                    
+            // console.log("TIME NOW IS: "+currTime +"| SERVER TIME: "+serverTime);
+            if(currTime < serverTime - 5){
+                // console.log("it worked??");
+                player.seekTo(serverTime);
+                ClientYTPlayer.updateTimeUI(serverTime);                    
             }
             
             // ClientYTPlayer.currentState = player.getPlayerState();
@@ -258,7 +269,7 @@ $(function(){
             "name" : nameOnServer,
             "user_id" : userID,
             "state" : ClientYTPlayer.currentState,
-            "video_time": ClientYTPlayer.getTime(),
+            "video_time": ClientYTPlayer.videoTime,
             "video_url": ClientYTPlayer.clientURL
         };
         $.ajax({
@@ -271,7 +282,25 @@ $(function(){
                 ClientYTPlayer.alignWithServerState(response); 
             }
         });
+
+
     }
+
+    const joinButton = document.getElementById('join-room-button');
+
+    joinButton.addEventListener('click', function(event){
+        document.getElementById('join-room-modal').classList.remove('active');
+        document.getElementById('join-room-modal-overlay').classList.remove('active');
+        
+        const state = ClientYTPlayer.currentState;
+        if(state == CustomStates.PLAYING){
+            player.playVideo();
+        } else if(state == CustomStates.PAUSED){
+            player.pauseVideo();
+        }
+
+        initializeToolTip();
+    });
 
     $('#ytsearch').on('submit', function(event){
         event.preventDefault();           
@@ -482,7 +511,7 @@ $(function(){
                 // userListTable.scrollTop(chatTable.height() * chatMessage.message_id);                        
                 // let messageID = parseInt(chatMessage.message_id);
                 // seenArray[messageID] = true;                          
-                console.log("USER: "+user.name+"("+user.id+") ADDED TO LIST("+i+")");
+                // console.log("USER: "+user.name+"("+user.id+") ADDED TO LIST("+i+")");
                 i++;
             });
             mostRecentListID = listID;
@@ -527,7 +556,7 @@ $(function(){
         }
         $.ajax({
             url: '/user-list',
-            method: 'GET',
+            method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(checkData, null, 2),
             success: function (response){                  
@@ -537,11 +566,11 @@ $(function(){
         serverListInitialized = true;
     }
 
-    const initializeInterval = setInterval(initializeServerList, 300);
+    // const initializeInterval = setInterval(initializeServerList, 300);
 
     function initializeServerList(){
         console.log("("+new Date().toLocaleTimeString()+") Server List Initialized");
-        if(!serverListInitialized){
+        // if(!serverListInitialized){
             $.ajax({
                 url: '/initialize',
                 method: 'POST',
@@ -551,10 +580,10 @@ $(function(){
                     serverListInitialized = true;
                 }
             });
-        } else {
-            clearInterval(initializeInterval);
-        }
-        clearInterval(initializeInterval);
+        // } else {
+        //     clearInterval(initializeInterval);
+        // }
+        // clearInterval(initializeInterval);
 
     }
 
@@ -778,9 +807,10 @@ $(function(){
     document.addEventListener('readystatechange', event => { 
     
         // When window loaded ( external resources are loaded too- `css`,`src`, etc...) 
-        if(event.target.readyState === "complete") {            
+        if(event.target.readyState === "complete"){            
 
             validateUserID();
+            initializeServerList();
 
             volumeSlider.addEventListener("change", changeVolume);
             volumeSlider.addEventListener("input", changeVolume)
@@ -792,7 +822,7 @@ $(function(){
         
             setInterval(checkForMessages, 500);
         
-            setInterval(checkForUserList, 607);
+            setInterval(checkForUserList, 650);
             player.addEventListener("onStateChange", stopYTEvent);
             ClientYTPlayer.currentState = YT.PlayerState.UNSTARTED;
 
@@ -800,6 +830,9 @@ $(function(){
 
             initializeYTProgressBar();
             progressBar.addEventListener('click', progressBarYTScrub);
+
+            document.getElementById('join-room-modal').classList.add('active');
+            document.getElementById('join-room-modal-overlay').classList.add('active');
         }
     });
 

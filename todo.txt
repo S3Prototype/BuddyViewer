@@ -1,17 +1,21 @@
 DOING:
 
 * Set up other youtube functions (captions, etc)
-    ** captions
-        *** Users have to press a button, then it will reload the video with the current time and captions enabled.
+    ** Playback rate
+        *** Just check in align server state if the playback rate is different from the server's. If so, adjust ours. When you adjust playback rate, set it on the server with sendstate.
+    ** Loop button so it can loop
+    ** Full screen controls that show up at the bottom of the screen and drop down after x amount of time
+    ** Set up the buffering bar using the getPlayerLoadedFraction() function
+* Load player from JS--not on the index.html page. Gives us so much more ability to do things when the video first loads. Can't just move the script tag in the html down below our other scrips, because they expect player to be a thing. Then again a lot of that code is in the document.onReadystate stuff, which runs after the page is already loaded, including the JS in the html.
 * Catch the play/pause events from users clicking on the player
 * Consider what to do about buffering. I guess just ignore it? It's kinda handled by the time buffer and everything.
-* Add code that pings the videowatcher and seekingID lists, same as pingName. When people DC while still in the seeking list, it breaks.
+    ** Probably if it's buffering, the client shouldn't ping the video state, because we kinda need to wait until it's done.
+    ** in the onplayerstatechange callback, check if the event triggered is buffering. If so, set our state to buffering. If the event is not buffering, check if our state is buffering--if so, set our state to whatever the event is. This way, we only take the state this callback gives us if we were just buffering; otherwise we ignore it.
 * Now just have to test everything thoroughly. All features.
 * If they're working well enough, we have to implement code to remove the user's ability to press the player and make stuff happen. It'll screw everything up.
 * Big scary thing is how much the youtube API is still checking for me. Like after it seeks, even though it was just playing, it might pause locally. That would not trigger an event on the server. Theoretically, if I seek while playing, the server remembers we were just playing, and when I'm done seeking, it sets me back to playing no matter what. But if I'm still buffering and the server tries to make me play, youtube API might reject the playVideo() call and leave me buffering. What then? I'm left to my fate, because my clientYTPlayer.currentState is still == PLAYING, but I'm not playing.
 
 TODO:
-* "ServerList is initialized!" message is printed 2x at once. Why?
 * Generally to set up the youtube playing functionality:
     ** Pressing play should play the videos of the other users
     ** Pressing pause should pause the videos of the other users
@@ -21,7 +25,6 @@ TODO:
     ** All other minor functions.
 * Volume settings/mute button
 * Fix it so youtube iframe is generated from js, not on the page.
-* Set up the buffering bar using the getPlayerLoadedFraction() function
 * REFACTOR/CLEAN UP CODE/ORGANIZE FOLDERS
 
 * Ultimately wrap the youtube div in another div, and create your own controls. That way when the user wants to watch a vid from another site, you just fill that div with their video player.
@@ -53,13 +56,29 @@ THOUGHTS:
 
 DONE:
 
+12/5/20
+
+* Add the popup modal that watch2gether has when a page is restarted.
+*(EXTRA):
+    ** fixed serverlist so it updates as soon as someone drops out
+    ** Fixed time alignment. Now if you're not within 5 seconds of the server time, you're skipped to it.
+    ** Fixed it so when you hot-join the room, your video is aligned with the state
+    ** Pinging the seekingID and viewerID's now.
+* In order for dropping in/out to work, we need a modal to pop up when you open the page that says "Join room"
+* Fix the code to ping ID's in videowatcher and seekingID. Also make it so as soon as you come in, if you click somewhere, the pinginterval starts and you get lined up with everyone else's video state. Shouldb e able to drop in/drop out.
+* Add code that pings the videowatcher and seekingID lists, same as pingName. When people DC while still in the seeking list, it breaks.
+======
 12/4/20
 
+** captions
+    *** Users have to press a button, then it will reload the video with the current time and captions enabled.
 * What's going on with the volume??? It's too low.
     **Seems like that's about as loud as it gets.
 
 =====
 12/3/20
+
+* "ServerList is initialized!" message is printed 2x at once. Why?
 * Make scrubbing work
     * Seek
     * Set our own state to seeking

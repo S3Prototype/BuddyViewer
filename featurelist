@@ -6,3 +6,5 @@ FEATURE LIST:
 * Playback rate change
 * Uploading your own videos temporarily for sharing
 * Being able to add a video with the "copy url at current time" so it actually starts at that time.
+* When a user adds a link to another site's videos, what if we write code that just detects a button press within that iframe. It then stores the id/class of that button, and on the other clients triggers the same event on whatever button matches that id/class.
+* Maybe add code for when the ENDED state is reached, so we can put our own "related videos/recommended videos" screen over the player. That way if the user clicks on one of them, we can make it play in our player.

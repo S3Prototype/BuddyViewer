@@ -19,9 +19,6 @@ let defaultMessage = {
 
 var port = process.env.PORT || 8092;
 
-let userWhoSent = null;
-let universalSetting = "PAUSE";
-
 app.use(express.static(__dirname));
 app.use(bodyparser.json());
 app.use(router);
@@ -204,12 +201,6 @@ class CustomStates{
 }
 
 class VideoManager{
-    // -1 (unstarted)
-    // 0 (ended)
-    // 1 (playing)
-    // 2 (paused)
-    // 3 (buffering)
-    // 5 (video cued)
     static universalState = CustomStates.UNSTARTED;
     static previousUniversalState = CustomStates.UNSTARTED;
     static universalTime = 0;
@@ -227,43 +218,91 @@ class VideoManager{
     static seekingIDListEmpty = true;
     static #viewerIDList = [];
     static isSeekingIDListEmpty(){
-        return VideoManager.#seekingIDList.length <= 0;
+        return !VideoManager.#seekingIDList || VideoManager.#seekingIDList.length <= 0;
     }
     static createSeekingIDList(exemptID){
         VideoManager.#seekingIDList = VideoManager.#viewerIDList.filter(
-            function(id){
-                return id && id != exemptID;
+            function(viewerId){
+                return viewerId && viewerId.id != exemptID;
             }
         );
     }
     static removeFromSeekingIDList(idToRemove){
         VideoManager.#seekingIDList = VideoManager.#seekingIDList.filter(
-            function(id){
-                return id && id != idToRemove;
+            function(seekingId){
+                return seekingId && seekingId.id != idToRemove;
             }
         );
     }
     static isInSeekingIDList(idToCheck){
-        return VideoManager.#seekingIDList.includes(idToCheck);
+        let idFound = false;
+        for(let i = 0; !idFound && i < VideoManager.#seekingIDList.length; i++){
+            if(VideoManager.#seekingIDList[i].id == idToCheck) idFound = true;
+        }
+        return idFound;
     }
     static destroySeekingIDList(){
         VideoManager.#seekingIDList = [];
     }
     static isViewerIdListEmpty(){
-        return VideoManager.#viewerIDList.length <= 0;
+        return !VideoManager.#viewerIDList || VideoManager.#viewerIDList.length <= 0;
     }
     static addToViewerIDList(idToAdd){
-        VideoManager.#viewerIDList.push(idToAdd);
+        VideoManager.#viewerIDList.push({id: idToAdd, hasBeenPinged: true, failedCount: 0});
     }
     static removeFromViewerIDList(idToRemove){
         VideoManager.#viewerIDList = VideoManager.#viewerIDList.filter(
-            function(id){
-                return id && id != idToRemove;
+            function(viewerId){
+                return viewerId && viewerId.id != idToRemove;
             }
         );            
     }
     static isInViewerIDList(idToCheck){
-        return VideoManager.#viewerIDList.includes(idToCheck);
+        let idFound = false;
+        for(let i = 0; !idFound && i < VideoManager.#viewerIDList.length; i++){
+            if(VideoManager.#viewerIDList[i].id == idToCheck) idFound = true;
+        }
+        return idFound;
+    }
+    static pingViewerIDList(id){
+        //Check if name and id are in ping list. If not, add it.
+        //nameData.name, nameData.id
+        // let idHasBeenPinged = false;
+        // console.log("###############");
+        // console.log("ID Pinged: "+pName);
+        if(VideoManager.isViewerIdListEmpty()) return;
+        let idFound = false;
+        for(let i = 0; !idFound && i < VideoManager.#viewerIDList.length; i++){
+            if(VideoManager.#viewerIDList[i].id == id){
+                // console.log("Failed count: "+NameContainer.#takenNames[i].failedCount);
+                VideoManager.#viewerIDList[i].hasBeenPinged = true;
+                VideoManager.#viewerIDList[i].failedCount = 0;
+                idFound = true;
+            }
+        }
+    }
+    static checkPings(){
+        // if(VideoManager.isViewerIdListEmpty()) return;
+        for(let pingedID of VideoManager.#viewerIDList){
+            if(pingedID){
+                if(pingedID.hasBeenPinged){
+                    pingedID.hasBeenPinged = false;
+                    pingedID.failedCount = 0;
+                } else {
+                    //increment and check the counter. if its too much,
+                    //delete the id from the server. But first let's just
+                    //DC it instantly. Implement the counter after we make
+                    //it work.
+                    if(pingedID.failedCount > 3){
+                        VideoManager.removeFromViewerIDList(pingedID.id);
+                        VideoManager.removeFromSeekingIDList(pingedID.id);
+                        console.log("******************");
+                        console.log("Video Ping failed! Deleting: "+pingedID.id);
+                    }
+                    pingedID.failedCount++;
+                }
+            }
+        }//for
     }
 }
 
@@ -312,7 +351,8 @@ app.post('/alter-video-settings', function(req, res){
     
     VideoManager.universalUrl = req.body.video_url;
 
-    NameContainer.pingName(req.body.name);
+    // NameContainer.pingName(req.body.name);
+    // VideoManager.pingViewerIDList(req.body.user_id);
 
     const data = {
         name: req.body.name,
@@ -330,6 +370,8 @@ app.post('/check-server-video-state', function(req, res){
 
     if(!VideoManager.isInViewerIDList(req.body.user_id)){
         VideoManager.addToViewerIDList(req.body.user_id);
+    } else {
+        VideoManager.pingViewerIDList(req.body.user_id);
     }
 
     let data = {
@@ -344,6 +386,7 @@ app.post('/check-server-video-state', function(req, res){
             VideoManager.universalState = VideoManager.previousUniversalState;
             data.state = VideoManager.previousUniversalState;
         } else {
+            VideoManager.checkPings();
             if(!VideoManager.isInSeekingIDList(req.body.user_id)){
                 data.state = VideoManager.previousUniversalState;
             } else if(VideoManager.timeIsWithinRange(req.body.video_time)) {
@@ -352,8 +395,10 @@ app.post('/check-server-video-state', function(req, res){
             }
         }
     } else {
-        VideoManager.universalTime = req.body.video_time;
-        data.video_time = req.body.video_time;
+        if(VideoManager.timeIsWithinRange(req.body.video_time)){
+            VideoManager.universalTime = req.body.video_time;
+            data.video_time = req.body.video_time;
+        }
     }
 
     NameContainer.pingName(req.body.name);
@@ -371,11 +416,12 @@ app.post('/server-ping', function(req, res){
     });
 });
 
-app.get('/user-list', function(req, res){
+app.post('/user-list', function(req, res){
     // let nameLength = takenNames.length;
     // let listToSend = [];
 
     UserListContainer.populateUserList(NameContainer.getTakenNames());
+    UserListContainer.generateNewListID();
     //Now because they're checking the user list, ping their id.
 
     // console.log.("________________");
@@ -435,15 +481,12 @@ app.post('/messages', function(req, res){
     }
 
     NameContainer.pingName(thisMessage.user_id);
+
     res.send(req.body);
 });
 
 app.post('/taken-names', function(req, res){
     res.send(nameWasFound);
-});
-
-app.put('/messages/:id', function(req, res){
-    res.send("This is a PUT request");
 });
 
 app.delete('/messages', function(req, res){

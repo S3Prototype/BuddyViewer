@@ -5,6 +5,7 @@
         <meta charset="utf-8" />
         <link rel="stylesheet" href="chat_styles.css" type="text/css" />
         <link rel="stylesheet" href="video_controls.css" type="text/css" />
+        <link rel="stylesheet" href="modal_styles.css" type="text/css" />
     </head>
     <body>
         <div class='video_container'>
@@ -63,6 +64,17 @@
                 <button class="send-text">SEND</button>
             </form>
         </div>
+        <div id="join-room-modal" class="join-room-modal">
+            <div id="join-room-modal-header" class="join-room-modal-header">
+                <button data-join-button id="join-room-button" class="join-room-button">
+                    Click here to join the room!
+                    <span class="fas fa-door-open"></span>
+                </button>
+            </div>
+        </div>
+        <div id="join-room-modal-overlay" class="join-room-modal-overlay">
+
+        </div>
     <script>
       // 2. This code loads the IFrame Player API code asynchronously.
     //   var tag = document.createElement('script');
@@ -81,10 +93,12 @@
           videoId: "hjcXNK-zUFg",    
           playerVars: {
             enablejsapi: 1,
-            autoplay: 0,
+            autoplay: 1,
             rel: 0,
             controls: 0,
-            origin: 'https://www.youtube.com'
+            origin: 'https://www.youtube.com',
+            disablekb: 1,
+            modestbranding: 1
           }
         });
       }

@@ -1,0 +1,52 @@
+.join-room-modal{
+    position: fixed;
+    top:50%;
+    left:50%;
+    transform: translate(-50%, -50%) scale(0);
+    transition: 200ms ease-in-out;
+    border-radius: 10px;
+    z-index: 10;
+    background-color: white;
+    width: 500px;
+    max-width: 80%;
+    height: 100px;
+    max-height: 200px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.join-room-modal.active{
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.join-room-modal-header{
+    padding: 10px 15px;
+    width: 50%;
+}
+
+.join-room-button{
+    width: 100%;
+    background-color: rgb(14, 24, 64);
+    color: white;
+    border-radius: 30px;
+}
+
+#join-room-modal-overlay{
+    position: fixed;
+    opacity: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgb(0, 0, 0, 0.8);
+    pointer-events: none;
+    transform: scale(0);
+    transition: 200ms ease-in-out;
+}
+
+#join-room-modal-overlay.active{
+    opacity: 1;
+    pointer-events: all;
+    transform: scale(1);
+}
