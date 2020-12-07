@@ -207,7 +207,7 @@ class VideoManager{
 
     static timeIsWithinRange(time){
         const uniTime = VideoManager.universalTime;
-        const bufferRange = 2;
+        const bufferRange = 3;
         return time > uniTime - bufferRange && time < uniTime + bufferRange;
     }
     static bufferingID = "EMPTY";
@@ -215,6 +215,7 @@ class VideoManager{
     static settingsAltered = false;
     static alterID = "";
     static #seekingIDList = [];
+    static universalPlaybackRate = 1;
     static seekingIDListEmpty = true;
     static #viewerIDList = [];
     static isSeekingIDListEmpty(){
@@ -255,7 +256,8 @@ class VideoManager{
             function(viewerId){
                 return viewerId && viewerId.id != idToRemove;
             }
-        );            
+        );
+        VideoManager.removeFromSeekingIDList(idToRemove);         
     }
     static isInViewerIDList(idToCheck){
         let idFound = false;
@@ -295,7 +297,6 @@ class VideoManager{
                     //it work.
                     if(pingedID.failedCount > 3){
                         VideoManager.removeFromViewerIDList(pingedID.id);
-                        VideoManager.removeFromSeekingIDList(pingedID.id);
                         console.log("******************");
                         console.log("Video Ping failed! Deleting: "+pingedID.id);
                     }
@@ -331,6 +332,7 @@ app.post('/alter-video-settings', function(req, res){
     console.log("CLIENT("+req.body.user_id+") "+"HAS SENT STATE: "+req.body.state);
 
     VideoManager.alterID = req.body.user_id;
+    VideoManager.universalPlaybackRate = req.body.video_playbackrate;
 
     if(req.body.state == CustomStates.SEEKING){
         VideoManager.previousUniversalState = VideoManager.universalState;
@@ -338,7 +340,6 @@ app.post('/alter-video-settings', function(req, res){
     }
 
     VideoManager.universalState = req.body.state;
-    
     VideoManager.universalTime = req.body.video_time;
 
     if(req.body.video_url != VideoManager.universalUrl){
@@ -346,15 +347,15 @@ app.post('/alter-video-settings', function(req, res){
         VideoManager.universalTime = 0;
     }
 
-    console.log("SERVER URL: "+VideoManager.universalUrl);
-    console.log("CLIENT URL: "+req.body.video_url);
+    // console.log("SERVER URL: "+VideoManager.universalUrl);
+    // console.log("CLIENT URL: "+req.body.video_url);
     
     VideoManager.universalUrl = req.body.video_url;
 
     // NameContainer.pingName(req.body.name);
     // VideoManager.pingViewerIDList(req.body.user_id);
 
-    const data = {
+    let data = {
         name: req.body.name,
         user_id: req.body.user_id,
         state: VideoManager.universalState,
@@ -386,7 +387,6 @@ app.post('/check-server-video-state', function(req, res){
             VideoManager.universalState = VideoManager.previousUniversalState;
             data.state = VideoManager.previousUniversalState;
         } else {
-            VideoManager.checkPings();
             if(!VideoManager.isInSeekingIDList(req.body.user_id)){
                 data.state = VideoManager.previousUniversalState;
             } else if(VideoManager.timeIsWithinRange(req.body.video_time)) {
@@ -395,20 +395,27 @@ app.post('/check-server-video-state', function(req, res){
             }
         }
     } else {
-        if(VideoManager.timeIsWithinRange(req.body.video_time)){
-            VideoManager.universalTime = req.body.video_time;
-            data.video_time = req.body.video_time;
+        if(VideoManager.universalState != CustomStates.PAUSED &&
+            VideoManager.timeIsWithinRange(req.body.video_time)){
+                VideoManager.universalTime = req.body.video_time;
+                data.video_time = req.body.video_time;
         }
     }
 
     NameContainer.pingName(req.body.name);
-
+    // console.log("==========================")
+    // console.log("STATE ON SERVER: "+data.state);
+    // console.log("==========================")
+    // console.log("TIME ON SERVER: "+data.video_time);
+    // console.log("==========================")
+    // console.log("TIME FROM CLIENT: "+req.body.video_time);
     res.send(data);
 });
 
 app.post('/server-ping', function(req, res){
 
     NameContainer.pingName(req.body.name);
+    VideoManager.pingViewerIDList(req.body.user_id);
 
     res.send({
         list : UserListContainer.getUserList(),
@@ -513,5 +520,6 @@ app.listen(port, function(){
     console.log(`Server listening on: ${port}`);
     console.log("Server start date/time: "+new Date().toLocaleDateString() + " / " + new Date().toLocaleTimeString());
     console.log("======");
-    setInterval(NameContainer.checkPings, 5000);
+    setInterval(NameContainer.checkPings, 2500);
+    setInterval(VideoManager.checkPings, 500);
 });

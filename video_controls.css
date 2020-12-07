@@ -1,13 +1,59 @@
 .video_container {
     background-color: black;
+    color: white;
     display: inline-grid;
-    grid-template-columns: [play-button] .5fr [time-code] 1fr [mute-button] .5fr [volume-slider] 1.5fr [closed-captions-button] .5fr [settings-button] 1fr [fullscreen-button] .5fr;
-    grid-template-rows: [video-player] 400px [progress-bar] 20px [video-controls] 20px [search-box] 20px [bottom-row] 10px;    
+    grid-template-columns: [play-button] .25fr [time-code] .5fr [mute-button] .25fr [volume-slider] 1.5fr [closed-captions-button] .25fr [playrate-button] .25fr [settings-button] .25fr [fullscreen-button] .5fr;
+    grid-template-rows: [video-player] 400px [progress-bar] 20px [video-controls] 20px [search-box] 20px [bottom-row] 10px;
 
     /*Below code aligns it in the page grid*/
     grid-column: main / right-sidebar;
     grid-row: video-area / chat-area;
     row-gap: 5px;
+}
+
+.playrate-button{
+    grid-row: video-controls;
+    grid-column: playrate-button;
+    color: inherit;
+    background: inherit;
+    border: none;
+    padding-bottom: 5px;
+}
+
+.playrate-dropdown{
+    height: 170px;
+    width: .25fr;
+    color: white;
+    grid-column: playrate-button;
+    grid-row: progress-bar;
+    bottom: 150px;
+    display: none;
+    background-color: black;
+    /* display: flex;
+    flex-direction: column; */
+    /* justify-content: center;
+    align-items: center; */
+    position: relative;
+    z-index: 9;
+}
+
+.playrate-dropdown button{
+    background: none;
+    color: white;
+    border: none;
+}
+
+.playrate-options{
+    background-color: inherit;
+    /* background: black; */ 
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+    border-radius: 10px;
+    width: 100%;
+    height: 100%;
+    /* list-style: none; */
 }
 
 #ytsearch{
@@ -17,6 +63,10 @@
 
 #ytsearch-input {
     width: 100%;
+    background-color: rgba(255, 255, 255, 0);
+    color: white;
+    border: none;
+    text-align: center;
 }
 
 .video_controls {
@@ -31,6 +81,7 @@
     grid-row-start: video-controls;
     grid-row-end: search-box;
     padding-left:10px;
+    padding-top: 4px;
     color: white;
 }
 
@@ -48,7 +99,7 @@
 }
 
 #closed-captions-button{
-    grid-column: closed-captions-button / settings-button;
+    grid-column: closed-captions-button / playrate-button;
     grid-row: video-controls / search-box;
     background:none;
     border:none;

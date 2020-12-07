@@ -1,11 +1,15 @@
 DOING:
 
+
 * Set up other youtube functions (captions, etc)
     ** Playback rate
         *** Just check in align server state if the playback rate is different from the server's. If so, adjust ours. When you adjust playback rate, set it on the server with sendstate.
     ** Loop button so it can loop
+        *** First should set a bool to true so when the video state changes to "ENDED," we set the universal time to 0 and then change the universal state to PLAYING. Boom. Loop.
+        *** Don't think I should let youtube's player handle the looping.
     ** Full screen controls that show up at the bottom of the screen and drop down after x amount of time
     ** Set up the buffering bar using the getPlayerLoadedFraction() function
+    ** Make it save all the options in a cookie, so when you reload the page you're good to go.
 * Load player from JS--not on the index.html page. Gives us so much more ability to do things when the video first loads. Can't just move the script tag in the html down below our other scrips, because they expect player to be a thing. Then again a lot of that code is in the document.onReadystate stuff, which runs after the page is already loaded, including the JS in the html.
 * Catch the play/pause events from users clicking on the player
 * Consider what to do about buffering. I guess just ignore it? It's kinda handled by the time buffer and everything.
@@ -14,6 +18,7 @@ DOING:
 * Now just have to test everything thoroughly. All features.
 * If they're working well enough, we have to implement code to remove the user's ability to press the player and make stuff happen. It'll screw everything up.
 * Big scary thing is how much the youtube API is still checking for me. Like after it seeks, even though it was just playing, it might pause locally. That would not trigger an event on the server. Theoretically, if I seek while playing, the server remembers we were just playing, and when I'm done seeking, it sets me back to playing no matter what. But if I'm still buffering and the server tries to make me play, youtube API might reject the playVideo() call and leave me buffering. What then? I'm left to my fate, because my clientYTPlayer.currentState is still == PLAYING, but I'm not playing.
+* Make play button replay hte video if state is ended. 
 
 TODO:
 * Generally to set up the youtube playing functionality:
@@ -41,10 +46,16 @@ TODO:
 * Once all above is instituted, do refactoring. Clean up the code. Once that's done, make simultaneous youtube videos work. Once that's done, set up the database. Once that's done, do the frontend so it looks nice using just css and html5 animations etc.
 
 REFACTORING:
+
+* Split chat code and video code into separate JS files
+* Get rid of clientYTPlayer util class and have literal instantiated objects. Use polymorphism to handle different video types (as in, youtube vs not youtube)
+* Remove Jquery
+* Write a clientytplayer function that is passed a state and sets current state to that, previous state to whatever it was before, as well as makes 
 * In IsNameAvailable(), change the for loop to something cleaner.
 * Set up something similar to: https://stackoverflow.com/questions/36327702/nodejs-express-getting-error-as-referenceerror-bodyparser-is-not-defined
 
 THOUGHTS:
+
 * When done with this whole list, refactor the code before proceeding with the next phase of development.
 * This will ultimately be a watch2gether clone. I think it's possible to do by having the client catch when the user changes the time on the embeded video, then send that new set time to the server, then send that to the other viewers' clients.
 * Add error handling. For example, currently (11/8/20), if your name for some reason is never released after you choose a new one, the code has no way of recognizing that issue. That's a serious issue because the name can never be used again, even by you.
@@ -56,6 +67,25 @@ THOUGHTS:
 
 DONE:
 
+12/6/20
+
+*We're setting playbackrate on our end. Now we just need to set it to the universal value in the server, and then in alignwithstate adjust playbackrate to match the server's.
+* Also sometimes pausing/playing desyncs. Try to test to see why. Seems to happen after a new video is added.
+* The serverstate is set to seeking, and then it seems that state is never undone, so alignstatewithserver is never able to fire again no matter what happens, and the play button stops working because it doesn't do anything unless the state is playing, paused, or unstarted. So there's an issue somewhere with the state being left in an unworkable situation
+    ** I think it's because I was not checking the pings on the vieweridlist, and also on the client side I hadn't been setting the user ID properly. So a page frefresh instantly gave you a new user ID, and then your old one wasn't being removed from the server ID list. This caused play button to stop working because its code doesn't check for the "seeking" state.
+* When you refresh the page, it starts playing immediately without triggering an event for the other player. Likely because autoplay is on. Disable autoplay in the player options.
+
+====
+
+12/6/20
+
+(EXTRA):
+    * Fixed an issue that was causing new videos to not be added when you entered the URL in the search bar.
+* Hot-joining while the video was paused didn't work, but now it seems fixed.
+    ** Actually it still doesn't work if you're doing it from a newly-added video. So I added some console logs to the alignstatewithserver shit.
+    ** Had an issue where we weren't setting the videoTime to the serverTime when adding it in, which we need to do specifically if a user is hot-joining and the universal video state is not playing.
+
+====
 12/5/20
 
 * Add the popup modal that watch2gether has when a page is restarted.
