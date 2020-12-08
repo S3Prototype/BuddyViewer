@@ -363,10 +363,11 @@ app.post('/alter-video-settings', function(req, res){
         state: VideoManager.universalState,
         video_url: VideoManager.universalUrl,
         video_time: VideoManager.universalTime,
-        alter_id: VideoManager.alterID        
+        alter_id: VideoManager.alterID,
+        video_looping: VideoManager.universalLooping
     }
     
-    res.send("SUCCESS");
+    res.send(data);
 });
 
 app.post('/check-server-video-state', function(req, res){
@@ -403,6 +404,12 @@ app.post('/check-server-video-state', function(req, res){
             VideoManager.timeIsWithinRange(req.body.video_time)){
                 VideoManager.universalTime = req.body.video_time;
                 data.video_time = req.body.video_time;
+        }
+    }
+
+    if(VideoManager.universalState == CustomStates.ENDED){
+        if(VideoManager.universalLooping){
+            data.video_time = 0;
         }
     }
 

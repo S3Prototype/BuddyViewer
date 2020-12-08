@@ -1,8 +1,8 @@
 DOING:
 * Still need to write code that actually loops the video when its state changes to ended.
-*Clicking the screen in fullscreen mode should toggle the controls on. If you click and toggle them on, they can't be toggled off by anything but moving the mouse out of the controls.
 
 * Set up other youtube functions (captions, etc)
+    ** Catch the spacebar so it plays video (but not if I'm typing in chat)
     ** Loop button so it can loop
         *** First should set a bool to true so when the video state changes to "ENDED," we set the universal time to 0 and then change the universal state to PLAYING. Boom. Loop.
         *** Don't think I should let youtube's player handle the looping.
@@ -67,6 +67,11 @@ THOUGHTS:
 
 DONE:
 
+12/8/20
+
+*Clicking the screen in fullscreen mode should toggle the controls on. If you click and toggle them on, they can't be toggled off by anything but moving the mouse out of the controls.
+
+=====
 12/7/20
     ** Full screen controls that show up at the bottom of the screen and drop down after x amount of time
     ** Playback rate

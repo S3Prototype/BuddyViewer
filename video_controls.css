@@ -9,6 +9,7 @@
     grid-column: main / right-sidebar;
     grid-row: video-area / chat-area;
     row-gap: 5px;
+    pointer-events: auto;
 }
 
 .video_container button{
@@ -19,6 +20,7 @@
 .video_container:fullscreen{
     display: flex;
     flex-direction: column;
+    flex-wrap: nowrap;
 }
 
 iframe{

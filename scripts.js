@@ -250,11 +250,19 @@ $(function(){
             //state last was me, just end it.
             if(!player) return;
             if(!progressBarInitialized) initializeYTProgressBar();
+
+            // console.log("PLAYBACK RATE IS NOW: "+player.getPlaybackRate());
             const serverState = response.state;
             const serverTime = Math.round(response.video_time);
             const serverURL = response.video_url;
             const serverPlaybackRate = response.video_playbackrate;
-            const serverLooping = response.video_looping;
+            ClientYTPlayer.looping = response.video_looping;
+            const loopingButton = document.getElementById('loop-button');
+            if(ClientYTPlayer.looping){
+                loopingButton.style.color = "white"
+            } else {
+                loopingButton.style.color = "gray";
+            }
 
             if(serverURL != ClientYTPlayer.clientURL){
                 ClientYTPlayer.clientURL = ClientYTPlayer.extractID(serverURL);
@@ -284,15 +292,27 @@ $(function(){
                     const seekIcon = serverTime > ClientYTPlayer.videoTime ? "fas fa-forward" : "fas fa-backward";
                     document.getElementById('play-pause-icon').className = seekIcon;                    
                 }
+            } else if(serverState == ClientYTPlayer.currentState) {
+            }
+
+            if(serverState == CustomStates.ENDED){
+                if(ClientYTPlayer.looping){
+                    ClientYTPlayer.currentState = CustomStates.PLAYING;
+                    ClientYTPlayer.videoTime = 0;
+                    document.getElementById('play-pause-icon').className = "fas fa-pause";
+                    player.seekTo(0);
+                    player.playVideo();
+                    ClientYTPlayer.SendStateToServer({})
+                }
             }
                 
             const currTime = ClientYTPlayer.videoTime;
             // console.log("TIME NOW IS: "+currTime +"| SERVER TIME: "+serverTime);
             if(currTime < serverTime - 5 || currTime > serverTime + 5){
-                console.log("Adjusting client to server time");
-                console.log("==================");
-                console.log(`Client time: ${currTime} | Server time: ${serverTime}`);
-                console.log("==================");
+                // console.log("Adjusting client to server time");
+                // console.log("==================");
+                // console.log(`Client time: ${currTime} | Server time: ${serverTime}`);
+                // console.log("==================");
                 player.seekTo(serverTime);
                 if(serverState == CustomStates.PAUSED){
                     player.pauseVideo();
@@ -306,7 +326,6 @@ $(function(){
                 document.getElementById('playrate-text').innerHTML = serverPlaybackRate +"x";
             }
 
-            ClientYTPlayer.looping = serverLooping;
             
             // ClientYTPlayer.currentState = player.getPlayerState();
         }
@@ -371,6 +390,7 @@ $(function(){
         playRateOptionsShowing = false
         ClientYTPlayer.playbackRate = nextRate;
         ClientYTPlayer.SendStateToServer({});
+        console.log("PLAYRATE SHOULD BE: "+nextRate);
     });
 
     reducePlayrateButton.addEventListener('click', function(event){
@@ -433,7 +453,7 @@ $(function(){
             loopButton.style.color = "white";
         }
         ClientYTPlayer.looping = !alreadyLooping
-        console.log("LOOPING: "+!alreadyLooping);
+        console.log("LOOPING: "+ClientYTPlayer.looping);
         ClientYTPlayer.SendStateToServer({});
     });
 
@@ -529,6 +549,13 @@ $(function(){
             player.playVideo();
             document.getElementById('play-pause-icon').className = "fas fa-pause";
             ClientYTPlayer.SendStateToServer({});
+        } else if(ClientYTPlayer.currentState == CustomStates.ENDED){
+            ClientYTPlayer.currentState = CustomStates.PLAYING;
+            ClientYTPlayer.videoTime = 0;
+            player.seekTo(ClientYTPlayer.videoTime);
+            player.playVideo();
+            document.getElementById('play-pause-icon').className = "fas fa-pause";
+            ClientYTPlayer.SendStateToServer({});     
         }
     });
 
@@ -598,6 +625,14 @@ $(function(){
 
     function stopYTEvent(event){
         playerInitialized = true;
+        if(event.data == CustomStates.ENDED){
+            ClientYTPlayer.currentState = event.data;
+            if(ClientYTPlayer.looping){
+                ClientYTPlayer.videoTime = 0;
+            }
+            document.getElementById('play-pause-icon').className = "fas fa-play";
+            ClientYTPlayer.SendStateToServer({});                
+        }
         // console.log("BEFORE anything: "+event.data);
         // if(event.data == YT.PlayerState.BUFFERING){                    
         //     return;
@@ -960,7 +995,7 @@ $(function(){
 
     }
 
-    let showControls = true;
+    let controlsToggled = false;
     document.addEventListener('readystatechange', event => { 
     
         // When window loaded ( external resources are loaded too- `css`,`src`, etc...) 
@@ -999,7 +1034,8 @@ $(function(){
                 if(!inFullScreen) return;
                 const screenHeight = window.screen.height;
                 // console.log(videoContainer.style.flexWrap);
-                if(event.screenY < screenHeight*0.85){
+                if(event.screenY < screenHeight*0.85 &&
+                    !controlsToggled){
                     videoContainer.style.flexWrap = "wrap";
                 } else {
                     videoContainer.style.flexWrap = "nowrap";
@@ -1009,6 +1045,19 @@ $(function(){
             document.addEventListener('fullscreenchange', function(event){
                 inFullScreen = !inFullScreen;
             })
+
+            videoContainer.addEventListener('click', function(eventi){
+                /*If you click in the video during fullscreen, bring
+                the controls up. After 3 secs, put them away again */
+                if(inFullScreen){
+                    videoContainer.style.flexWrap = "nowrap";                    
+                    controlsToggled = true;
+                    setTimeout(()=>{
+                        controlsToggled = false;
+                        videoContainer.style.flexWrap = "wrap";                    
+                    }, 3000);
+                }
+            });
 
             document.getElementById('join-room-modal').classList.add('active');
             document.getElementById('join-room-modal-overlay').classList.add('active');
