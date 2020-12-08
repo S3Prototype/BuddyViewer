@@ -1,17 +1,16 @@
 DOING:
-
+* Still need to write code that actually loops the video when its state changes to ended.
+*Clicking the screen in fullscreen mode should toggle the controls on. If you click and toggle them on, they can't be toggled off by anything but moving the mouse out of the controls.
 
 * Set up other youtube functions (captions, etc)
-    ** Playback rate
-        *** Just check in align server state if the playback rate is different from the server's. If so, adjust ours. When you adjust playback rate, set it on the server with sendstate.
     ** Loop button so it can loop
         *** First should set a bool to true so when the video state changes to "ENDED," we set the universal time to 0 and then change the universal state to PLAYING. Boom. Loop.
         *** Don't think I should let youtube's player handle the looping.
-    ** Full screen controls that show up at the bottom of the screen and drop down after x amount of time
     ** Set up the buffering bar using the getPlayerLoadedFraction() function
     ** Make it save all the options in a cookie, so when you reload the page you're good to go.
 * Load player from JS--not on the index.html page. Gives us so much more ability to do things when the video first loads. Can't just move the script tag in the html down below our other scrips, because they expect player to be a thing. Then again a lot of that code is in the document.onReadystate stuff, which runs after the page is already loaded, including the JS in the html.
 * Catch the play/pause events from users clicking on the player
+    **This still has to be considered for mobile probably. Not sure if pointer-events:none works on mobile.
 * Consider what to do about buffering. I guess just ignore it? It's kinda handled by the time buffer and everything.
     ** Probably if it's buffering, the client shouldn't ping the video state, because we kinda need to wait until it's done.
     ** in the onplayerstatechange callback, check if the event triggered is buffering. If so, set our state to buffering. If the event is not buffering, check if our state is buffering--if so, set our state to whatever the event is. This way, we only take the state this callback gives us if we were just buffering; otherwise we ignore it.
@@ -47,6 +46,7 @@ TODO:
 
 REFACTORING:
 
+* Put the join-room-button code in the actual index.html, in a script in the head, so it runs before the rest of the page loads; otherwise people are able to click on things before the overlay loads to block mouse events.
 * Split chat code and video code into separate JS files
 * Get rid of clientYTPlayer util class and have literal instantiated objects. Use polymorphism to handle different video types (as in, youtube vs not youtube)
 * Remove Jquery
@@ -67,6 +67,15 @@ THOUGHTS:
 
 DONE:
 
+12/7/20
+    ** Full screen controls that show up at the bottom of the screen and drop down after x amount of time
+    ** Playback rate
+        *** Just check in align server state if the playback rate is different from the server's. If so, adjust ours. When you adjust playback rate, set it on the server with sendstate.
+* Set it so if you click the playbackrate button while in fullscreen, it just toggles to the next value up or down. Either do that, or add fastforward and rewind buttons on either side of the playbackrate, and disable playbackrate while inFullScreen is true.
+* Catch the esc keypress and check if inFullScreen is true. If so, set it to false.
+* Video controls now appear in full screen mode, godfuckingdammit. TOOK. HOURS. Even watch2gether doesn't do that
+
+====
 12/6/20
 
 *We're setting playbackrate on our end. Now we just need to set it to the universal value in the server, and then in alignwithstate adjust playbackrate to match the server's.

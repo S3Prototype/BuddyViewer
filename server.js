@@ -216,6 +216,7 @@ class VideoManager{
     static alterID = "";
     static #seekingIDList = [];
     static universalPlaybackRate = 1;
+    static universalLooping = false;
     static seekingIDListEmpty = true;
     static #viewerIDList = [];
     static isSeekingIDListEmpty(){
@@ -331,6 +332,7 @@ app.post('/initialize', function(req, res){
 app.post('/alter-video-settings', function(req, res){
     console.log("CLIENT("+req.body.user_id+") "+"HAS SENT STATE: "+req.body.state);
 
+    VideoManager.universalLooping = req.body.video_looping;
     VideoManager.alterID = req.body.user_id;
     VideoManager.universalPlaybackRate = req.body.video_playbackrate;
 
@@ -379,7 +381,9 @@ app.post('/check-server-video-state', function(req, res){
         state: VideoManager.universalState,
         video_time: VideoManager.universalTime,
         video_url: VideoManager.universalUrl,
-        alter_id: VideoManager.alterID
+        alter_id: VideoManager.alterID,
+        video_playbackrate: VideoManager.universalPlaybackRate,
+        video_looping: VideoManager.universalLooping
     }
 
     if(VideoManager.universalState == CustomStates.SEEKING){

@@ -13,12 +13,11 @@
             <div class="video_progress">
                 <progress id="progress-bar" value="0" min="0"></progress>
             </div>
-            <div class='video_controls'>
-            </div>
-            <button data-title="Play/Pause" class="play-pause-button" id="play-pause-button">            
-                <span id="play-pause-icon" class="fas fa-play" ></span>
-            </button>
-            <span class="seek-tooltip" id="seek-tooltip">00:00 | 00:00</span>
+            <div class='video_controls' id='video_controls'>            
+                <button data-title="Play/Pause" class="play-pause-button" id="play-pause-button">            
+                    <span id="play-pause-icon" class="fas fa-play" ></span>
+                </button>
+                <span class="seek-tooltip" id="seek-tooltip">00:00 | 00:00</span>
                 <button data-title="Mute (m)" class="mute-button" id="mute-button">
                     <span id="mute-icon" class="fas fa-volume-up"></span>
                 </button>          
@@ -29,29 +28,35 @@
                 <button id="fullscreen-button" class="fullscreen-button">
                     <span id="fullscreen-icon" class="fas fa-expand"></span>
                 </button>
-                <form id="ytsearch">
-                    <input type="text" id="ytsearch-input" placeholder="Paste a Youtube link here">                            
-                </form>
+                <button id="reduce-playrate-button" class="reduce-playrate-button">
+                    <span id="reduce-playrate-icon" class="fas fa-angle-double-left"></span>
+                </button>
                 <button class="playrate-button" id="playrate-button">
                     <span class="playrate-text" id="playrate-text">1x</span>
                 </button>
-                <!--
-                <button>
-                    <i class="fas fa-angle-double-right"></i>
-                </button> -->
-                <div class="playrate-dropdown" id="playrate-dropdown">
-                    <div class="playrate-options" id="playrate-options">
-                            <button>2x</button> 
-                            <button>1.75x</button>
-                            <button>1.5x</button>
-                            <button>1.25x</button>
-                            <button>1x</button>
-                            <button>0.75x</button>
-                            <button>0.5x</button>
-                            <button>0.25x</button>
-                        </ul>
-                    </div>
-                </div>
+                <button id="increase-playrate-button" class="increase-playrate-button">
+                    <span id="increase-playrate-icon" class="fas fa-angle-double-right"></span>
+                </button>
+                <button id="loop-button" class="loop-button">
+                    <span class="fas fa-infinity"></span>
+                </button>
+            </div>
+                                <div class="playrate-dropdown" id="playrate-dropdown">
+                                    <div class="playrate-options" id="playrate-options">
+                                            <button>2x</button> 
+                                            <button>1.75x</button>
+                                            <button>1.5x</button>
+                                            <button>1.25x</button>
+                                            <button>1x</button>
+                                            <button>0.75x</button>
+                                            <button>0.5x</button>
+                                            <button>0.25x</button>
+                                        </ul>
+                                    </div>
+                                </div>
+            <form id="ytsearch">
+                <input type="text" id="ytsearch-input" placeholder="Paste a Youtube link here">                            
+            </form>
         </div>
         <div id="chat-area-container">
             <table id="chat-table" class="chat-table">

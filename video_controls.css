@@ -11,6 +11,52 @@
     row-gap: 5px;
 }
 
+.video_container button{
+    background: none;
+    border: none;
+}
+
+.video_container:fullscreen{
+    display: flex;
+    flex-direction: column;
+}
+
+iframe{
+pointer-events: none;
+}
+
+.video_controls{
+    grid-row: video-controls / search-box;
+    grid-column: 1 / -1;
+    width: 100%;
+    display: inline-grid;
+    grid-template-columns: [play-button] .25fr [time-code] .5fr [mute-button] .25fr [volume-slider] 1fr [closed-captions-button] .25fr [reduce-playrate] .10fr [playrate-button] .25fr [increase-playrate] .10fr [loop-button] .25fr [settings-button] .25fr [fullscreen-button] .25fr;
+    grid-template-rows: 1fr;
+    order: 2;
+}
+
+#player {
+    grid-column-start: 1;
+    grid-column-end: -1;
+    grid-row-start: video-player;
+    grid-row-end: progress-bar;
+    order: 1;
+    height: 100%;
+    width: 100%;
+}
+
+.reduce-playrate-button{
+    grid-column: reduce-playrate;
+    grid-row: video-controls;
+    color: white; 
+}
+
+.increase-playrate-button{
+    grid-column: increase-playrate;
+    grid-row: video-controls;
+    color: white;
+}
+
 .playrate-button{
     grid-row: video-controls;
     grid-column: playrate-button;
@@ -27,6 +73,7 @@
     grid-column: playrate-button;
     grid-row: progress-bar;
     bottom: 150px;
+    left: -15px;
     display: none;
     background-color: black;
     /* display: flex;
@@ -41,6 +88,12 @@
     background: none;
     color: white;
     border: none;
+    width: 100%;
+}
+
+.playrate-dropdown button:hover{
+    background-color: white;
+    color: black;
 }
 
 .playrate-options{
@@ -56,24 +109,25 @@
     /* list-style: none; */
 }
 
+.loop-button{
+    color: gray;
+    grid-row: video-controls;
+    grid-column: loop-button;
+}
+
 #ytsearch{
     grid-row: search-box / bottom-row;
     grid-column: time-code / fullscreen-button;
+    width: 100%;
+    order: 3;
 }
 
 #ytsearch-input {
     width: 100%;
-    background-color: rgba(255, 255, 255, 0);
+    background-color:inherit;
     color: white;
     border: none;
     text-align: center;
-}
-
-.video_controls {
-    grid-column-start: play-button;
-    grid-column-end: volume-bar;
-    grid-row-start: video-controls;
-    grid-row-end: search-box;
 }
 
 #seek-tooltip {
@@ -85,7 +139,7 @@
     color: white;
 }
 
-#play-pause-button {
+.play-pause-button {
     grid-column-start: play-button;
     grid-column-end: time-code;
     grid-row-start: video-controls;
@@ -99,8 +153,8 @@
 }
 
 #closed-captions-button{
-    grid-column: closed-captions-button / playrate-button;
-    grid-row: video-controls / search-box;
+    grid-column: closed-captions-button;
+    grid-row: video-controls;
     background:none;
     border:none;
 }
@@ -109,17 +163,12 @@
     color: white;
 }
 
-#player {
-    grid-column-start: 1;
-    grid-column-end: -1;
-    grid-row-start: video-player;
-    grid-row-end: progress-bar;
-}
-
 .video_progress {
     grid-column: 1 / -1;
     grid-row: progress-bar / video-controls;
     color: white;
+    width: 100%;
+    order: 2;
 }
 
 #progress-bar {
@@ -133,12 +182,14 @@
 /* For Firefox */ 
 #progress-bar::-moz-progress-bar { 
     background:whitesmoke;
+    width: 100%;
     color: gray;
 } 
 
 /* For Chrome or Safari */ 
 #progress-bar::-webkit-progress-value { 
     background:whitesmoke; 
+    width: 100%;
     color: gray;
 } 
 

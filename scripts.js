@@ -105,6 +105,7 @@ $(function(){
         //     SEEKING: 6
         // };
         static videoDuration;
+        static looping = false;
 
         static timeShouldBeSaved = false;
 
@@ -224,7 +225,8 @@ $(function(){
                 "state" : ClientYTPlayer.currentState,
                 "video_time" : ClientYTPlayer.videoTime,
                 "video_url": ClientYTPlayer.clientURL,
-                "video_playbackrate": ClientYTPlayer.playbackRate
+                "video_playbackrate": ClientYTPlayer.playbackRate,
+                "video_looping": ClientYTPlayer.looping
             };
 
             //Here we check if the state is anything weird.
@@ -252,6 +254,7 @@ $(function(){
             const serverTime = Math.round(response.video_time);
             const serverURL = response.video_url;
             const serverPlaybackRate = response.video_playbackrate;
+            const serverLooping = response.video_looping;
 
             if(serverURL != ClientYTPlayer.clientURL){
                 ClientYTPlayer.clientURL = ClientYTPlayer.extractID(serverURL);
@@ -300,7 +303,10 @@ $(function(){
             if(serverPlaybackRate != ClientYTPlayer.playbackRate){
                 ClientYTPlayer.playbackRate = serverPlaybackRate;
                 player.setPlaybackRate(serverPlaybackRate);
+                document.getElementById('playrate-text').innerHTML = serverPlaybackRate +"x";
             }
+
+            ClientYTPlayer.looping = serverLooping;
             
             // ClientYTPlayer.currentState = player.getPlayerState();
         }
@@ -315,7 +321,7 @@ $(function(){
             "user_id" : userID,
             "state" : ClientYTPlayer.currentState,
             "video_time": ClientYTPlayer.videoTime,
-            "video_url": ClientYTPlayer.clientURL
+            "video_url": ClientYTPlayer.clientURL,
         };
         $.ajax({
             url: '/check-server-video-state',
@@ -327,7 +333,6 @@ $(function(){
                 ClientYTPlayer.alignWithServerState(response); 
             }
         });
-
 
     }
 
@@ -352,28 +357,56 @@ $(function(){
 
     });
 
+    const increasePlayrateButton = document.getElementById('increase-playrate-button');
+    const reducePlayrateButton = document.getElementById('reduce-playrate-button');
+    
+    const playrateText = document.getElementById('playrate-text');
+
+    increasePlayrateButton.addEventListener('click', function(event){
+        const currRate = player.getPlaybackRate();
+        if(currRate == 2) return;
+        let nextRate = currRate + 0.25;
+        playrateText.innerHTML = nextRate+"x";
+        player.setPlaybackRate(nextRate);
+        playRateOptionsShowing = false
+        ClientYTPlayer.playbackRate = nextRate;
+        ClientYTPlayer.SendStateToServer({});
+    });
+
+    reducePlayrateButton.addEventListener('click', function(event){
+        const currRate = player.getPlaybackRate();
+        if(currRate == 0.25) return;
+        let nextRate = currRate - 0.25;
+        playrateText.innerHTML = nextRate+"x";
+        player.setPlaybackRate(nextRate);
+        playRateOptionsShowing = false
+        ClientYTPlayer.playbackRate = nextRate;
+        ClientYTPlayer.SendStateToServer({});
+    });
+
     const playrateButton = document.getElementById('playrate-button');
     let playRateOptionsShowing = false;
     playrateButton.addEventListener('click', function(event){
-
-    const playrateButtonChildren = document.getElementById('playrate-options').children;
-    const playrateButtonArray = Array.from(playrateButtonChildren);
-    const playrateText = document.getElementById('playrate-text');
-
-    playrateButtonArray.forEach((button)=>{
-        button.addEventListener('click', function(event){
-            const xIndex = button.innerHTML.indexOf('x');
-            console.log(button.innerHTML);
-            const playbackRateValue = parseFloat(button.innerHTML.substring(0, xIndex));
-            player.setPlaybackRate();
-            ClientYTPlayer.playbackRate = playbackRateValue;
-            ClientYTPlayer.SendStateToServer({});
-            playrateDropdown.style.display = 'none';
-            playRateOptionsShowing = false;
-            playrateText.innerHTML = playbackRateValue +"x";
-            //Now set the clientytplayer playrate and send state to server below
+        if(inFullScreen) return;
+        
+        const playrateButtonChildren = document.getElementById('playrate-options').children;
+        const playrateButtonArray = Array.from(playrateButtonChildren);
+        
+        playrateButtonArray.forEach((button)=>{
+            button.addEventListener('click', function(event){
+                if(inFullScreen) return;
+                const xIndex = button.innerHTML.indexOf('x');
+                console.log(button.innerHTML);
+                const playbackRateValue = parseFloat(button.innerHTML.substring(0, xIndex));
+                player.setPlaybackRate(playbackRateValue);
+                ClientYTPlayer.playbackRate = playbackRateValue;
+                ClientYTPlayer.SendStateToServer({});
+                playrateDropdown.style.display = 'none';
+                playRateOptionsShowing = false;
+                playrateText.innerHTML = playbackRateValue +"x";
+                //Now set the clientytplayer playrate and send state to server below
+            });
         });
-    });
 
         const playrateDropdown = document.getElementById('playrate-dropdown');
         const videoContainer = document.getElementById('video_container');
@@ -389,6 +422,19 @@ $(function(){
             });
         }
         playRateOptionsShowing = !playRateOptionsShowing;
+    });
+
+    const loopButton = document.getElementById('loop-button');
+    loopButton.addEventListener('click', function(event){
+        const alreadyLooping = ClientYTPlayer.looping;
+        if(alreadyLooping){
+            loopButton.style.color = "gray";
+        } else {
+            loopButton.style.color = "white";
+        }
+        ClientYTPlayer.looping = !alreadyLooping
+        console.log("LOOPING: "+!alreadyLooping);
+        ClientYTPlayer.SendStateToServer({});
     });
 
     $('#ytsearch').on('submit', function(event){
@@ -408,14 +454,25 @@ $(function(){
             console.log("End of search submit function");
         }
     });
-
+    let inFullScreen = false;
+    
     $('#fullscreen-button').click(function(event){
-        const playerElement = document.getElementById('player');
-        let requestFullScreen = playerElement.requestFullScreen || playerElement.mozRequestFullScreen || playerElement.webkitRequestFullScreen;
-        if (requestFullScreen) {
-            requestFullScreen.bind(playerElement)();
-            // document.getElementById('fullscreen-icon').class = "fas fa-compress";
+        if(!inFullScreen){
+            const playerElement = document.getElementById('video_container');
+            let requestFullScreen = playerElement.requestFullScreen || playerElement.mozRequestFullScreen || playerElement.webkitRequestFullScreen;
+            if (requestFullScreen) {
+                document.getElementById('fullscreen-icon').class = "fas fa-compress";
+                requestFullScreen.bind(playerElement)();
+                // document.getElementById('ytsearch').style.display = 'none';
+            }
         }
+        else {
+            document.getElementById('fullscreen-icon').class = "fas fa-expand";
+            document.exitFullscreen();
+            // document.getElementById('ytsearch').style.display = '';
+            // document.getElementById('ytsearch').style.removeProperty('display');
+        }
+        // inFullScreen = !inFullScreen;
     });
 
     $('#closed-captions-button').click(function(event){
@@ -474,6 +531,7 @@ $(function(){
             ClientYTPlayer.SendStateToServer({});
         }
     });
+
 
     function updateYTVideoTime(){
         if(!player || !player.getCurrentTime ||
@@ -902,6 +960,7 @@ $(function(){
 
     }
 
+    let showControls = true;
     document.addEventListener('readystatechange', event => { 
     
         // When window loaded ( external resources are loaded too- `css`,`src`, etc...) 
@@ -928,9 +987,31 @@ $(function(){
 
             initializeYTProgressBar();
             progressBar.addEventListener('click', progressBarYTScrub);
+            inFullScreen = false;
 
-            // document.getElementById('join-room-modal').classList.add('active');
-            // document.getElementById('join-room-modal-overlay').classList.add('active');
+            const videoContainer = document.getElementById('video_container');
+            // const mouseDetector = document.getElementById('fullscreen-mouse-detector');
+            // const videoControls = document.getElementById('video_controls');
+            const searchBar = document.getElementById('ytsearch');
+
+            videoContainer.addEventListener('mousemove', function(event){
+                // console.log(new Date().toLocaleTimeString()+" mouse moved at: "+event.screenY);
+                if(!inFullScreen) return;
+                const screenHeight = window.screen.height;
+                // console.log(videoContainer.style.flexWrap);
+                if(event.screenY < screenHeight*0.85){
+                    videoContainer.style.flexWrap = "wrap";
+                } else {
+                    videoContainer.style.flexWrap = "nowrap";
+                }
+            });
+
+            document.addEventListener('fullscreenchange', function(event){
+                inFullScreen = !inFullScreen;
+            })
+
+            document.getElementById('join-room-modal').classList.add('active');
+            document.getElementById('join-room-modal-overlay').classList.add('active');
         }
     });
 
