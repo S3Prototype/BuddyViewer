@@ -296,7 +296,7 @@ class VideoManager{
                     //delete the id from the server. But first let's just
                     //DC it instantly. Implement the counter after we make
                     //it work.
-                    if(pingedID.failedCount > 3){
+                    if(pingedID.failedCount > 5){
                         VideoManager.removeFromViewerIDList(pingedID.id);
                         console.log("******************");
                         console.log("Video Ping failed! Deleting: "+pingedID.id);
@@ -319,12 +319,9 @@ app.get('/messages', function(req, res){
 
 app.post('/initialize', function(req, res){
 
-    var nameValidated;
-    if(req.body){
-        nameValidated = NameContainer.validateName(req.body, null);
-    }
-
+    NameContainer.validateName(req.body, null);
     NameContainer.pingName(req.body.name);
+    VideoManager.pingViewerIDList(req.body.user_id);
 
     res.send("SUCCESS");
 });
@@ -440,6 +437,8 @@ app.post('/user-list', function(req, res){
 
     UserListContainer.populateUserList(NameContainer.getTakenNames());
     UserListContainer.generateNewListID();
+    NameContainer.pingName(req.body.user_id);
+    VideoManager.pingViewerIDList(req.body.user_id);
     //Now because they're checking the user list, ping their id.
 
     // console.log.("________________");
@@ -497,7 +496,7 @@ app.post('/messages', function(req, res){
             "user_id" : thisMessage.user_id
         };
     }
-
+    VideoManager.pingViewerIDList(req.body.user_id);
     NameContainer.pingName(thisMessage.user_id);
 
     res.send(req.body);

@@ -1,30 +1,11 @@
 DOING:
 
-* Set up other youtube functions (captions, etc)
-** Make it save all the options in a cookie, so when you reload the page you're good to go.
-* Load player from JS--not on the index.html page. Gives us so much more ability to do things when the video first loads. Can't just move the script tag in the html down below our other scrips, because they expect player to be a thing. Then again a lot of that code is in the document.onReadystate stuff, which runs after the page is already loaded, including the JS in the html.
-* Consider what to do about buffering. I guess just ignore it? It's kinda handled by the time buffer and everything.
-    ** Probably if it's buffering, the client shouldn't ping the video state, because we kinda need to wait until it's done.
-    ** in the onplayerstatechange callback, check if the event triggered is buffering. If so, set our state to buffering. If the event is not buffering, check if our state is buffering--if so, set our state to whatever the event is. This way, we only take the state this callback gives us if we were just buffering; otherwise we ignore it.
-* Why does hte bar jump back and forht if you hot-join while the video is paused and then seek?
-* Now just have to test everything thoroughly. All features.
-* If they're working well enough, we have to implement code to remove the user's ability to press the player and make stuff happen. It'll screw everything up.
-* Big scary thing is how much the youtube API is still checking for me. Like after it seeks, even though it was just playing, it might pause locally. That would not trigger an event on the server. Theoretically, if I seek while playing, the server remembers we were just playing, and when I'm done seeking, it sets me back to playing no matter what. But if I'm still buffering and the server tries to make me play, youtube API might reject the playVideo() call and leave me buffering. What then? I'm left to my fate, because my clientYTPlayer.currentState is still == PLAYING, but I'm not playing.
-* Make play button replay hte video if state is ended. 
+* Add the search function
 
 TODO:
-* Generally to set up the youtube playing functionality:
-    ** Pressing play should play the videos of the other users
-    ** Pressing pause should pause the videos of the other users
-    ** Scrubbing should work.
-    ** Searching
-    ** Changing play speed.
-    ** All other minor functions.
-* Volume settings/mute button
-* Fix it so youtube iframe is generated from js, not on the page.
+* Why does the bar jump back and forth if you hot-join while the video is paused and then seek?
+* Now just have to test everything thoroughly. All features.
 * REFACTOR/CLEAN UP CODE/ORGANIZE FOLDERS
-
-* Ultimately wrap the youtube div in another div, and create your own controls. That way when the user wants to watch a vid from another site, you just fill that div with their video player.
 
 
 * Stretch goal: Let users paste embed codes of any video player <iframe>, then play it in our video container div.
@@ -49,10 +30,20 @@ REFACTORING:
 
 THOUGHTS:
 
+* Use web-scraping to get better search results than the youtube search API might give you. That way you'll do better than watch2gether's search.
+* Default video should be a 1-minute explanation of what the site is and how it works.
 * When done with this whole list, refactor the code before proceeding with the next phase of development.
 * This will ultimately be a watch2gether clone. I think it's possible to do by having the client catch when the user changes the time on the embeded video, then send that new set time to the server, then send that to the other viewers' clients.
 * Add error handling. For example, currently (11/8/20), if your name for some reason is never released after you choose a new one, the code has no way of recognizing that issue. That's a serious issue because the name can never be used again, even by you.
 * Could make it so it stores the status of videos. So when you put in a new video, you can press a "back" button that reverts to the previous video at the time that it was at.
+* Consider what to do about buffering. I guess just ignore it? It's kinda handled by the time buffer and everything.
+    ** Probably if it's buffering, the client shouldn't ping the video state, because we kinda need to wait until it's done.
+    ** in the onplayerstatechange callback, check if the event triggered is buffering. If so, set our state to buffering. If the event is not buffering, check if our state is buffering--if so, set our state to whatever the event is. This way, we only take the state this callback gives us if we were just buffering; otherwise we ignore it.
+* Big scary thing is how much the youtube API is still checking for me. Like after it seeks, even though it was just playing, it might pause locally. That would not trigger an event on the server. Theoretically, if I seek while playing, the server remembers we were just playing, and when I'm done seeking, it sets me back to playing no matter what. But if I'm still buffering and the server tries to make me play, youtube API might reject the playVideo() call and leave me buffering. What then? I'm left to my fate, because my clientYTPlayer.currentState is still == PLAYING, but I'm not playing.
+
+* SCRAPPED:
+* Load player from JS--not on the index.html page. Gives us so much more ability to do things when the video first loads. Can't just move the script tag in the html down below our other scrips, because they expect player to be a thing. Then agai*n a lot of that code is in the document.onReadystate stuff, which runs after the page is already loaded, including the JS in the html.
+    ** This won't work. Instead, start the page with an HTML5 video just like watch2gether. A user can then create a player when they search and play a video.
 
 ~~~~~~~~~~~
 ===========
@@ -61,6 +52,14 @@ THOUGHTS:
 DONE:
 
 12/8/20
+** Make it save all the options in a cookie, so when you reload the page you're good to go.
+    ** CC
+    ** looping
+    ** playbackRate
+        **This one didn't make as much sense in practice, so I cut it.
+* Make play button replay hte video if state is ended. 
+* Ultimately wrap the youtube div in another div, and create your own controls. That way when the user wants to watch a vid from another site, you just fill that div with their video player.
+* Set up other youtube functions (captions, etc)
     ** Set up the buffering bar using the getPlayerLoadedFraction() function
     
 * Catch the play/pause events from users clicking on the player

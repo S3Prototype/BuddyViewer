@@ -3,8 +3,6 @@
     <head>
         <title>Test Chatroom</title>
         <meta charset="utf-8" />
-        <script async="async" src="https://www.youtube.com/iframe_api"></script>
-        <script async="async" src="https://apis.google.com/js/api.js"></script>
         <link rel="stylesheet" href="chat_styles.css" type="text/css" />
         <link rel="stylesheet" href="video_controls.css" type="text/css" />
         <link rel="stylesheet" href="modal_styles.css" type="text/css" />
@@ -104,15 +102,41 @@
 
       // 3. This function creates an <iframe> (and YouTube player)
       //    after the API code downloads.
-      const ytReadyEvent = new Event('ytready');
-      const pageIsReadyEvent = new Event('pageIsReady');
+      var player;
       function onYouTubeIframeAPIReady() {
-        document.dispatchEvent(ytReadyEvent);
+        player = new YT.Player('player', {
+          height: '100%',
+          width: '100%',
+          videoId: "hjcXNK-zUFg",
+          events: {
+            'onReady': function(event){
+                if(parseInt(localStorage.getItem('cc_load_policy')) != 0){
+                    document.getElementById('closed-captions-icon').className = "fas fa-closed-captioning";
+                }
+                if(localStorage.getItem('looping') == 'true'){
+                    document.getElementById('loop-button').style.color = "white";
+                }
+            }
+          },
+          playerVars: {
+            enablejsapi: 1,
+            autoplay: 0,
+            rel: 0,
+            controls: 0,
+            origin: 'https://62f28e5b2373.ngrok.io/',
+            disablekb: 1,
+            modestbranding: 1,
+            cc_load_policy: parseInt(localStorage.getItem('cc_load_policy')) || 0,
+            cc_lang_pref: localStorage.getItem('cc_lang_pref') || 'en'
+          }
+        });
       }
     </script>
 
-    </body>    
+    </body>
     <script src="https://kit.fontawesome.com/ab8bbc25ce.js" crossorigin="anonymous"></script>
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
     <script src="jquery-3.5.1.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/js-cookie@rc/dist/js.cookie.min.js"></script>
     <script src="scripts.js"></script>

@@ -1,5 +1,5 @@
 $(function(){
-
+    
     const maxNameLength = 18;
     $("#name-input").attr("maxlength", maxNameLength);
     let letterArray = ["a", "b", "c", "x", "y", "z"];
@@ -92,8 +92,8 @@ $(function(){
             rel: 0,
             controls: 0,
             origin: 'https://62f28e5b2373.ngrok.io/',
-            cc_load_policy: 0,
-            cc_lang_pref: 'en',
+            cc_load_policy: parseInt(localStorage.getItem('cc_load_policy')) || 0,
+            cc_lang_pref: localStorage.getItem('cc_lang_pref') || 'en',
             disablekb: 1,
             modestbranding: 1
         };
@@ -106,7 +106,7 @@ $(function(){
         //     SEEKING: 6
         // };
         static videoDuration;
-        static looping = false;
+        static looping = localStorage.getItem('looping') == 'true';
 
         static timeShouldBeSaved = false;
 
@@ -150,6 +150,10 @@ $(function(){
                 ClientYTPlayer.updateTimeUI(ClientYTPlayer.videoTime);
                 // ClientYTPlayer.timeShouldBeSaved = false;
                 ClientYTPlayer.shouldSendState = true;
+            }
+
+            if(ClientYTPlayer.currentState == CustomStates.PLAYING){
+                document.getElementById('play-pause-icon').className = "fas fa-pause";
             }
             ClientYTPlayer.pingInterval = setInterval(pingVideoSetting, 200);
             console.log("initNewPlayer ENDED");            
@@ -261,9 +265,12 @@ $(function(){
             const loopingButton = document.getElementById('loop-button');
             if(ClientYTPlayer.looping){
                 loopingButton.style.color = "white"
+                localStorage.setItem('looping', "true");
             } else {
                 loopingButton.style.color = "gray";
+                localStorage.setItem('looping', "false");
             }
+            
 
             if(serverURL != ClientYTPlayer.clientURL){
                 ClientYTPlayer.clientURL = ClientYTPlayer.extractID(serverURL);
@@ -477,8 +484,8 @@ $(function(){
             console.log("End of search submit function");
         }
     });
-    let inFullScreen = false;
     
+    let inFullScreen = false;
     $('#fullscreen-button').click(function(event){
         if(!inFullScreen){
             const playerElement = document.getElementById('video_container');
@@ -508,6 +515,9 @@ $(function(){
             ClientYTPlayer.options.cc_load_policy = 0;
             document.getElementById('closed-captions-icon').className = "far fa-closed-captioning";
         }
+
+        localStorage.setItem('cc_load_policy', ClientYTPlayer.options.cc_load_policy);
+        localStorage.setItem('cc_lang_pref', ClientYTPlayer.options.cc_lang_pref);
         // ClientYTPlayer.timeShouldBeSaved = true;
         ClientYTPlayer.shouldSendState = false;
         ClientYTPlayer.addNewVideo();
