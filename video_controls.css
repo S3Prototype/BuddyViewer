@@ -168,32 +168,92 @@ pointer-events: none;
 .video_progress {
     grid-column: 1 / -1;
     grid-row: progress-bar / video-controls;
-    color: white;
     width: 100%;
+    position: auto;
     order: 2;
+    z-index: 5;
+
 }
 
 #progress-bar {
-    grid-column: 1 / -1;
+    position: auto;
     width: 100%;
     border:none;
-    color:whitesmoke;
-    background-color: gray;
+    background: none;
+    color: whitesmoke;
+    z-index: 5;
 }
 
 /* For Firefox */ 
 #progress-bar::-moz-progress-bar { 
-    background:whitesmoke;
+    position: auto;
+    border:none;
     width: 100%;
-    color: gray;
+    background: whitesmoke;
+    z-index: 5;
+
 } 
 
 /* For Chrome or Safari */ 
 #progress-bar::-webkit-progress-value { 
-    background:whitesmoke; 
+    position: auto;
     width: 100%;
-    color: gray;
+    background: whitesmoke;
+    border:none;
+    z-index: 5;
+}
+
+#progress-bar::-webkit-progress-bar{
+    background: none;
+}
+
+
+.buffer_progress{
+    grid-column: 1 / -1;
+    grid-row: progress-bar / video-controls;
+    /* color: white; */
+    position: auto;
+    width: 100%;
+    border:none;
+    order: 2;
+    z-index: 1;
+}
+
+#buffer-bar {
+    grid-column: 1 / -1;
+    grid-row: progress-bar;
+    width: 100%;
+    border:none;
+    background-color: rgb(61, 61, 61);
+    position: auto;
+    z-index: 1;
+}
+
+/* For Firefox */ 
+#buffer-bar::-moz-progress-bar { 
+    position: auto;
+    background-color: rgb(61, 61, 61);
+    background:gray;
+    border:none;
+    width: 100%;
+    z-index: 1;
+
 } 
+
+/* For Chrome or Safari */ 
+#buffer-bar::-webkit-progress-value { 
+    position: auto;
+    background:gray;
+    /* background:gray;  */
+    border:none;
+    width: 100%;
+    z-index: 1;
+
+} 
+
+#buffer-bar::-webkit-progress-bar{
+    background: rgb(61, 61, 61);
+}
 
 #mute-button {
     grid-column-start: mute-button;

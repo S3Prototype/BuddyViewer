@@ -1,19 +1,12 @@
 DOING:
-* Still need to write code that actually loops the video when its state changes to ended.
 
 * Set up other youtube functions (captions, etc)
-    ** Catch the spacebar so it plays video (but not if I'm typing in chat)
-    ** Loop button so it can loop
-        *** First should set a bool to true so when the video state changes to "ENDED," we set the universal time to 0 and then change the universal state to PLAYING. Boom. Loop.
-        *** Don't think I should let youtube's player handle the looping.
-    ** Set up the buffering bar using the getPlayerLoadedFraction() function
-    ** Make it save all the options in a cookie, so when you reload the page you're good to go.
+** Make it save all the options in a cookie, so when you reload the page you're good to go.
 * Load player from JS--not on the index.html page. Gives us so much more ability to do things when the video first loads. Can't just move the script tag in the html down below our other scrips, because they expect player to be a thing. Then again a lot of that code is in the document.onReadystate stuff, which runs after the page is already loaded, including the JS in the html.
-* Catch the play/pause events from users clicking on the player
-    **This still has to be considered for mobile probably. Not sure if pointer-events:none works on mobile.
 * Consider what to do about buffering. I guess just ignore it? It's kinda handled by the time buffer and everything.
     ** Probably if it's buffering, the client shouldn't ping the video state, because we kinda need to wait until it's done.
     ** in the onplayerstatechange callback, check if the event triggered is buffering. If so, set our state to buffering. If the event is not buffering, check if our state is buffering--if so, set our state to whatever the event is. This way, we only take the state this callback gives us if we were just buffering; otherwise we ignore it.
+* Why does hte bar jump back and forht if you hot-join while the video is paused and then seek?
 * Now just have to test everything thoroughly. All features.
 * If they're working well enough, we have to implement code to remove the user's ability to press the player and make stuff happen. It'll screw everything up.
 * Big scary thing is how much the youtube API is still checking for me. Like after it seeks, even though it was just playing, it might pause locally. That would not trigger an event on the server. Theoretically, if I seek while playing, the server remembers we were just playing, and when I'm done seeking, it sets me back to playing no matter what. But if I'm still buffering and the server tries to make me play, youtube API might reject the playVideo() call and leave me buffering. What then? I'm left to my fate, because my clientYTPlayer.currentState is still == PLAYING, but I'm not playing.
@@ -68,7 +61,16 @@ THOUGHTS:
 DONE:
 
 12/8/20
+    ** Set up the buffering bar using the getPlayerLoadedFraction() function
+    
+* Catch the play/pause events from users clicking on the player
+    **This still has to be considered for mobile probably. Not sure if pointer-events:none works on mobile.
 
+    ** Catch the spacebar so it plays video (but not if I'm typing in chat)
+    ** Loop button so it can loop
+        *** First should set a bool to true so when the video state changes to "ENDED," we set the universal time to 0 and then change the universal state to PLAYING. Boom. Loop.
+        *** Don't think I should let youtube's player handle the looping.
+* Still need to write code that actually loops the video when its state changes to ended.
 *Clicking the screen in fullscreen mode should toggle the controls on. If you click and toggle them on, they can't be toggled off by anything but moving the mouse out of the controls.
 
 =====

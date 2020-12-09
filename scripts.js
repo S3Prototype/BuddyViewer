@@ -58,6 +58,7 @@ $(function(){
     const seekToolTip = document.getElementById('seek-tooltip');
     let tooltipInitialized = false;
 
+    const videoContainer = document.getElementById('video_container');
 
     const fullscreenButton = document.getElementById('fullscreen-button');
 
@@ -355,6 +356,8 @@ $(function(){
 
     }
 
+    const bufferBar = document.getElementById('buffer-bar');
+
     const joinButton = document.getElementById('join-room-button');
 
     joinButton.addEventListener('click', function(event){
@@ -483,6 +486,7 @@ $(function(){
             if (requestFullScreen) {
                 document.getElementById('fullscreen-icon').class = "fas fa-compress";
                 requestFullScreen.bind(playerElement)();
+                document.activeElement.blur();
                 // document.getElementById('ytsearch').style.display = 'none';
             }
         }
@@ -535,6 +539,14 @@ $(function(){
 
         changeTriggeredByControls = true;
         if(ClientYTPlayer.currentState == YT.PlayerState.PLAYING){
+            if(inFullScreen){
+                videoContainer.style.flexWrap = "nowrap";
+                controlsToggled = true;
+                setTimeout(()=>{
+                    controlsToggled = false;
+                    videoContainer.style.flexWrap = "wrap";                    
+                }, 3000);
+            }
             ClientYTPlayer.currentState = YT.PlayerState.PAUSED;
             player.pauseVideo();
             document.getElementById('play-pause-icon').className = "fas fa-play";
@@ -570,6 +582,12 @@ $(function(){
         if(Math.round(playerTime) != ClientYTPlayer.videoTime){
             ClientYTPlayer.updateTimeUI(playerTime);
         }
+        const bufferedTime = player.getVideoLoadedFraction() * player.getDuration();
+        updateYTBufferBar(bufferedTime);
+    }
+
+    function updateYTBufferBar(updateTime){
+        bufferBar.value = updateTime;
     }
 
     function updateYTProgressBar(updateTime){
@@ -618,9 +636,10 @@ $(function(){
             progressBarInitialized = false;
             return;
         }
-        const currTime = Math.round(player.getDuration());
-        progressBar.setAttribute('max', currTime);        
+        const maxTime = Math.round(player.getDuration());
+        progressBar.setAttribute('max', maxTime);        
         progressBarInitialized = true;
+        bufferBar.setAttribute('max', maxTime);
     }
 
     function stopYTEvent(event){
@@ -1024,7 +1043,6 @@ $(function(){
             progressBar.addEventListener('click', progressBarYTScrub);
             inFullScreen = false;
 
-            const videoContainer = document.getElementById('video_container');
             // const mouseDetector = document.getElementById('fullscreen-mouse-detector');
             // const videoControls = document.getElementById('video_controls');
             const searchBar = document.getElementById('ytsearch');
@@ -1056,6 +1074,18 @@ $(function(){
                         controlsToggled = false;
                         videoContainer.style.flexWrap = "wrap";                    
                     }, 3000);
+                }
+            });
+
+            document.addEventListener('keypress', function(event){
+                let code = (event.code ? event.code : event.key);
+                const activeElement = document.activeElement;
+                if (code == " " || code == "Space"){
+                    if(activeElement.tagName.toLowerCase() != 'input'){
+                        event.preventDefault();
+                        const playEvent = new Event('click');
+                        document.getElementById('play-pause-button').dispatchEvent(playEvent);
+                    }
                 }
             });
 

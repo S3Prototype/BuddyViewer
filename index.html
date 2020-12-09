@@ -3,6 +3,8 @@
     <head>
         <title>Test Chatroom</title>
         <meta charset="utf-8" />
+        <script async="async" src="https://www.youtube.com/iframe_api"></script>
+        <script async="async" src="https://apis.google.com/js/api.js"></script>
         <link rel="stylesheet" href="chat_styles.css" type="text/css" />
         <link rel="stylesheet" href="video_controls.css" type="text/css" />
         <link rel="stylesheet" href="modal_styles.css" type="text/css" />
@@ -10,6 +12,9 @@
     <body>
         <div class='video_container' id="video_container">
             <div id="player"></div>
+            <div class="buffer_progress">
+                <progress id="buffer-bar" value="0" min="0"></progress>
+            </div>
             <div class="video_progress">
                 <progress id="progress-bar" value="0" min="0"></progress>
             </div>
@@ -38,10 +43,10 @@
                     <span id="increase-playrate-icon" class="fas fa-angle-double-right"></span>
                 </button>
                 <button id="loop-button" class="loop-button">
-                    <span class="fas fa-infinity"></span>
+                    <span id="loop-icon" class="fas fa-infinity"></span>
                 </button>
             </div>
-                                <div class="playrate-dropdown" id="playrate-dropdown">
+            <div class="playrate-dropdown" id="playrate-dropdown">
                                     <div class="playrate-options" id="playrate-options">
                                             <button>2x</button> 
                                             <button>1.75x</button>
@@ -53,7 +58,7 @@
                                             <button>0.25x</button>
                                         </ul>
                                     </div>
-                                </div>
+            </div>
             <form id="ytsearch">
                 <input type="text" id="ytsearch-input" placeholder="Paste a Youtube link here">                            
             </form>
@@ -99,29 +104,15 @@
 
       // 3. This function creates an <iframe> (and YouTube player)
       //    after the API code downloads.
-      var player;
+      const ytReadyEvent = new Event('ytready');
+      const pageIsReadyEvent = new Event('pageIsReady');
       function onYouTubeIframeAPIReady() {
-        player = new YT.Player('player', {
-          height: '100%',
-          width: '100%',
-          videoId: "hjcXNK-zUFg",    
-          playerVars: {
-            enablejsapi: 1,
-            autoplay: 0,
-            rel: 0,
-            controls: 0,
-            origin: 'https://62f28e5b2373.ngrok.io/',
-            disablekb: 1,
-            modestbranding: 1
-          }
-        });
+        document.dispatchEvent(ytReadyEvent);
       }
     </script>
 
-    </body>
+    </body>    
     <script src="https://kit.fontawesome.com/ab8bbc25ce.js" crossorigin="anonymous"></script>
-    <script src="https://apis.google.com/js/api.js"></script>
-    <script src="https://www.youtube.com/iframe_api"></script>
     <script src="jquery-3.5.1.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/js-cookie@rc/dist/js.cookie.min.js"></script>
     <script src="scripts.js"></script>
