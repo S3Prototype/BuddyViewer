@@ -211,7 +211,7 @@ class VideoManager{
         return time > uniTime - bufferRange && time < uniTime + bufferRange;
     }
     static bufferingID = "EMPTY";
-    static universalUrl = "G6XthQpk8uk";
+    static universalUrl = "hjcXNK-zUFg";
     static settingsAltered = false;
     static alterID = "";
     static #seekingIDList = [];
