@@ -60,7 +60,7 @@ class NameContainer{
         // NameContainer.#takenNames = newList;
     }
     static isNameAvailable(thisMessage){
-        console.log("%%Is Name Available called%%");
+        // console.log("%%Is Name Available called%%");
         let doesUserOwnIt = false;
         let nameAvailable = true;
 
@@ -83,8 +83,8 @@ class NameContainer{
     static validateName(thisMessage, nameToRelease){   
         NameContainer.makeNameAvailable(nameToRelease);
         const currentName = NameContainer.isNameAvailable(thisMessage);// returns an object
-        console.log('Is '+thisMessage.name+ ' avail?'+currentName.canUse);
-        console.log('| Already owned by this user? '+currentName.alreadyOwnedByUser);
+        // console.log('Is '+thisMessage.name+ ' avail?'+currentName.canUse);
+        // console.log('| Already owned by this user? '+currentName.alreadyOwnedByUser);
 
         if(currentName.canUse){//was && nameToRelease
             //If you're changing your name
@@ -207,7 +207,7 @@ class VideoManager{
 
     static timeIsWithinRange(time){
         const uniTime = VideoManager.universalTime;
-        const bufferRange = 3;
+        const bufferRange = 5;
         return time > uniTime - bufferRange && time < uniTime + bufferRange;
     }
     static bufferingID = "EMPTY";
@@ -225,7 +225,7 @@ class VideoManager{
     static createSeekingIDList(exemptID){
         VideoManager.#seekingIDList = VideoManager.#viewerIDList.filter(
             function(viewerId){
-                return viewerId && viewerId.id != exemptID;
+                return viewerId.id != exemptID;
             }
         );
     }
@@ -235,6 +235,9 @@ class VideoManager{
                 return seekingId && seekingId.id != idToRemove;
             }
         );
+    }
+    static getSeekingIDList(){
+        return VideoManager.#seekingIDList;
     }
     static isInSeekingIDList(idToCheck){
         let idFound = false;
@@ -306,6 +309,9 @@ class VideoManager{
             }
         }//for
     }
+    static getViewerIDList(){
+        return VideoManager.#viewerIDList;
+    }
 }
 
 app.get('/messages', function(req, res){
@@ -321,7 +327,13 @@ app.post('/initialize', function(req, res){
 
     NameContainer.validateName(req.body, null);
     NameContainer.pingName(req.body.name);
-    VideoManager.pingViewerIDList(req.body.user_id);
+    if(!VideoManager.isInViewerIDList(req.body.user_id)){
+        console.log(`Adding ID ${req.body.user_id} to viewerlist`);
+        VideoManager.addToViewerIDList(req.body.user_id);
+        console.log(`ID ${req.body.user_id} in list? ${VideoManager.isInViewerIDList(req.body.user_id)}`);
+    } else {
+        VideoManager.pingViewerIDList(req.body.user_id);
+    }
 
     res.send("SUCCESS");
 });
@@ -329,13 +341,21 @@ app.post('/initialize', function(req, res){
 app.post('/alter-video-settings', function(req, res){
     console.log("CLIENT("+req.body.user_id+") "+"HAS SENT STATE: "+req.body.state);
 
+    if(!VideoManager.isInViewerIDList(req.body.user_id)){
+        VideoManager.addToViewerIDList(req.body.user_id);
+    } else {
+        VideoManager.pingViewerIDList(req.body.user_id);
+    }
+
+    
     VideoManager.universalLooping = req.body.video_looping;
     VideoManager.alterID = req.body.user_id;
     VideoManager.universalPlaybackRate = req.body.video_playbackrate;
-
+    
     if(req.body.state == CustomStates.SEEKING){
         VideoManager.previousUniversalState = VideoManager.universalState;
         VideoManager.createSeekingIDList(req.body.user_id);
+        console.log("SEEKING ID LIST: "+JSON.stringify(VideoManager.getSeekingIDList(), null, 2));
     }
 
     VideoManager.universalState = req.body.state;
@@ -385,17 +405,39 @@ app.post('/check-server-video-state', function(req, res){
     }
 
     if(VideoManager.universalState == CustomStates.SEEKING){
+        console.log(`USER(${req.body.user_id}) entered seeking.`);
+        console.log("=====");
         if(VideoManager.isSeekingIDListEmpty()){
+            console.log(`For USER(${req.body.user_id}), SEEKING LIST DID NOT EXIST.`);            
+            //I believe this code will cause issues if
+            //we seek after the video has ENDED.
+            //Will cause us to seek and then the video to stop playing, I believe.
             VideoManager.universalState = VideoManager.previousUniversalState;
             data.state = VideoManager.previousUniversalState;
         } else {
+            console.log(`For USER(${req.body.user_id}), SEEKING LIST EXISTED.`);            
+            console.log("SEEKING ID LIST: "+JSON.stringify(VideoManager.getSeekingIDList(), null, 2));
             if(!VideoManager.isInSeekingIDList(req.body.user_id)){
+                console.log(`USER(${req.body.user_id}), WASN'T IN THE SEEKING LIST.`);            
                 data.state = VideoManager.previousUniversalState;
-            } else if(VideoManager.timeIsWithinRange(req.body.video_time)) {
-                VideoManager.removeFromSeekingIDList(req.body.user_id);
-                data.state = VideoManager.previousUniversalState;
+            } else{
+                // console.log(`USER(${req.body.user_id}), WAS IN THE SEEKING LIST.`);            
+                // if(VideoManager.timeIsWithinRange(req.body.video_time)) {
+                    // console.log(`USER(${req.body.user_id})'s TIME WAS WITHIN RANGE..`);            
+                    VideoManager.removeFromSeekingIDList(req.body.user_id);
+                    data.state = VideoManager.previousUniversalState;
+                // } else {
+
+                // }
+                if(VideoManager.isSeekingIDListEmpty()){
+                    console.log(`NOW THE LIST IS EMPTY [USER(${req.body.user_id})]`);            
+                    //I believe this code will cause issues if we seek after the video has ENDED
+                    VideoManager.universalState = VideoManager.previousUniversalState;
+                }
             }
         }
+        console.log(`USER(${req.body.user_id}) exited seeking with state ${data.state}.`);
+        console.log("======");
     } else {
         if(VideoManager.universalState != CustomStates.PAUSED &&
             VideoManager.timeIsWithinRange(req.body.video_time)){
@@ -531,5 +573,5 @@ app.listen(port, function(){
     console.log("Server start date/time: "+new Date().toLocaleDateString() + " / " + new Date().toLocaleTimeString());
     console.log("======");
     setInterval(NameContainer.checkPings, 2500);
-    setInterval(VideoManager.checkPings, 500);
+    setInterval(VideoManager.checkPings, 1000);
 });

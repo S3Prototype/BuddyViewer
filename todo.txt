@@ -1,9 +1,18 @@
 DOING:
 
 * Add the search function
+* For some reason that 5 second framebuffer is triggering even when it shouldn't, in the middle of playing the video. Why? Seems server-side.
+    Could this serverside code be the issue?
+        if(VideoManager.universalState != CustomStates.PAUSED &&
+            VideoManager.timeIsWithinRange(req.body.video_time)){
+                VideoManager.universalTime = req.body.video_time;
+                data.video_time = req.body.video_time;
+        }
+    ^^Doesn't set the time if it's paused.
+    
+
 
 TODO:
-* Why does the bar jump back and forth if you hot-join while the video is paused and then seek?
 * Now just have to test everything thoroughly. All features.
 * REFACTOR/CLEAN UP CODE/ORGANIZE FOLDERS
 
@@ -50,7 +59,18 @@ THOUGHTS:
 ~~~~~~~~~~~
 
 DONE:
+12/9/20
 
+* For fixing the seekingID ping issue, we should setTimeOut() every time we go through the loop and we're done seeking and the others aren't. If we haven't cleared the seekingIDlist by then, clear everyone in there out and delete their viewerid too.
+    ** Actually I just increased the ping time. It was going too fast.
+* Why does the bar jump back and forth if you hot-join while the video is paused and then seek?
+*Hot-joining while video paused, then seeking immediately was glitchy. Time would jump back and forth between what it was when we joined and what it is now that we seeked. Fixed it.
+    *maybe I should change updateYTVideoTime to not do anything if state is paused.
+        **This was the problem.
+
+* clicking the fullscreen button doesn't let you out sometimes
+
+===
 12/8/20
 ** Make it save all the options in a cookie, so when you reload the page you're good to go.
     ** CC

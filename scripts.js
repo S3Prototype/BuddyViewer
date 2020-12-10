@@ -323,9 +323,9 @@ $(function(){
                 // console.log("==================");
                 player.seekTo(serverTime);
                 if(serverState == CustomStates.PAUSED){
-                    player.pauseVideo();
+                    // player.pauseVideo();
                 }
-                ClientYTPlayer.updateTimeUI(serverTime);                    
+                ClientYTPlayer.updateTimeUI(serverTime);                                   
             }
 
             if(serverPlaybackRate != ClientYTPlayer.playbackRate){
@@ -487,7 +487,7 @@ $(function(){
     
     let inFullScreen = false;
     $('#fullscreen-button').click(function(event){
-        if(!inFullScreen){
+        if(!document.fullscreenElement){
             const playerElement = document.getElementById('video_container');
             let requestFullScreen = playerElement.requestFullScreen || playerElement.mozRequestFullScreen || playerElement.webkitRequestFullScreen;
             if (requestFullScreen) {
@@ -585,7 +585,8 @@ $(function(){
     function updateYTVideoTime(){
         if(!player || !player.getCurrentTime ||
             ClientYTPlayer.currentState == YT.PlayerState.ENDED ||
-            ClientYTPlayer.currentState == YT.PlayerState.UNSTARTED){
+            ClientYTPlayer.currentState == YT.PlayerState.UNSTARTED ||
+            ClientYTPlayer.currentState == CustomStates.PAUSED){
                 return;
         }
         const playerTime = player.getCurrentTime();
@@ -1051,7 +1052,7 @@ $(function(){
 
             initializeYTProgressBar();
             progressBar.addEventListener('click', progressBarYTScrub);
-            inFullScreen = false;
+            // inFullScreen = false;
 
             // const mouseDetector = document.getElementById('fullscreen-mouse-detector');
             // const videoControls = document.getElementById('video_controls');
@@ -1070,7 +1071,7 @@ $(function(){
                 }
             });
 
-            document.addEventListener('fullscreenchange', function(event){
+            videoContainer.addEventListener('fullscreenchange', function(event){
                 inFullScreen = !inFullScreen;
             })
 
@@ -1091,7 +1092,8 @@ $(function(){
                 let code = (event.code ? event.code : event.key);
                 const activeElement = document.activeElement;
                 if (code == " " || code == "Space"){
-                    if(activeElement.tagName.toLowerCase() != 'input'){
+                    if(activeElement.tagName.toLowerCase() != 'input' &&
+                        activeElement.tagName.toLowerCase() != 'textarea'){
                         event.preventDefault();
                         const playEvent = new Event('click');
                         document.getElementById('play-pause-button').dispatchEvent(playEvent);
