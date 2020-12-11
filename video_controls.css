@@ -7,7 +7,7 @@
 
     /*Below code aligns it in the page grid*/
     grid-column: main / right-sidebar;
-    grid-row: video-area / chat-area;
+    grid-row: video-area / search-results-area;
     row-gap: 5px;
     pointer-events: auto;
 }

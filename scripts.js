@@ -77,6 +77,7 @@ $(function(){
     let tooltipDuration = "00:00";
 
     const youtubeInput = $('#ytsearch-input');
+    const searchResultsContainer = document.getElementById('search-results');
 
     class ClientYTPlayer{
         static currentState;
@@ -159,19 +160,30 @@ $(function(){
             console.log("initNewPlayer ENDED");            
         }
         static extractID(url){
-            const startIndex = url.indexOf('v=') + 2;
+            // const startIndex = url.indexOf('v=') + 2;
+            if(url.indexOf('y') != 0 || !url.indexOf('https:') != 0){
+                //if the url is not the first thing in the text, fail.
+                url = null
+                return url;
+            }
+            if(url.includes('&')){
+                url = url.substring(0, url.indexOf('&'));
+            }
+
             if(url.includes('v=')){
                 url = url.substring(url.indexOf('v=') + 2)
             } else if(url.includes('youtu.be')){
                 url = url.substring(url.indexOf('youtu.be/') + 9);
             } else if (url.includes('/embed/')){
                 url = url.substring(url.indexOf('/embed/') + 7);
-            } //could use url = url.substring(blahblah) || url;
+            } else if (url.includes('yt.be/')){
+                url = url.substring(url.indexOf('yt.be/') + 6);            
+            } else {
+                url = null;
+            }
 
-            console.log("YOU entered ID: "+url);
-            if(url.includes('&')){
-                url = url.substring(0, url.indexOf('&'));
-            } 
+            if(url) console.log("YOU entered ID: "+url);            
+
             return url;
         }
         static addNewVideo(){
@@ -220,6 +232,108 @@ $(function(){
 
             return ClientYTPlayer.currentState;
         }
+
+        static searchInterval;
+        static searchCount = 0;
+
+        static keepCheckingForResults(){
+            setTimeout(
+                _=>ClientYTPlayer.getSearchResults(),
+                100); 
+        }
+
+        static getSearchResults(){
+            $.ajax({
+                url: '/get-search-results',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({user_id: userID}, null, 2),
+                success: function (results){
+                    console.log(`${new Date().toLocaleTimeString()} Results are: ${results}`);
+                    // ClientYTPlayer.currentlySendingData = false;
+                    if(results){
+                        // clearInterval(ClientYTPlayer.searchInterval);
+                        console.log(results[0]);
+                        ClientYTPlayer.addSearchResults(results);
+                        ClientYTPlayer.searchCount = 0;
+                    } else {
+                        ClientYTPlayer.searchCount++;
+                        if(ClientYTPlayer.searchCount >= 10){
+                            ClientYTPlayer.searchCount = 0;
+                            // clearInterval(ClientYTPlayer.searchInterval);
+                            //code has failed
+                        } else {
+                            ClientYTPlayer.keepCheckingForResults();
+                        }
+                    }
+                    // console.log("("+ new Date().toLocaleTimeString()+") Sendstate from this client done.");
+                    // initializeYTProgressBar();
+                    // ClientYTPlayer.clientState = player.getPlayerState();
+                }
+            });
+        }
+
+        static videoSearch(query){
+            $.ajax({
+                url: '/search',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({user_id: userID, query: query}, null, 2),
+                success: function (results){
+                console.log(`${new Date().toLocaleTimeString()} Executed search. Preliminary results are: ${JSON.stringify(results, null, 2)}`);
+                    if(!results || results.length < 1){
+                        ClientYTPlayer.keepCheckingForResults();                        
+                    }
+                }
+            });
+        }
+
+        static addSearchResults(results){
+            console.log(JSON.stringify("Add search results: "+results, null, 2));
+            searchResultsContainer.innerHTML = "";
+            results.forEach(function(result){
+                const resultDiv = document.createElement('div');
+                resultDiv.setAttribute('class', 'result');
+
+                const thumbDiv = document.createElement('div');
+                thumbDiv.setAttribute('class', 'result-thumbnail-div');
+
+                const thumbnail = document.createElement('img');
+                thumbnail.setAttribute('class', 'result-thumbnail');
+                thumbnail.setAttribute('src', result.thumbnail);
+                thumbnail.addEventListener('click', function(event){
+                ClientYTPlayer.shouldSendState = true;
+
+                    ClientYTPlayer.clientURL = result.videoID;
+                    ClientYTPlayer.addNewVideo();
+                });
+                thumbDiv.append(thumbnail)
+                resultDiv.append(thumbDiv);
+
+
+                const title = document.createElement('span');
+                title.setAttribute('class', 'result-title');
+                const titleText = document.createTextNode(result.title);
+                title.appendChild(titleText);
+                title.addEventListener('click', function(event){
+                ClientYTPlayer.shouldSendState = true;
+
+                    ClientYTPlayer.clientURL = result.videoID;
+                    ClientYTPlayer.addNewVideo();
+                });
+                resultDiv.appendChild(title);
+
+                const description = document.createElement('span');
+                description.setAttribute('class', 'result-description');
+                const shortenedDescription = result.description.substring(0, 150);
+                const descriptionText = document.createTextNode(shortenedDescription);
+                description.appendChild(descriptionText);
+                resultDiv.append(description);
+
+                searchResultsContainer.append(resultDiv);
+            });
+
+        }
         static SendStateToServer(event){
 
             ClientYTPlayer.currentlySendingData = true;
@@ -243,7 +357,9 @@ $(function(){
                 contentType: 'application/json',
                 data: JSON.stringify(sendData, null, 2),
                 success: function (response){
+                    console.log(`${new Date().toLocaleTimeString()} Reults are: ${response.name}`);
                     ClientYTPlayer.currentlySendingData = false;
+                    // ClientYTPlayer.addSearchResults(response.results);
                     console.log("("+ new Date().toLocaleTimeString()+") Sendstate from this client done.");
                     initializeYTProgressBar();
                     // ClientYTPlayer.clientState = player.getPlayerState();
@@ -470,18 +586,23 @@ $(function(){
     $('#ytsearch').on('submit', function(event){
         event.preventDefault();           
         const newVid = youtubeInput.val();
-        if(newVid.length <= 0) return;
+        if(newVid == '') return;
         const currURL = ClientYTPlayer.extractID(newVid);
         console.log("BEFORE NEW VIDEO SET. URL: "+currURL);
-        if(currURL != ClientYTPlayer.clientURL){
-            console.log("Trying to start URL: "+currURL);
-            console.log("Client URL before change: "+ClientYTPlayer.clientURL);
-            ClientYTPlayer.clientURL = currURL;
-            console.log("Client URL after change: "+ClientYTPlayer.clientURL);
-            ClientYTPlayer.shouldSendState = true;
-            console.log("Client should send? "+ClientYTPlayer.shouldSendState);
-            ClientYTPlayer.addNewVideo();
-            console.log("End of search submit function");
+        if(currURL){
+            if(currURL != ClientYTPlayer.clientURL){
+                console.log("Trying to start URL: "+currURL);
+                console.log("Client URL before change: "+ClientYTPlayer.clientURL);
+                ClientYTPlayer.clientURL = currURL;
+                console.log("Client URL after change: "+ClientYTPlayer.clientURL);
+                ClientYTPlayer.shouldSendState = true;
+                console.log("Client should send? "+ClientYTPlayer.shouldSendState);
+                ClientYTPlayer.addNewVideo();
+                console.log("End of search submit function");
+            }
+        } else {
+            console.log("SEARCHING FOR! "+newVid);
+            ClientYTPlayer.videoSearch(newVid);
         }
     });
     

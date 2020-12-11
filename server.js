@@ -4,6 +4,11 @@ const router = express.Router();
 var events = require('events');
 const fs = require('fs');
 const e = require('express');
+const request = require('request');
+const cheerio = require('cheerio');
+require('dotenv').config();
+const { google } = require('googleapis');
+const { title } = require('process');
 
 var app = express();
 
@@ -314,6 +319,10 @@ class VideoManager{
     }
 }
 
+class YouTubeSearchManager{
+    static searchResults = [];
+}
+
 app.get('/messages', function(req, res){
     // console.log("GET CALLED");
     const messageList = MessageContainer.getMessageList()
@@ -338,8 +347,52 @@ app.post('/initialize', function(req, res){
     res.send("SUCCESS");
 });
 
+app.post('/search', function(req, res){
+    console.log(`${new Date().toLocaleTimeString()} Searching for: ${JSON.stringify(req.body, null, 2)}`);
+    console.log('===================================');    
+    google.youtube('v3').search.list({
+        key: process.env.YOUTUBE_TOKEN,
+        part: "snippet",
+        q: req.body.query,
+        maxResults: 20
+    }).then((res)=>{
+        const searchData = [];
+        const { data } = res;
+        data.items.forEach(function(item){
+            if(item.id.kind == "youtube#video"){
+                const snippet = item.snippet;
+                searchData.push({
+                    title: snippet.title,
+                    description: snippet.description,
+                    published: snippet.publishedAt,
+                    thumbnail: snippet.thumbnails['high'].url,
+                    videoID: item.id.videoId
+                });
+            }
+        });
+        YouTubeSearchManager.searchResults[req.body.user_id] = searchData;
+    })
+    .catch(e=>console.log(e));
+    res.send(YouTubeSearchManager.searchResults[req.body.user_id]);
+});
+
+app.post('/get-search-results', function(req, res){
+    
+    const results = YouTubeSearchManager.searchResults[req.body.user_id];
+    if(results){
+        results.forEach(result=>console.log(`${new Date().toLocaleTimeString()} Result is: ${JSON.stringify(result, null, 2)}`));
+        YouTubeSearchManager.searchResults[req.body.user_id] = null;
+    }// if(results) YouTubeSearchManager.searchResults[req.body.user_id] = null;
+
+    res.send(results);
+});
+
 app.post('/alter-video-settings', function(req, res){
+
+    const results = [];
+    
     console.log("CLIENT("+req.body.user_id+") "+"HAS SENT STATE: "+req.body.state);
+    // console.log(`${new Date().toLocaleTimeString()}\n ${JSON.stringify(YouTubeSearchManager.searchResults, null, 2)}`);
 
     if(!VideoManager.isInViewerIDList(req.body.user_id)){
         VideoManager.addToViewerIDList(req.body.user_id);
@@ -381,7 +434,8 @@ app.post('/alter-video-settings', function(req, res){
         video_url: VideoManager.universalUrl,
         video_time: VideoManager.universalTime,
         alter_id: VideoManager.alterID,
-        video_looping: VideoManager.universalLooping
+        video_looping: VideoManager.universalLooping,
+        results: YouTubeSearchManager.searchResults
     }
     
     res.send(data);

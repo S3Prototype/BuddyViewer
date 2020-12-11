@@ -1,10 +1,12 @@
 FEATURE LIST:
 
-* Chat should be like a floating tray. IT should be like the userlist tray in Watch2Gether, always on the bottom, able to be popped up and popped down.
+* Chat should be like a floating tray. It should be like the userlist tray in Watch2Gether, always on the bottom, able to be popped up and popped down.
 * Closed captions option
 * Full screen button
 * Looping
 * Playback rate change
+* Should have a row in the video player that shows the most recently sent message in the chat, maybe with a higher z-index so it just appears above the video and then eventually fades away.
+* Also have a little chat icon button in the video player so you can bring the chat up at the side. If you're in fullscreen, chat appears in a z-index above the player.
 * Uploading your own videos temporarily for sharing
 * Being able to add a video with the "copy url at current time" so it actually starts at that time.
 * When a user adds a link to another site's videos, what if we write code that just detects a button press within that iframe. It then stores the id/class of that button, and on the other clients triggers the same event on whatever button matches that id/class.
