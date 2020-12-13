@@ -63,7 +63,7 @@
             </form>
         </div>
         <div id="search-results" class="search-results">
-            
+            <span id="default-search-text">SEARCH RESULTS</span>
         </div>
         <div id="chat-area-container">
             <table id="chat-table" class="chat-table">
@@ -84,7 +84,7 @@
                 <textarea type="text" id="message-input" class="text-input"
                         placeholder="Enter your message here">
                 </textarea>
-                <button class="send-text">SEND</button>
+                <!-- <button class="send-text">SEND</button> -->
             </form>
         </div>
         <div id="join-room-modal" class="join-room-modal">
@@ -131,7 +131,8 @@
             disablekb: 1,
             modestbranding: 1,
             cc_load_policy: parseInt(localStorage.getItem('cc_load_policy')) || 0,
-            cc_lang_pref: localStorage.getItem('cc_lang_pref') || 'en'
+            cc_lang_pref: localStorage.getItem('cc_lang_pref') || 'en',
+            mute: 1
           }
         });
       }

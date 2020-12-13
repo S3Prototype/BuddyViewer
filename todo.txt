@@ -1,21 +1,9 @@
 DOING:
 
-* clciking a search result doesn't send the new video to the other clients. Might have to do with the origin var.
-
-
-* Add the search function
-    ** Set it up to do web scraping first, and if that fails, then use the provided youtube search API 
-* For some reason that 5 second framebuffer is triggering even when it shouldn't, in the middle of playing the video. Why? Seems server-side.
-    Could this serverside code be the issue?
-        if(VideoManager.universalState != CustomStates.PAUSED &&
-            VideoManager.timeIsWithinRange(req.body.video_time)){
-                VideoManager.universalTime = req.body.video_time;
-                data.video_time = req.body.video_time;
-        }
-    ^^Doesn't set the time if it's paused.
-
 TODO:
 * Now just have to test everything thoroughly. All features.
+* In the description/title search results on the server, check for the html codes like &quot; etc, and convert them over to their actual characters.
+* Full screen doesn't work in chrome again. Goddammit. The video controls look janky and don't go away.
 * REFACTOR/CLEAN UP CODE/ORGANIZE FOLDERS
 
 
@@ -59,6 +47,15 @@ THOUGHTS:
 ~~~~~~~~~~~
 ===========
 ~~~~~~~~~~~
+12/12/20
+
+
+* Should just set it to put in inline-flexes for every row. Count it off. Every 3 items, put in a new row. (But this solution isn't scaleable to smaller screens)
+    SEems to work now. Just had to fuck with the flexbox settings.
+* clicking a search result doesn't send the new video to the other clients. Might have to do with the origin var.
+    ** It was actually the fact that extractID now returns null if the url entered is already in ID form. So we had to change it so when alignstatewithserver gets a new URL sent to it, it sets clienturl to the serverurl without extracting an ID. This is fine, because by the time an ID hits the server, it's already been extracted.
+
+====
 12/10/20
 
 * everytime you search, set an interval that checks the server for our search result. If we don't find it after 3 tries, give up and put out some error code. But we need to associate an id with each search result, so that when we check for a search result we know we're getting what was meant for us. This'll allow clients to search simultaneously. When you finally get a result back, clear the interval.

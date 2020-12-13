@@ -9,6 +9,8 @@ $(function(){
     let nameOnServer = null;//anonName;
 
     const volumeSlider = document.getElementById('volume-slider');
+    let stayMuted = false;
+    let mobileMode = false;
 
 
     function validateUserID(){
@@ -96,7 +98,8 @@ $(function(){
             cc_load_policy: parseInt(localStorage.getItem('cc_load_policy')) || 0,
             cc_lang_pref: localStorage.getItem('cc_lang_pref') || 'en',
             disablekb: 1,
-            modestbranding: 1
+            modestbranding: 1,
+            mute: 1
         };
         static playbackRate = 1;
         static videoTime = 0;
@@ -142,7 +145,8 @@ $(function(){
                 console.log("SHOULD BE SENDING DATA");
                 ClientYTPlayer.previousState = ClientYTPlayer.currentState;
                 ClientYTPlayer.currentState = CustomStates.PLAYING;
-                document.getElementById('play-pause-icon').className = "fas fa-pause";
+                document.getElementById('play-pause-icon').classList.remove("fa-play");
+                document.getElementById('play-pause-icon').classList.add("fa-pause");
                 ClientYTPlayer.SendStateToServer(event);
             } else {
                 console.log("WE ARE NOT SENDING DATA");
@@ -154,8 +158,11 @@ $(function(){
             }
 
             if(ClientYTPlayer.currentState == CustomStates.PLAYING){
-                document.getElementById('play-pause-icon').className = "fas fa-pause";
+                document.getElementById('play-pause-icon').classList.remove("fa-play");
+                document.getElementById('play-pause-icon').classList.add("fa-pause");
             }
+            stayMuted || player.unMute();
+                //Where do we clear the ping interval first?
             ClientYTPlayer.pingInterval = setInterval(pingVideoSetting, 200);
             console.log("initNewPlayer ENDED");            
         }
@@ -297,6 +304,7 @@ $(function(){
 
                 const thumbDiv = document.createElement('div');
                 thumbDiv.setAttribute('class', 'result-thumbnail-div');
+                resultDiv.append(thumbDiv);
 
                 const thumbnail = document.createElement('img');
                 thumbnail.setAttribute('class', 'result-thumbnail');
@@ -308,7 +316,6 @@ $(function(){
                     ClientYTPlayer.addNewVideo();
                 });
                 thumbDiv.append(thumbnail)
-                resultDiv.append(thumbDiv);
 
 
                 const title = document.createElement('span');
@@ -321,17 +328,20 @@ $(function(){
                     ClientYTPlayer.clientURL = result.videoID;
                     ClientYTPlayer.addNewVideo();
                 });
-                resultDiv.appendChild(title);
+                resultDiv.append(title);
 
                 const description = document.createElement('span');
                 description.setAttribute('class', 'result-description');
-                const shortenedDescription = result.description.substring(0, 150);
+                const shortenedDescription = result.description.substring(0, 120) + "..."; 
                 const descriptionText = document.createTextNode(shortenedDescription);
                 description.appendChild(descriptionText);
                 resultDiv.append(description);
 
                 searchResultsContainer.append(resultDiv);
             });
+            if(mobileMode){
+                document.activeElement.blur();
+            }
 
         }
         static SendStateToServer(event){
@@ -389,7 +399,7 @@ $(function(){
             
 
             if(serverURL != ClientYTPlayer.clientURL){
-                ClientYTPlayer.clientURL = ClientYTPlayer.extractID(serverURL);
+                ClientYTPlayer.clientURL = serverURL;
                 if(serverState != CustomStates.PLAYING){
                     ClientYTPlayer.videoTime = serverTime;
                 }                
@@ -404,17 +414,19 @@ $(function(){
                 if(serverState == YT.PlayerState.PLAYING){
                     ClientYTPlayer.currentState = serverState;
                     player.playVideo();
-                    document.getElementById('play-pause-icon').className = "fas fa-pause";
+                    document.getElementById('play-pause-icon').classList.remove("fa-play");
+                    document.getElementById('play-pause-icon').classList.add("fa-pause");
                 } else if(serverState == YT.PlayerState.PAUSED){
                     ClientYTPlayer.currentState = serverState;
                     player.pauseVideo();
-                    document.getElementById('play-pause-icon').className = "fas fa-play";
+                    document.getElementById('play-pause-icon').classList.remove("fa-pause");
+                    document.getElementById('play-pause-icon').classList.add("fa-play");
                 } else if(serverState == YT.PlayerState.SEEKING){
                     ClientYTPlayer.currentState = serverState;
                     player.seekTo(serverTime);
                     ClientYTPlayer.updateTimeUI(serverTime);                    
-                    const seekIcon = serverTime > ClientYTPlayer.videoTime ? "fas fa-forward" : "fas fa-backward";
-                    document.getElementById('play-pause-icon').className = seekIcon;                    
+                    // const seekIcon = serverTime > ClientYTPlayer.videoTime ? "fas fa-forward" : "fas fa-backward";
+                    // document.getElementById('play-pause-icon').className = seekIcon;                    
                 }
             } else if(serverState == ClientYTPlayer.currentState) {
             }
@@ -423,7 +435,8 @@ $(function(){
                 if(ClientYTPlayer.looping){
                     ClientYTPlayer.currentState = CustomStates.PLAYING;
                     ClientYTPlayer.videoTime = 0;
-                    document.getElementById('play-pause-icon').className = "fas fa-pause";
+                    document.getElementById('play-pause-icon').classList.remove("fa-play");
+                    document.getElementById('play-pause-icon').classList.add("fa-pause");
                     player.seekTo(0);
                     player.playVideo();
                     ClientYTPlayer.SendStateToServer({})
@@ -491,10 +504,12 @@ $(function(){
         const state = ClientYTPlayer.currentState;
         if(state == CustomStates.PLAYING){
             player.playVideo();
-            document.getElementById('play-pause-icon').className = "fas fa-pause";
+            document.getElementById('play-pause-icon').classList.remove("fa-play");
+            document.getElementById('play-pause-icon').classList.add("fa-pause");
         } else if(state == CustomStates.PAUSED){
             player.pauseVideo();
-            document.getElementById('play-pause-icon').className = "fas fa-play";
+            document.getElementById('play-pause-icon').classList.remove("fa-pause");
+            document.getElementById('play-pause-icon').classList.add("fa-play");
         }
 
         initializeYTProgressBar();
@@ -604,6 +619,7 @@ $(function(){
             console.log("SEARCHING FOR! "+newVid);
             ClientYTPlayer.videoSearch(newVid);
         }
+        searchResultsContainer.scrollTop = 0;
     });
     
     let inFullScreen = false;
@@ -612,18 +628,22 @@ $(function(){
             const playerElement = document.getElementById('video_container');
             let requestFullScreen = playerElement.requestFullScreen || playerElement.mozRequestFullScreen || playerElement.webkitRequestFullScreen;
             if (requestFullScreen) {
-                document.getElementById('fullscreen-icon').class = "fas fa-compress";
-                requestFullScreen.bind(playerElement)();
-                document.activeElement.blur();
+                document.getElementById('fullscreen-icon').classList.remove("fa-expand");
+                document.getElementById('fullscreen-icon').classList.add("fa-compress");
+                requestFullScreen.bind(playerElement)().then(data=>{
+                    // document.getElementById('video_container').setAttribute('rotate', 90);
+                });
                 // document.getElementById('ytsearch').style.display = 'none';
             }
         }
         else {
-            document.getElementById('fullscreen-icon').class = "fas fa-expand";
+            document.getElementById('fullscreen-icon').classList.remove("fa-compress");
+            document.getElementById('fullscreen-icon').classList.add("fa-expand");
             document.exitFullscreen();
             // document.getElementById('ytsearch').style.display = '';
             // document.getElementById('ytsearch').style.removeProperty('display');
         }
+        document.activeElement.blur();
         // inFullScreen = !inFullScreen;
     });
 
@@ -631,10 +651,12 @@ $(function(){
         if(ClientYTPlayer.options.cc_load_policy != 1){
             ClientYTPlayer.options.cc_load_policy = 1;
             ClientYTPlayer.options.cc_lang_pref = "en";
-            document.getElementById('closed-captions-icon').className = "fas fa-closed-captioning";
+            document.getElementById('closed-captions-icon').classList.remove("far");
+            document.getElementById('closed-captions-icon').classList.add("fas");
         } else {
             ClientYTPlayer.options.cc_load_policy = 0;
-            document.getElementById('closed-captions-icon').className = "far fa-closed-captioning";
+            document.getElementById('closed-captions-icon').classList.remove("fas");
+            document.getElementById('closed-captions-icon').classList.add("far");
         }
 
         localStorage.setItem('cc_load_policy', ClientYTPlayer.options.cc_load_policy);
@@ -646,11 +668,15 @@ $(function(){
 
     $('#mute-button').click(function(event){
         if(player.isMuted()){
-            player.unMute();
-            document.getElementById('mute-icon').className = "fas fa-volume-up";
+            stayMuted = false;
+            player.unMute();         
+            document.getElementById('mute-icon').classList.remove("fa-volume-mute");
+            document.getElementById('mute-icon').classList.add("fa-volume-up");
         } else {            
-            player.mute();            
-            document.getElementById('mute-icon').className = "fas fa-volume-mute";
+            stayMuted = true;
+            player.mute();  
+            document.getElementById('mute-icon').classList.remove("fa-volume-up");
+            document.getElementById('mute-icon').classList.add("fa-volume-mute"); 
         }
     });
 
@@ -680,24 +706,28 @@ $(function(){
             }
             ClientYTPlayer.currentState = YT.PlayerState.PAUSED;
             player.pauseVideo();
-            document.getElementById('play-pause-icon').className = "fas fa-play";
+            document.getElementById('play-pause-icon').classList.remove("fa-pause");
+            document.getElementById('play-pause-icon').classList.add("fa-play");
             ClientYTPlayer.SendStateToServer({});
         } else if(ClientYTPlayer.currentState == YT.PlayerState.UNSTARTED){
             ClientYTPlayer.currentState = YT.PlayerState.PLAYING;
             player.playVideo();
-            document.getElementById('play-pause-icon').className = "fas fa-pause";
+            document.getElementById('play-pause-icon').classList.remove("fa-play");
+            document.getElementById('play-pause-icon').classList.add("fa-pause");
             ClientYTPlayer.SendStateToServer({});
         } else if(ClientYTPlayer.currentState == YT.PlayerState.PAUSED){
             ClientYTPlayer.currentState = YT.PlayerState.PLAYING;
             player.playVideo();
-            document.getElementById('play-pause-icon').className = "fas fa-pause";
+            document.getElementById('play-pause-icon').classList.remove("fa-play");
+            document.getElementById('play-pause-icon').classList.add("fa-pause");
             ClientYTPlayer.SendStateToServer({});
         } else if(ClientYTPlayer.currentState == CustomStates.ENDED){
             ClientYTPlayer.currentState = CustomStates.PLAYING;
             ClientYTPlayer.videoTime = 0;
             player.seekTo(ClientYTPlayer.videoTime);
             player.playVideo();
-            document.getElementById('play-pause-icon').className = "fas fa-pause";
+            document.getElementById('play-pause-icon').classList.remove("fa-play");
+            document.getElementById('play-pause-icon').classList.add("fa-pause");
             ClientYTPlayer.SendStateToServer({});     
         }
     });
@@ -781,7 +811,8 @@ $(function(){
             if(ClientYTPlayer.looping){
                 ClientYTPlayer.videoTime = 0;
             }
-            document.getElementById('play-pause-icon').className = "fas fa-play";
+            document.getElementById('play-pause-icon').classList.remove("fa-pause");
+            document.getElementById('play-pause-icon').classList.add("fa-play");
             ClientYTPlayer.SendStateToServer({});                
         }
         // console.log("BEFORE anything: "+event.data);
@@ -1070,7 +1101,8 @@ $(function(){
         if(!player) return;
         if(player.isMuted()){
             player.unMute();
-            document.getElementById('mute-icon').className = "fas fa-volume-up";
+            document.getElementById('mute-icon').classList.remove("fa-volume-mute");
+            document.getElementById('mute-icon').classList.add("fa-volume-up");
         }
         player.setVolume(parseInt(volumeSlider.value));
     }
@@ -1146,11 +1178,76 @@ $(function(){
 
     }
 
+    const bigIcon = 'fa-3x';
+    const smallIcon = 'fa-lg';
+    window.onresize = function(event){
+        if(window.innerWidth < 1000){
+            setIconsBig();
+            mobileMode = true;
+        } else if (window.innerWidth > 1000) {
+            setIconsSmall();
+            mobileMode = false;
+        }
+    }
+
+    function setIconsBig(){
+            unsetIconSize(smallIcon);
+            document.getElementById('play-pause-icon').classList.add(bigIcon);
+            document.getElementById('mute-icon').classList.add(bigIcon);
+            document.getElementById('closed-captions-icon').classList.add(bigIcon);
+            document.getElementById('fullscreen-icon').classList.add(bigIcon);
+            document.getElementById('reduce-playrate-icon').classList.add(bigIcon);
+            document.getElementById('increase-playrate-icon').classList.add(bigIcon);
+            document.getElementById('loop-icon').classList.add(bigIcon);
+    }
+
+    function setIconsSmall(){
+        unsetIconSize(bigIcon);
+        document.getElementById('play-pause-icon').classList.add(smallIcon);
+        document.getElementById('mute-icon').classList.add(smallIcon);
+        document.getElementById('closed-captions-icon').classList.add(smallIcon);
+        document.getElementById('fullscreen-icon').classList.add(smallIcon);
+        document.getElementById('reduce-playrate-icon').classList.add(smallIcon);
+        document.getElementById('increase-playrate-icon').classList.add(smallIcon);
+        document.getElementById('loop-icon').classList.add(smallIcon);
+    }
+
+    function unsetIconSize(iconSize){
+        document.getElementById('play-pause-icon').classList.remove(iconSize);
+        document.getElementById('mute-icon').classList.remove(iconSize);
+        document.getElementById('closed-captions-icon').classList.remove(iconSize);
+        document.getElementById('fullscreen-icon').classList.remove(iconSize);
+        document.getElementById('reduce-playrate-icon').classList.remove(iconSize);
+        document.getElementById('increase-playrate-icon').classList.remove(iconSize);
+        document.getElementById('loop-icon').classList.remove(iconSize);
+    }
+
+    if (/Mobi|Android/i.test(navigator.userAgent)) {
+        setIconsBig();
+        mobileMode = true;
+    }
+
+    function lockScreenOrientation () {
+        screen.lockOrientationUniversal =
+            screen.lockOrientation ||
+            screen.mozLockOrientation ||
+            screen.msLockOrientation;
+
+        if (screen.lockOrientationUniversal("landscape-primary")) {
+        // Orientation was locked
+        } else {
+        // Orientation lock failed
+        }
+    }
+
+
     let controlsToggled = false;
     document.addEventListener('readystatechange', event => { 
     
         // When window loaded ( external resources are loaded too- `css`,`src`, etc...) 
-        if(event.target.readyState === "complete"){            
+        if(event.target.readyState === "complete"){ 
+            
+            
 
             validateUserID();
             initializeServerList();

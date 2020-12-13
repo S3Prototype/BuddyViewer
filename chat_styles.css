@@ -4,7 +4,7 @@ body {
     font-family: Helvetica, Arial, sans-serif;
     display: grid;
     grid-template-columns: [left-sidebar] 1fr [main] 30fr [right-sidebar] 1fr;
-    grid-template-rows: [video-area] 1fr [search-results-area] 1fr [chat-area] 1fr [bottom-row] 5px;
+    grid-template-rows: [video-area] 1fr [search-results-area] 400px [chat-area] 1fr [bottom-row] 5px;
     grid-gap: 15px;
 }
 
@@ -138,4 +138,45 @@ th.headrow {
   padding-right: 40px;
   margin: 0 auto;
   font-family: Arial, Helvetica, sans-serif;
+}
+
+@media (max-width: 1000px){
+    body{
+        display: grid;
+        grid-template-rows: [video] .75fr [search-results] 1fr [chat] .75fr;
+        grid-template-columns: [main] 1fr;
+        font-size: 2em;
+    }
+
+    
+    #chat-area-container{
+        grid-column: 1;
+        grid-row: 3 / 4;
+        display: inline-grid;
+        grid-template-columns: [main] 1fr;
+        grid-template-rows: [messages] 1fr [name] 1fr  [input] 1fr;
+        width: 100%;
+    }
+
+    .userlist-table{
+    }
+
+    #input-form{
+        grid-row: input;
+        grid-column: main;
+    }
+    
+    #name-form{
+        grid-row: name;
+        grid-column: main;
+    }
+
+    .chat-table{
+        grid-row: messages;
+        grid-column: main;
+    }
+    
+    hr{
+        display: none;
+    }
 }
