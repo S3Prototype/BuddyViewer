@@ -150,7 +150,7 @@ $(function(){
                 ClientYTPlayer.SendStateToServer(event);
             } else {
                 console.log("WE ARE NOT SENDING DATA");
-                ClientYTPlayer.currentState = ClientYTPlayer.previousState;
+                // ClientYTPlayer.currentState = ClientYTPlayer.previousState;
                 player.seekTo(ClientYTPlayer.videoTime);
                 ClientYTPlayer.updateTimeUI(ClientYTPlayer.videoTime);
                 // ClientYTPlayer.timeShouldBeSaved = false;
@@ -160,6 +160,8 @@ $(function(){
             if(ClientYTPlayer.currentState == CustomStates.PLAYING){
                 document.getElementById('play-pause-icon').classList.remove("fa-play");
                 document.getElementById('play-pause-icon').classList.add("fa-pause");
+            } else if (ClientYTPlayer.currentState == CustomStates.PAUSED){
+                player.pauseVideo();
             }
             stayMuted || player.unMute();
                 //Where do we clear the ping interval first?
@@ -168,7 +170,7 @@ $(function(){
         }
         static extractID(url){
             // const startIndex = url.indexOf('v=') + 2;
-            if(url.indexOf('y') != 0 || !url.indexOf('https:') != 0){
+            if(url.indexOf('y') != 0 && url.indexOf('https:') != 0){
                 //if the url is not the first thing in the text, fail.
                 url = null
                 return url;
@@ -762,11 +764,19 @@ $(function(){
         const time = Math.round(seekTime);
         let minutes = parseInt(time / 60);
         let seconds = time % 60;
+        let hours = 0;
+        if(minutes >= 60){
+            hours = parseInt(minutes / 60);
+            minutes = minutes % 60;
+        }
 
         if(minutes < 10) minutes = "0"+minutes;
         if(seconds < 10) seconds = "0"+seconds;
+
+        let timeDisplay = minutes+":"+seconds;
+        if(hours > 0) timeDisplay = hours+":"+timeDisplay;
         
-        seekToolTip.textContent = minutes+":"+seconds+" | "+tooltipDuration;        
+        seekToolTip.textContent = timeDisplay+" | "+tooltipDuration;
     }
 
     function progressBarYTScrub(event) {
@@ -787,9 +797,15 @@ $(function(){
         const currTime = Math.round(player.getDuration());
         let maxMinutes = parseInt(currTime / 60);
         let maxSeconds = currTime % 60;
+        let maxHours = 0;
+        if(maxMinutes >= 60){
+            maxHours = parseInt(maxMinutes / 60);
+            maxMinutes = maxMinutes % 60;
+        }
         if(maxMinutes < 10) maxMinutes = "0"+maxMinutes;
         if(maxSeconds < 10) maxSeconds = "0"+maxSeconds;
         tooltipDuration = maxMinutes+":"+maxSeconds;
+        if(maxHours > 0) tooltipDuration = maxHours+":"+tooltipDuration;
         tooltipInitialized = true;
     }
 

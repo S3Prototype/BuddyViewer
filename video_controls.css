@@ -300,10 +300,6 @@ pointer-events: none;
     
     }
 
-    .video_container:fullscreen{
-        rotate: 90;       
-    }
-
     #ytsearch{
         height: 80px;
         margin-top: 40px;

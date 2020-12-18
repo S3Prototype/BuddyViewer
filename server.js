@@ -348,8 +348,8 @@ app.post('/initialize', function(req, res){
 });
 
 app.post('/search', function(req, res){
-    console.log(`${new Date().toLocaleTimeString()} Searching for: ${JSON.stringify(req.body, null, 2)}`);
-    console.log('===================================');    
+    // console.log(`${new Date().toLocaleTimeString()} Searching for: ${JSON.stringify(req.body, null, 2)}`);
+    // console.log('===================================');    
     google.youtube('v3').search.list({
         key: process.env.YOUTUBE_TOKEN,
         part: "snippet",

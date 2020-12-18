@@ -2,8 +2,14 @@ DOING:
 
 TODO:
 * Now just have to test everything thoroughly. All features.
+* Change the chat so it's ways floating
+* Show text to say who put in a video/pressed play/etc
+* Implement a history
+* Add recommended videos overlay over the video when it reaches ended/paused status, with your own videos in that the viewer can click and add instantly.
+* Add overlay on video that catches the clicks and pauses/plays, to recreate clicking on the vid to pause/play.
 * In the description/title search results on the server, check for the html codes like &quot; etc, and convert them over to their actual characters.
 * Full screen doesn't work in chrome again. Goddammit. The video controls look janky and don't go away.
+    ** Probably have to put the css in a -webkit thing
 * REFACTOR/CLEAN UP CODE/ORGANIZE FOLDERS
 
 
@@ -19,6 +25,7 @@ TODO:
 
 REFACTORING:
 
+* Maybe add all buttons to an array with their names as the indices. Would allow for cycling through them to add the enlarged classes.
 * Put the join-room-button code in the actual index.html, in a script in the head, so it runs before the rest of the page loads; otherwise people are able to click on things before the overlay loads to block mouse events.
 * Split chat code and video code into separate JS files
 * Get rid of clientYTPlayer util class and have literal instantiated objects. Use polymorphism to handle different video types (as in, youtube vs not youtube)
@@ -47,6 +54,17 @@ THOUGHTS:
 ~~~~~~~~~~~
 ===========
 ~~~~~~~~~~~
+12/15/20
+
+
+* Pressing CC while it's paused will make it play and make the play/pause button show a play button, even though the video is playing (should show pause whenever video is playing).
+    ** Fixed. Had to pause video after initing it if state is paused.
+* Now pasting links doesn't work anymore. It just searches it for some reason.
+    ** Fixed. It was a logic error.
+* For some reason adding code to the update tooltip code that actually shows hours (instead of 87 minutes, 100 minutes etc) has broken the ability of the progress bar to skip past 60 minutes/hour, or to even update past that value. This is extra strange because the progress bar isn't full when it stops, so it's clearly initialized properly. Just when it's time to update again, if it's past 60 minutes, it won't anymore. Strange.
+    *Done. It was a typo.
+
+====
 12/12/20
 
 
