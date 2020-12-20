@@ -1,4 +1,5 @@
 DOING:
+* Confused about how to initialize a video that hotjoins with websockets.
 
 TODO:
 * Now just have to test everything thoroughly. All features.

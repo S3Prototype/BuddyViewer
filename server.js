@@ -24,35 +24,70 @@ const io = socketio(server);
 
 io.on('connection', socket=>{
     
-        //When new user connects, emit to them the current video state.
-    socket.emit("VideoState", {
-        bufferingID: VideoManager.bufferingID = "EMPTY",
-        universalUrl: VideoManager.universalUrl = "hjcXNK-zUFg",
-        settingsAltered: VideoManager.settingsAltered,
-        alterID: VideoManager.alterID,
-        universalPlaybackRate: VideoManager.universalPlaybackRate,
-        universalLooping: VideoManager.universalLooping,
-        seekingIDListEmpty: VideoManager.seekingIDListEmpty
-    })
+        // When new user connects, emit to them the current video state.
+    // socket.emit("VideoState", {
+    //     bufferingID: VideoManager.bufferingID = "EMPTY",
+    //     universalUrl: VideoManager.universalUrl = "hjcXNK-zUFg",
+    //     settingsAltered: VideoManager.settingsAltered,
+    //     alterID: VideoManager.alterID,
+    //     universalPlaybackRate: VideoManager.universalPlaybackRate,
+    //     universalLooping: VideoManager.universalLooping,
+    //     seekingIDListEmpty: VideoManager.seekingIDListEmpty
+    // })
 
         //Then send a message to everyone else that's connected.
-    socket.broadcast.emit();
+    socket.aligned = false;
+    io.emit('getState', "");
 
-    socket.on('disconnect', data=>{
-        io.emit();//Tell everyone else someone DC'd.
-    })
+    socket.on('getState', ({state, startTime, id})=>{
+        if(socket.aligned){
+           socket.broadcast.emit('setState', {
+               state,
+               startTime,
+               id
+            });
+        } else {
+            socket.emit('setState', {
+                state,
+                startTime,
+                id
+            });
+        }
+        socket.aligned = true;
+    });
 
-    //test comment
+    socket.on('play', videostate=>{
+        socket.broadcast.emit('play', videostate);
+    });
+
+    socket.on('pause', videostate=>{
+        socket.broadcast.emit('pause', videostate);
+    });
+
+    socket.on('seek', time=>{
+        socket.broadcast.emit('seek', time);
+    });
 
     socket.on('message', letterArray=>{
         console.log(letterArray);
+    });
+
+    socket.on('startOver', time=>{
+        socket.broadcast.emit('startOver', time);
+    });
+
+    socket.on('startNew', ({startTime, id})=>{
+        socket.broadcast.emit('startNew',{
+            startTime: startTime,
+            id: id
+        });
     });
 })
 
 
 
 
-var port = process.env.PORT || 6969;
+var port = process.env.PORT || 8092;
 
 app.use(express.static(path.join(__dirname, '/public/')));
 app.use(bodyparser.json());

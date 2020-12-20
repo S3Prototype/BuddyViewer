@@ -14,11 +14,77 @@ $(function(){
 
     const socket = io();
 
-    socket.on('VideoState', state=>{
-        console.log(JSON.stringify(state));
+    socket.on('getState', _=>{
+        socket.emit('getState', {
+            state: ClientYTPlayer.currentState,
+            startTime: ClientYTPlayer.videoTime,
+            id: ClientYTPlayer.clientURL
+        });
     });
 
-    socket.emit('message', letterArray);
+    socket.on('setState', ({state, startTime, id})=>{
+        ClientYTPlayer.currentState = state;
+        if(id != ClientYTPlayer.clientURL){
+            ClientYTPlayer.clientURL = id;
+            ClientYTPlayer.videoTime = startTime;
+            ClientYTPlayer.addNewVideo();
+        } else {
+            player.seekTo(startTime);
+            ClientYTPlayer.updateTimeUI(startTime);
+        }
+
+        switch(state){
+            case CustomStates.PLAYING:
+                playVideo();
+                break;
+            default:
+                pauseVideo();
+                break;
+        }
+        initializeToolTip();
+        initializeYTProgressBar();
+    });
+
+    socket.on('play', state=>{
+        initializeToolTip();
+        initializeYTProgressBar();
+        playVideo();
+        // player.playVideo();
+        // player.setVolume(parseInt(volumeSlider.value));
+    });
+
+    socket.on('pause', state=>{
+        pauseVideo();
+    });
+
+    socket.on('seek', time=>{
+        player.seekTo(time);
+        ClientYTPlayer.updateTimeUI(time);
+    });
+
+    socket.on('startNew', ({id, startTime})=>{
+        if(id != ClientYTPlayer.clientURL){
+            ClientYTPlayer.clientURL = id;
+            ClientYTPlayer.videoTime = startTime;
+            ClientYTPlayer.addNewVideo();
+        } else {
+            player.seekTo(startTime);
+            ClientYTPlayer.updateTimeUI(startTime);
+            playVideo();
+        }
+        initializeToolTip();
+        initializeYTProgressBar();
+    });
+
+    socket.on('startOver', time=>{
+        player.seekTo(time);
+        ClientYTPlayer.updateTimeUI(time);
+        playVideo();
+    });
+
+
+
+    // socket.emit('message', letterArray);
 
 
     function validateUserID(){
@@ -129,7 +195,8 @@ $(function(){
         static initNewPlayer(event){
             // event.target.addEventListener("onStateChange", ClientYTPlayer.SendStateToServer);
             console.log("initNewPlayer STARTED");            
-            event.target.playVideo();
+            // event.target.playVideo();            
+            playVideo();
             initializeYTProgressBar();
             initializeToolTip();
             // ClientYTPlayer.previousState = ClientYTPlayer.currentState;
@@ -149,32 +216,32 @@ $(function(){
             //     // document.getElementById('play-pause-icon').className = "fas fa-pause";
             // }
             // ClientYTPlayer.SendStateToServer(event);
-            if(ClientYTPlayer.shouldSendState){
-                console.log("SHOULD BE SENDING DATA");
-                ClientYTPlayer.previousState = ClientYTPlayer.currentState;
-                ClientYTPlayer.currentState = CustomStates.PLAYING;
-                document.getElementById('play-pause-icon').classList.remove("fa-play");
-                document.getElementById('play-pause-icon').classList.add("fa-pause");
-                ClientYTPlayer.SendStateToServer(event);
-            } else {
-                console.log("WE ARE NOT SENDING DATA");
-                // ClientYTPlayer.currentState = ClientYTPlayer.previousState;
-                player.seekTo(ClientYTPlayer.videoTime);
-                ClientYTPlayer.updateTimeUI(ClientYTPlayer.videoTime);
-                // ClientYTPlayer.timeShouldBeSaved = false;
-                ClientYTPlayer.shouldSendState = true;
-            }
+            // if(ClientYTPlayer.shouldSendState){
+            //     console.log("SHOULD BE SENDING DATA");
+            //     ClientYTPlayer.previousState = ClientYTPlayer.currentState;
+            //     ClientYTPlayer.currentState = CustomStates.PLAYING;
+            //     document.getElementById('play-pause-icon').classList.remove("fa-play");
+            //     document.getElementById('play-pause-icon').classList.add("fa-pause");
+            //     ClientYTPlayer.SendStateToServer(event);
+            // } else {
+            //     console.log("WE ARE NOT SENDING DATA");
+            //     // ClientYTPlayer.currentState = ClientYTPlayer.previousState;
+            //     player.seekTo(ClientYTPlayer.videoTime);
+            //     ClientYTPlayer.updateTimeUI(ClientYTPlayer.videoTime);
+            //     // ClientYTPlayer.timeShouldBeSaved = false;
+            //     ClientYTPlayer.shouldSendState = true;
+            // }
 
-            if(ClientYTPlayer.currentState == CustomStates.PLAYING){
-                document.getElementById('play-pause-icon').classList.remove("fa-play");
-                document.getElementById('play-pause-icon').classList.add("fa-pause");
-            } else if (ClientYTPlayer.currentState == CustomStates.PAUSED){
-                player.pauseVideo();
-            }
+            // if(ClientYTPlayer.currentState == CustomStates.PLAYING){
+            //     document.getElementById('play-pause-icon').classList.remove("fa-play");
+            //     document.getElementById('play-pause-icon').classList.add("fa-pause");
+            // } else if (ClientYTPlayer.currentState == CustomStates.PAUSED){
+            //     player.pauseVideo();
+            // }
             stayMuted || player.unMute();
                 //Where do we clear the ping interval first?
-            ClientYTPlayer.pingInterval = setInterval(pingVideoSetting, 200);
-            console.log("initNewPlayer ENDED");            
+            // ClientYTPlayer.pingInterval = setInterval(pingVideoSetting, 200);
+            // console.log("initNewPlayer ENDED");            
         }
         static extractID(url){
             // const startIndex = url.indexOf('v=') + 2;
@@ -208,10 +275,10 @@ $(function(){
             // const currURL = ClientYTPlayer.extractID(player.getVideoUrl());
             // if(currURL == ClientYTPlayer.clientURL) return;
             ClientYTPlayer.currentlySendingData = ClientYTPlayer.shouldSendState;
-            console.log("ADD NEW VIDEO STARTED");
+            // console.log("ADD NEW VIDEO STARTED");
                 player.destroy();
                 playerInitialized = false;
-                clearInterval(ClientYTPlayer.pingInterval);
+                // clearInterval(ClientYTPlayer.pingInterval);
                 player = new YT.Player('player', {
                     height: '100%',
                     width: '100%',
@@ -223,7 +290,7 @@ $(function(){
                     },        
                     playerVars: ClientYTPlayer.options
                   });
-            console.log("ADD NEW VIDEO ENDED");
+            // console.log("ADD NEW VIDEO ENDED");
             // ClientYTPlayer.SendStateToServer({});
         }
         static getTime(){
@@ -300,6 +367,10 @@ $(function(){
                 console.log(`${new Date().toLocaleTimeString()} Executed search. Preliminary results are: ${JSON.stringify(results, null, 2)}`);
                     if(!results || results.length < 1){
                         ClientYTPlayer.keepCheckingForResults();                        
+                    } else {
+                        console.log(results[0]);
+                        ClientYTPlayer.addSearchResults(results);
+                        ClientYTPlayer.searchCount = 0;
                     }
                 }
             });
@@ -316,14 +387,24 @@ $(function(){
                 thumbDiv.setAttribute('class', 'result-thumbnail-div');
                 resultDiv.append(thumbDiv);
 
+                function addFromResult(){
+                    ClientYTPlayer.shouldSendState = true;
+                    ClientYTPlayer.clientURL = result.videoID;
+                    ClientYTPlayer.addNewVideo();
+                    socket.emit('startNew', {
+                        startTime: 0,
+                        id: result.videoID
+                    })
+                }
+
                 const thumbnail = document.createElement('img');
                 thumbnail.setAttribute('class', 'result-thumbnail');
                 thumbnail.setAttribute('src', result.thumbnail);
                 thumbnail.addEventListener('click', function(event){
-                ClientYTPlayer.shouldSendState = true;
-
-                    ClientYTPlayer.clientURL = result.videoID;
-                    ClientYTPlayer.addNewVideo();
+                    addFromResult();
+                    // ClientYTPlayer.shouldSendState = true;
+                    // ClientYTPlayer.clientURL = result.videoID;
+                    // ClientYTPlayer.addNewVideo();
                 });
                 thumbDiv.append(thumbnail)
 
@@ -333,10 +414,10 @@ $(function(){
                 const titleText = document.createTextNode(result.title);
                 title.appendChild(titleText);
                 title.addEventListener('click', function(event){
-                ClientYTPlayer.shouldSendState = true;
-
-                    ClientYTPlayer.clientURL = result.videoID;
-                    ClientYTPlayer.addNewVideo();
+                    addFromResult();
+                    // ClientYTPlayer.shouldSendState = true;
+                    // ClientYTPlayer.clientURL = result.videoID;
+                    // ClientYTPlayer.addNewVideo();
                 });
                 resultDiv.append(title);
 
@@ -356,149 +437,149 @@ $(function(){
         }
         static SendStateToServer(event){
 
-            ClientYTPlayer.currentlySendingData = true;
-            // ClientYTPlayer.currentState = ;            
-            let sendData = {
-                "name" : nameOnServer,
-                "user_id" : userID,
-                "state" : ClientYTPlayer.currentState,
-                "video_time" : ClientYTPlayer.videoTime,
-                "video_url": ClientYTPlayer.clientURL,
-                "video_playbackrate": ClientYTPlayer.playbackRate,
-                "video_looping": ClientYTPlayer.looping
-            };
+            // ClientYTPlayer.currentlySendingData = true;
+            // // ClientYTPlayer.currentState = ;            
+            // let sendData = {
+            //     "name" : nameOnServer,
+            //     "user_id" : userID,
+            //     "state" : ClientYTPlayer.currentState,
+            //     "video_time" : ClientYTPlayer.videoTime,
+            //     "video_url": ClientYTPlayer.clientURL,
+            //     "video_playbackrate": ClientYTPlayer.playbackRate,
+            //     "video_looping": ClientYTPlayer.looping
+            // };
 
-            //Here we check if the state is anything weird.
+            // //Here we check if the state is anything weird.
 
-            console.log("("+ new Date().toLocaleTimeString()+") TELL SERVER TO "+sendData.state);
-            $.ajax({
-                url: '/alter-video-settings',
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify(sendData, null, 2),
-                success: function (response){
-                    console.log(`${new Date().toLocaleTimeString()} Reults are: ${response.name}`);
-                    ClientYTPlayer.currentlySendingData = false;
-                    // ClientYTPlayer.addSearchResults(response.results);
-                    console.log("("+ new Date().toLocaleTimeString()+") Sendstate from this client done.");
-                    initializeYTProgressBar();
-                    // ClientYTPlayer.clientState = player.getPlayerState();
-                }
-            });
+            // console.log("("+ new Date().toLocaleTimeString()+") TELL SERVER TO "+sendData.state);
+            // $.ajax({
+            //     url: '/alter-video-settings',
+            //     method: 'POST',
+            //     contentType: 'application/json',
+            //     data: JSON.stringify(sendData, null, 2),
+            //     success: function (response){
+            //         console.log(`${new Date().toLocaleTimeString()} Reults are: ${response.name}`);
+            //         ClientYTPlayer.currentlySendingData = false;
+            //         // ClientYTPlayer.addSearchResults(response.results);
+            //         console.log("("+ new Date().toLocaleTimeString()+") Sendstate from this client done.");
+            //         initializeYTProgressBar();
+            //         // ClientYTPlayer.clientState = player.getPlayerState();
+            //     }
+            // });
         }
         static alignWithServerState(response){
-            //If ytplayer not made yet, or the person who altered server
-            //state last was me, just end it.
-            if(!player) return;
-            if(!progressBarInitialized) initializeYTProgressBar();
+            // //If ytplayer not made yet, or the person who altered server
+            // //state last was me, just end it.
+            // if(!player) return;
+            // if(!progressBarInitialized) initializeYTProgressBar();
 
-            // console.log("PLAYBACK RATE IS NOW: "+player.getPlaybackRate());
-            const serverState = response.state;
-            const serverTime = Math.round(response.video_time);
-            const serverURL = response.video_url;
-            const serverPlaybackRate = response.video_playbackrate;
-            ClientYTPlayer.looping = response.video_looping;
-            const loopingButton = document.getElementById('loop-button');
-            if(ClientYTPlayer.looping){
-                loopingButton.style.color = "white"
-                localStorage.setItem('looping', "true");
-            } else {
-                loopingButton.style.color = "gray";
-                localStorage.setItem('looping', "false");
-            }
+            // // console.log("PLAYBACK RATE IS NOW: "+player.getPlaybackRate());
+            // const serverState = response.state;
+            // const serverTime = Math.round(response.video_time);
+            // const serverURL = response.video_url;
+            // const serverPlaybackRate = response.video_playbackrate;
+            // ClientYTPlayer.looping = response.video_looping;
+            // const loopingButton = document.getElementById('loop-button');
+            // if(ClientYTPlayer.looping){
+            //     loopingButton.style.color = "white"
+            //     localStorage.setItem('looping', "true");
+            // } else {
+            //     loopingButton.style.color = "gray";
+            //     localStorage.setItem('looping', "false");
+            // }
             
 
-            if(serverURL != ClientYTPlayer.clientURL){
-                ClientYTPlayer.clientURL = serverURL;
-                if(serverState != CustomStates.PLAYING){
-                    ClientYTPlayer.videoTime = serverTime;
-                }                
-                ClientYTPlayer.shouldSendState = false;
-                ClientYTPlayer.addNewVideo();
-                return;
-            }
+            // if(serverURL != ClientYTPlayer.clientURL){
+            //     ClientYTPlayer.clientURL = serverURL;
+            //     if(serverState != CustomStates.PLAYING){
+            //         ClientYTPlayer.videoTime = serverTime;
+            //     }                
+            //     ClientYTPlayer.shouldSendState = false;
+            //     ClientYTPlayer.addNewVideo();
+            //     return;
+            // }
             
-            if(serverState != ClientYTPlayer.currentState){
-                console.log("("+ new Date().toLocaleTimeString()+") RECEIVED STATE "+serverState);                
-                changeTriggeredByControls = true;
-                if(serverState == YT.PlayerState.PLAYING){
-                    ClientYTPlayer.currentState = serverState;
-                    player.playVideo();
-                    document.getElementById('play-pause-icon').classList.remove("fa-play");
-                    document.getElementById('play-pause-icon').classList.add("fa-pause");
-                } else if(serverState == YT.PlayerState.PAUSED){
-                    ClientYTPlayer.currentState = serverState;
-                    player.pauseVideo();
-                    document.getElementById('play-pause-icon').classList.remove("fa-pause");
-                    document.getElementById('play-pause-icon').classList.add("fa-play");
-                } else if(serverState == YT.PlayerState.SEEKING){
-                    ClientYTPlayer.currentState = serverState;
-                    player.seekTo(serverTime);
-                    ClientYTPlayer.updateTimeUI(serverTime);                    
-                    // const seekIcon = serverTime > ClientYTPlayer.videoTime ? "fas fa-forward" : "fas fa-backward";
-                    // document.getElementById('play-pause-icon').className = seekIcon;                    
-                }
-            } else if(serverState == ClientYTPlayer.currentState) {
-            }
+            // if(serverState != ClientYTPlayer.currentState){
+            //     console.log("("+ new Date().toLocaleTimeString()+") RECEIVED STATE "+serverState);                
+            //     changeTriggeredByControls = true;
+            //     if(serverState == YT.PlayerState.PLAYING){
+            //         ClientYTPlayer.currentState = serverState;
+            //         player.playVideo();
+            //         document.getElementById('play-pause-icon').classList.remove("fa-play");
+            //         document.getElementById('play-pause-icon').classList.add("fa-pause");
+            //     } else if(serverState == YT.PlayerState.PAUSED){
+            //         ClientYTPlayer.currentState = serverState;
+            //         player.pauseVideo();
+            //         document.getElementById('play-pause-icon').classList.remove("fa-pause");
+            //         document.getElementById('play-pause-icon').classList.add("fa-play");
+            //     } else if(serverState == YT.PlayerState.SEEKING){
+            //         ClientYTPlayer.currentState = serverState;
+            //         player.seekTo(serverTime);
+            //         ClientYTPlayer.updateTimeUI(serverTime);                    
+            //         // const seekIcon = serverTime > ClientYTPlayer.videoTime ? "fas fa-forward" : "fas fa-backward";
+            //         // document.getElementById('play-pause-icon').className = seekIcon;                    
+            //     }
+            // } else if(serverState == ClientYTPlayer.currentState) {
+            // }
 
-            if(serverState == CustomStates.ENDED){
-                if(ClientYTPlayer.looping){
-                    ClientYTPlayer.currentState = CustomStates.PLAYING;
-                    ClientYTPlayer.videoTime = 0;
-                    document.getElementById('play-pause-icon').classList.remove("fa-play");
-                    document.getElementById('play-pause-icon').classList.add("fa-pause");
-                    player.seekTo(0);
-                    player.playVideo();
-                    ClientYTPlayer.SendStateToServer({})
-                }
-            }
+            // if(serverState == CustomStates.ENDED){
+            //     if(ClientYTPlayer.looping){
+            //         ClientYTPlayer.currentState = CustomStates.PLAYING;
+            //         ClientYTPlayer.videoTime = 0;
+            //         document.getElementById('play-pause-icon').classList.remove("fa-play");
+            //         document.getElementById('play-pause-icon').classList.add("fa-pause");
+            //         player.seekTo(0);
+            //         player.playVideo();
+            //         ClientYTPlayer.SendStateToServer({})
+            //     }
+            // }
                 
-            const currTime = ClientYTPlayer.videoTime;
-            // console.log("TIME NOW IS: "+currTime +"| SERVER TIME: "+serverTime);
-            if(currTime < serverTime - 5 || currTime > serverTime + 5){
-                // console.log("Adjusting client to server time");
-                // console.log("==================");
-                // console.log(`Client time: ${currTime} | Server time: ${serverTime}`);
-                // console.log("==================");
-                player.seekTo(serverTime);
-                if(serverState == CustomStates.PAUSED){
-                    // player.pauseVideo();
-                }
-                ClientYTPlayer.updateTimeUI(serverTime);                                   
-            }
+            // const currTime = ClientYTPlayer.videoTime;
+            // // console.log("TIME NOW IS: "+currTime +"| SERVER TIME: "+serverTime);
+            // if(currTime < serverTime - 5 || currTime > serverTime + 5){
+            //     // console.log("Adjusting client to server time");
+            //     // console.log("==================");
+            //     // console.log(`Client time: ${currTime} | Server time: ${serverTime}`);
+            //     // console.log("==================");
+            //     player.seekTo(serverTime);
+            //     if(serverState == CustomStates.PAUSED){
+            //         // player.pauseVideo();
+            //     }
+            //     ClientYTPlayer.updateTimeUI(serverTime);                                   
+            // }
 
-            if(serverPlaybackRate != ClientYTPlayer.playbackRate){
-                ClientYTPlayer.playbackRate = serverPlaybackRate;
-                player.setPlaybackRate(serverPlaybackRate);
-                document.getElementById('playrate-text').innerHTML = serverPlaybackRate +"x";
-            }
+            // if(serverPlaybackRate != ClientYTPlayer.playbackRate){
+            //     ClientYTPlayer.playbackRate = serverPlaybackRate;
+            //     player.setPlaybackRate(serverPlaybackRate);
+            //     document.getElementById('playrate-text').innerHTML = serverPlaybackRate +"x";
+            // }
 
             
-            // ClientYTPlayer.currentState = player.getPlayerState();
+            // // ClientYTPlayer.currentState = player.getPlayerState();
         }
     }
 
     function pingVideoSetting(){
-        if(!player) return;
-        if(ClientYTPlayer.currentlySendingData) return;
+        // if(!player) return;
+        // if(ClientYTPlayer.currentlySendingData) return;
 
-        const playerData = {
-            "name" : nameOnServer,
-            "user_id" : userID,
-            "state" : ClientYTPlayer.currentState,
-            "video_time": ClientYTPlayer.videoTime,
-            "video_url": ClientYTPlayer.clientURL,
-        };
-        $.ajax({
-            url: '/check-server-video-state',
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify(playerData, null, 2),
-            success: function (response){
-                if(ClientYTPlayer.currentlySendingData) return;
-                ClientYTPlayer.alignWithServerState(response); 
-            }
-        });
+        // const playerData = {
+        //     "name" : nameOnServer,
+        //     "user_id" : userID,
+        //     "state" : ClientYTPlayer.currentState,
+        //     "video_time": ClientYTPlayer.videoTime,
+        //     "video_url": ClientYTPlayer.clientURL,
+        // };
+        // $.ajax({
+        //     url: '/check-server-video-state',
+        //     method: 'POST',
+        //     contentType: 'application/json',
+        //     data: JSON.stringify(playerData, null, 2),
+        //     success: function (response){
+        //         if(ClientYTPlayer.currentlySendingData) return;
+        //         ClientYTPlayer.alignWithServerState(response); 
+        //     }
+        // });
 
     }
 
@@ -511,19 +592,19 @@ $(function(){
         document.getElementById('join-room-modal').classList.remove('active');
         document.getElementById('join-room-modal-overlay').classList.remove('active');
         
-        const state = ClientYTPlayer.currentState;
-        if(state == CustomStates.PLAYING){
-            player.playVideo();
-            document.getElementById('play-pause-icon').classList.remove("fa-play");
-            document.getElementById('play-pause-icon').classList.add("fa-pause");
-        } else if(state == CustomStates.PAUSED){
-            player.pauseVideo();
-            document.getElementById('play-pause-icon').classList.remove("fa-pause");
-            document.getElementById('play-pause-icon').classList.add("fa-play");
-        }
+        // const state = ClientYTPlayer.currentState;
+        // if(state == CustomStates.PLAYING){
+        //     // player.playVideo();
+        //     document.getElementById('play-pause-icon').classList.remove("fa-play");
+        //     document.getElementById('play-pause-icon').classList.add("fa-pause");
+        // } else if(state == CustomStates.PAUSED){
+        //     // player.pauseVideo();
+        //     document.getElementById('play-pause-icon').classList.remove("fa-pause");
+        //     document.getElementById('play-pause-icon').classList.add("fa-play");
+        // }
 
-        initializeYTProgressBar();
-        initializeToolTip();
+        // initializeYTProgressBar();
+        // initializeToolTip();
 
     });
 
@@ -623,6 +704,10 @@ $(function(){
                 ClientYTPlayer.shouldSendState = true;
                 console.log("Client should send? "+ClientYTPlayer.shouldSendState);
                 ClientYTPlayer.addNewVideo();
+                socket.emit('startNew', {
+                    id: currURL,
+                    startTime: 0
+                })
                 console.log("End of search submit function");
             }
         } else {
@@ -690,6 +775,37 @@ $(function(){
         }
     });
 
+    function pauseVideo(){
+        if(inFullScreen){
+            videoContainer.style.flexWrap = "nowrap";
+            controlsToggled = true;
+            setTimeout(()=>{
+                controlsToggled = false;
+                videoContainer.style.flexWrap = "wrap";                    
+            }, 3000);
+        }
+        ClientYTPlayer.currentState = YT.PlayerState.PAUSED;
+        player.pauseVideo();
+        document.getElementById('play-pause-icon').classList.remove("fa-pause");
+        document.getElementById('play-pause-icon').classList.add("fa-play");
+        // socket.emit('pause', {});
+    }
+
+    function playVideo(){
+        ClientYTPlayer.currentState = YT.PlayerState.PLAYING;
+        player.playVideo();
+        document.getElementById('play-pause-icon').classList.remove("fa-play");
+        document.getElementById('play-pause-icon').classList.add("fa-pause");        
+        // socket.emit('play', {});
+    }
+
+    function startVideoOver(){
+        ClientYTPlayer.videoTime = 0;
+        player.seekTo(ClientYTPlayer.videoTime);
+        document.getElementById('play-pause-icon').classList.remove("fa-play");
+        document.getElementById('play-pause-icon').classList.add("fa-pause");        
+    }
+
     $('#play-pause-button').click(function(event){
         if(!player){
             console.log("PLAY BUTTON FAILED")
@@ -703,42 +819,44 @@ $(function(){
             initializeToolTip();
             player.setVolume(parseInt(volumeSlider.value));
         }
+        
 
         changeTriggeredByControls = true;
         if(ClientYTPlayer.currentState == YT.PlayerState.PLAYING){
-            if(inFullScreen){
-                videoContainer.style.flexWrap = "nowrap";
-                controlsToggled = true;
-                setTimeout(()=>{
-                    controlsToggled = false;
-                    videoContainer.style.flexWrap = "wrap";                    
-                }, 3000);
-            }
-            ClientYTPlayer.currentState = YT.PlayerState.PAUSED;
-            player.pauseVideo();
-            document.getElementById('play-pause-icon').classList.remove("fa-pause");
-            document.getElementById('play-pause-icon').classList.add("fa-play");
-            ClientYTPlayer.SendStateToServer({});
-        } else if(ClientYTPlayer.currentState == YT.PlayerState.UNSTARTED){
-            ClientYTPlayer.currentState = YT.PlayerState.PLAYING;
-            player.playVideo();
-            document.getElementById('play-pause-icon').classList.remove("fa-play");
-            document.getElementById('play-pause-icon').classList.add("fa-pause");
-            ClientYTPlayer.SendStateToServer({});
-        } else if(ClientYTPlayer.currentState == YT.PlayerState.PAUSED){
-            ClientYTPlayer.currentState = YT.PlayerState.PLAYING;
-            player.playVideo();
-            document.getElementById('play-pause-icon').classList.remove("fa-play");
-            document.getElementById('play-pause-icon').classList.add("fa-pause");
-            ClientYTPlayer.SendStateToServer({});
+            pauseVideo();
+            socket.emit('pause');
+            // if(inFullScreen){
+            //     videoContainer.style.flexWrap = "nowrap";
+            //     controlsToggled = true;
+            //     setTimeout(()=>{
+            //         controlsToggled = false;
+            //         videoContainer.style.flexWrap = "wrap";                    
+            //     }, 3000);
+            // }
+            // ClientYTPlayer.currentState = YT.PlayerState.PAUSED;
+            // player.pauseVideo();
+            // document.getElementById('play-pause-icon').classList.remove("fa-pause");
+            // document.getElementById('play-pause-icon').classList.add("fa-play");
+            // socket.emit('pause', {});
+        } else if(ClientYTPlayer.currentState == YT.PlayerState.UNSTARTED ||
+                ClientYTPlayer.currentState == YT.PlayerState.PAUSED){
+            playVideo();
+            socket.emit('play');
+            // ClientYTPlayer.currentState = YT.PlayerState.PLAYING;
+            // player.playVideo();
+            // document.getElementById('play-pause-icon').classList.remove("fa-play");
+            // document.getElementById('play-pause-icon').classList.add("fa-pause");        
+            // socket.emit('play', {});
         } else if(ClientYTPlayer.currentState == CustomStates.ENDED){
-            ClientYTPlayer.currentState = CustomStates.PLAYING;
-            ClientYTPlayer.videoTime = 0;
-            player.seekTo(ClientYTPlayer.videoTime);
-            player.playVideo();
-            document.getElementById('play-pause-icon').classList.remove("fa-play");
-            document.getElementById('play-pause-icon').classList.add("fa-pause");
-            ClientYTPlayer.SendStateToServer({});     
+            startVideoOver();
+            socket.emit('startOver');
+            // ClientYTPlayer.currentState = CustomStates.PLAYING;
+            // ClientYTPlayer.videoTime = 0;
+            // player.seekTo(ClientYTPlayer.videoTime);
+            // player.playVideo();
+            // document.getElementById('play-pause-icon').classList.remove("fa-play");
+            // document.getElementById('play-pause-icon').classList.add("fa-pause");
+            // socket.emit('play', {});
         }
     });
 
@@ -792,9 +910,10 @@ $(function(){
         const scrubTime = (event.offsetX / progressBar.offsetWidth) * player.getDuration();
         changeTriggeredByControls = true;
         player.seekTo(scrubTime);
-        ClientYTPlayer.currentState = CustomStates.SEEKING;
+        // ClientYTPlayer.currentState = CustomStates.SEEKING;
         ClientYTPlayer.updateTimeUI(scrubTime);
-        ClientYTPlayer.SendStateToServer({});
+        socket.emit('seek', scrubTime);
+        // ClientYTPlayer.SendStateToServer({});
     }
 
     function initializeToolTip(){
@@ -833,11 +952,15 @@ $(function(){
         if(event.data == CustomStates.ENDED){
             ClientYTPlayer.currentState = event.data;
             if(ClientYTPlayer.looping){
-                ClientYTPlayer.videoTime = 0;
+                startVideoOver();
+                socket.emit('startNew', {
+                    startTime: 0,
+                    id: ClientYTPlayer.clientURL
+                });
             }
             document.getElementById('play-pause-icon').classList.remove("fa-pause");
             document.getElementById('play-pause-icon').classList.add("fa-play");
-            ClientYTPlayer.SendStateToServer({});                
+            // ClientYTPlayer.SendStateToServer({});                
         }
         // console.log("BEFORE anything: "+event.data);
         // if(event.data == YT.PlayerState.BUFFERING){                    
@@ -1282,11 +1405,11 @@ $(function(){
 
             ClientYTPlayer.pingInterval = setInterval(pingVideoSetting, 200);
         
-            setInterval(pingServer, 2500);
+            // setInterval(pingServer, 2500);
         
-            setInterval(checkForMessages, 500);
+            // setInterval(checkForMessages, 500);
         
-            setInterval(checkForUserList, 650);
+            // setInterval(checkForUserList, 650);
             player.addEventListener("onStateChange", stopYTEvent);
             ClientYTPlayer.currentState = YT.PlayerState.UNSTARTED;
 
