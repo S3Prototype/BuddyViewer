@@ -1,30 +1,58 @@
+const path = require('path');
+const http = require('http');
 var express = require('express');
 var bodyparser = require('body-parser');
 const router = express.Router();
-var events = require('events');
-const fs = require('fs');
+// var events = require('events');
+// const fs = require('fs');
 const e = require('express');
 const request = require('request');
-const cheerio = require('cheerio');
+// const cheerio = require('cheerio');
 require('dotenv').config();
 const { google } = require('googleapis');
 const { title } = require('process');
 
+const socketio = require('socket.io');
+
+
 var app = express();
+const server = http.createServer(app);
+const io = socketio(server);
 
 //let rawData = fs.readFileSync('messages.json');
 
-let defaultMessage = {
-    "name": "SERVER",
-    "message_id": 0,
-    "timestamp": "00:00:00 AM",
-    "message_data": " ",
-    "user_id" : "SERVER_MESSAGE"
-};
 
-var port = process.env.PORT || 8092;
+io.on('connection', socket=>{
+    
+        //When new user connects, emit to them the current video state.
+    socket.emit("VideoState", {
+        bufferingID: VideoManager.bufferingID = "EMPTY",
+        universalUrl: VideoManager.universalUrl = "hjcXNK-zUFg",
+        settingsAltered: VideoManager.settingsAltered,
+        alterID: VideoManager.alterID,
+        universalPlaybackRate: VideoManager.universalPlaybackRate,
+        universalLooping: VideoManager.universalLooping,
+        seekingIDListEmpty: VideoManager.seekingIDListEmpty
+    })
 
-app.use(express.static(__dirname));
+        //Then send a message to everyone else that's connected.
+    socket.broadcast.emit();
+
+    socket.on('disconnect', data=>{
+        io.emit();//Tell everyone else someone DC'd.
+    })
+
+    socket.on('message', letterArray=>{
+        console.log(letterArray);
+    });
+})
+
+
+
+
+var port = process.env.PORT || 6969;
+
+app.use(express.static(path.join(__dirname, '/public/')));
 app.use(bodyparser.json());
 app.use(router);
 // let messages = [{}];//was: JSON.parse(rawData);
@@ -622,7 +650,7 @@ app.delete('/messages', function(req, res){
     res.send("Delete succeeded.");
 });
 
-app.listen(port, function(){
+server.listen(port, function(){
     console.log(`Server listening on: ${port}`);
     console.log("Server start date/time: "+new Date().toLocaleDateString() + " / " + new Date().toLocaleTimeString());
     console.log("======");

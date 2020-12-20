@@ -12,6 +12,14 @@ $(function(){
     let stayMuted = false;
     let mobileMode = false;
 
+    const socket = io();
+
+    socket.on('VideoState', state=>{
+        console.log(JSON.stringify(state));
+    });
+
+    socket.emit('message', letterArray);
+
 
     function validateUserID(){
         const savedID = localStorage.getItem('userID');
