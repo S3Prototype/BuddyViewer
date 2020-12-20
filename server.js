@@ -42,6 +42,8 @@ io.on('connection', socket=>{
         io.emit();//Tell everyone else someone DC'd.
     })
 
+    //test comment
+
     socket.on('message', letterArray=>{
         console.log(letterArray);
     });
