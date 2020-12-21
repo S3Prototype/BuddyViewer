@@ -12,10 +12,13 @@ $(function(){
     let stayMuted = false;
     let mobileMode = false;
 
+    const playrateText = document.getElementById('playrate-text');
+
     const socket = io();
 
-    socket.on('initPlayer', ({state, id, startTime})=>{
+    socket.on('initPlayer', ({state, id, startTime, playRate})=>{
         ClientYTPlayer.currentState = state;
+        ClientYTPlayer.playbackRate = playRate;
         if(id != ClientYTPlayer.clientURL){
             ClientYTPlayer.clientURL = id;
             ClientYTPlayer.videoTime = startTime;
@@ -24,15 +27,6 @@ $(function(){
             player.seekTo(startTime);
             ClientYTPlayer.updateTimeUI(startTime);
         }
-
-        // switch(state){
-        //     case CustomStates.PLAYING:
-        //         playVideo();
-        //         break;
-        //     default:
-        //         pauseVideo();
-        //         break;
-        // }
         initializeToolTip();
         initializeYTProgressBar();
     });
@@ -42,8 +36,17 @@ $(function(){
             state: ClientYTPlayer.currentState,
             id: ClientYTPlayer.clientURL,
             startTime: ClientYTPlayer.videoTime,
-            socketID
+            socketID,
+            playRate: ClientYTPlayer.playbackRate,            
         });        
+    });
+
+    socket.on('playrateChange', playRate=>{
+        if(playRate != ClientYTPlayer.playbackRate){
+            ClientYTPlayer.playbackRate = playRate;
+            changePlayRate(ClientYTPlayer.playbackRate);
+            // document.getElementById('playrate-text').innerHTML = playRate +"x";
+        }
     });
 
     socket.on('play', state=>{
@@ -63,7 +66,9 @@ $(function(){
         ClientYTPlayer.updateTimeUI(time);
     });
 
-    socket.on('startNew', ({id, startTime})=>{
+    socket.on('startNew', ({id, startTime, playRate, state})=>{
+        ClientYTPlayer.currentState = state;
+        ClientYTPlayer.playbackRate = playRate;
         if(id != ClientYTPlayer.clientURL){
             ClientYTPlayer.clientURL = id;
             ClientYTPlayer.videoTime = startTime;
@@ -83,10 +88,7 @@ $(function(){
         playVideo();
     });
 
-
-
     // socket.emit('message', letterArray);
-
 
     function validateUserID(){
         const savedID = localStorage.getItem('userID');
@@ -156,6 +158,11 @@ $(function(){
     const youtubeInput = $('#ytsearch-input');
     const searchResultsContainer = document.getElementById('search-results');
 
+    function changePlayRate(newRate){
+        playrateText.innerHTML = newRate +"x";
+        player.setPlaybackRate(newRate)
+    }
+
     class ClientYTPlayer{
         static currentState;
         static playerInfo = {
@@ -195,19 +202,26 @@ $(function(){
 
         static initNewPlayer(event){
             // event.target.addEventListener("onStateChange", ClientYTPlayer.SendStateToServer);
-            console.log("initNewPlayer STARTED");            
-            // event.target.playVideo();            
-            if(ClientYTPlayer.currentState == CustomStates.PLAYING ||
-                ClientYTPlayer.currentState == CustomStates.UNSTARTED ||
-                ClientYTPlayer.currentState == CustomStates.ENDED){
-                playVideo();
-            } else {
-                pauseVideo();
-            }
+            console.log("initNewPlayer STARTED");
             initializeYTProgressBar();
             initializeToolTip();
             player.seekTo(ClientYTPlayer.videoTime);
             ClientYTPlayer.updateTimeUI(ClientYTPlayer.videoTime);
+            // event.target.playVideo();            
+            if(ClientYTPlayer.currentState == CustomStates.PLAYING ||
+                ClientYTPlayer.currentState == CustomStates.UNSTARTED ||
+                ClientYTPlayer.currentState == CustomStates.ENDED)
+            {
+                playVideo();
+            } else {
+                pauseVideo();
+            }
+
+            changePlayRate(ClientYTPlayer.playbackRate);
+
+            console.log(`Starting video with state: ${ClientYTPlayer.currentState}`);
+            console.log("===================");
+
             // ClientYTPlayer.previousState = ClientYTPlayer.currentState;
             // ClientYTPlayer.currentState = CustomStates.PLAYING;
             // document.getElementById('play-pause-icon').className = "fas fa-pause";
@@ -410,11 +424,15 @@ $(function(){
 
                 function addFromResult(){
                     ClientYTPlayer.shouldSendState = true;
+                    ClientYTPlayer.videoTime = 0;
                     ClientYTPlayer.clientURL = result.videoID;
+                    ClientYTPlayer.currentState = CustomStates.PLAYING;
                     ClientYTPlayer.addNewVideo();
                     socket.emit('startNew', {
                         startTime: 0,
-                        id: result.videoID
+                        id: result.videoID,
+                        playRate: ClientYTPlayer.playbackRate,
+                        state: ClientYTPlayer.currentState
                     })
                 }
 
@@ -605,7 +623,6 @@ $(function(){
     }
 
     const bufferBar = document.getElementById('buffer-bar');
-
     const joinButton = document.getElementById('join-room-button');
 
     joinButton.addEventListener('click', function(event){
@@ -632,8 +649,6 @@ $(function(){
     const increasePlayrateButton = document.getElementById('increase-playrate-button');
     const reducePlayrateButton = document.getElementById('reduce-playrate-button');
     
-    const playrateText = document.getElementById('playrate-text');
-
     increasePlayrateButton.addEventListener('click', function(event){
         const currRate = player.getPlaybackRate();
         if(currRate == 2) return;
@@ -642,7 +657,8 @@ $(function(){
         player.setPlaybackRate(nextRate);
         playRateOptionsShowing = false
         ClientYTPlayer.playbackRate = nextRate;
-        ClientYTPlayer.SendStateToServer({});
+        // ClientYTPlayer.SendStateToServer({});
+        socket.emit('playrateChange', ClientYTPlayer.playbackRate);
         console.log("PLAYRATE SHOULD BE: "+nextRate);
     });
 
@@ -654,7 +670,8 @@ $(function(){
         player.setPlaybackRate(nextRate);
         playRateOptionsShowing = false
         ClientYTPlayer.playbackRate = nextRate;
-        ClientYTPlayer.SendStateToServer({});
+        socket.emit('playrateChange', ClientYTPlayer.playbackRate);
+        // ClientYTPlayer.SendStateToServer({});
     });
 
     const playrateButton = document.getElementById('playrate-button');
@@ -673,10 +690,11 @@ $(function(){
                 const playbackRateValue = parseFloat(button.innerHTML.substring(0, xIndex));
                 player.setPlaybackRate(playbackRateValue);
                 ClientYTPlayer.playbackRate = playbackRateValue;
-                ClientYTPlayer.SendStateToServer({});
+                // ClientYTPlayer.SendStateToServer({});
                 playrateDropdown.style.display = 'none';
                 playRateOptionsShowing = false;
                 playrateText.innerHTML = playbackRateValue +"x";
+                socket.emit('playrateChange', ClientYTPlayer.playbackRate);
                 //Now set the clientytplayer playrate and send state to server below
             });
         });
@@ -707,7 +725,7 @@ $(function(){
         }
         ClientYTPlayer.looping = !alreadyLooping
         console.log("LOOPING: "+ClientYTPlayer.looping);
-        ClientYTPlayer.SendStateToServer({});
+        // ClientYTPlayer.SendStateToServer({});
     });
 
     $('#ytsearch').on('submit', function(event){
@@ -724,7 +742,9 @@ $(function(){
                 console.log("Client URL after change: "+ClientYTPlayer.clientURL);
                 ClientYTPlayer.shouldSendState = true;
                 console.log("Client should send? "+ClientYTPlayer.shouldSendState);
+                ClientYTPlayer.videoTime = 0;
                 ClientYTPlayer.addNewVideo();
+                ClientYTPlayer.currentState = CustomStates.PLAYING;
                 socket.emit('startNew', {
                     id: currURL,
                     startTime: 0
@@ -778,7 +798,7 @@ $(function(){
         localStorage.setItem('cc_load_policy', ClientYTPlayer.options.cc_load_policy);
         localStorage.setItem('cc_lang_pref', ClientYTPlayer.options.cc_lang_pref);
         // ClientYTPlayer.timeShouldBeSaved = true;
-        ClientYTPlayer.shouldSendState = false;
+        // ClientYTPlayer.shouldSendState = false;
         ClientYTPlayer.addNewVideo();
     });
 
@@ -805,7 +825,7 @@ $(function(){
                 videoContainer.style.flexWrap = "wrap";                    
             }, 3000);
         }
-        ClientYTPlayer.currentState = YT.PlayerState.PAUSED;
+        ClientYTPlayer.currentState = CustomStates.PAUSED;
         player.pauseVideo();
         document.getElementById('play-pause-icon').classList.remove("fa-pause");
         document.getElementById('play-pause-icon').classList.add("fa-play");
@@ -813,7 +833,7 @@ $(function(){
     }
 
     function playVideo(){
-        ClientYTPlayer.currentState = YT.PlayerState.PLAYING;
+        ClientYTPlayer.currentState = CustomStates.PLAYING;
         player.playVideo();
         document.getElementById('play-pause-icon').classList.remove("fa-play");
         document.getElementById('play-pause-icon').classList.add("fa-pause");        
@@ -823,8 +843,8 @@ $(function(){
     function startVideoOver(){
         ClientYTPlayer.videoTime = 0;
         player.seekTo(ClientYTPlayer.videoTime);
-        document.getElementById('play-pause-icon').classList.remove("fa-play");
-        document.getElementById('play-pause-icon').classList.add("fa-pause");        
+        ClientYTPlayer.updateTimeUI(0);
+        playVideo();    
     }
 
     $('#play-pause-button').click(function(event){
@@ -843,7 +863,7 @@ $(function(){
         
 
         changeTriggeredByControls = true;
-        if(ClientYTPlayer.currentState == YT.PlayerState.PLAYING){
+        if(ClientYTPlayer.currentState == CustomStates.PLAYING){
             pauseVideo();
             socket.emit('pause');
             // if(inFullScreen){
@@ -859,8 +879,8 @@ $(function(){
             // document.getElementById('play-pause-icon').classList.remove("fa-pause");
             // document.getElementById('play-pause-icon').classList.add("fa-play");
             // socket.emit('pause', {});
-        } else if(ClientYTPlayer.currentState == YT.PlayerState.UNSTARTED ||
-                ClientYTPlayer.currentState == YT.PlayerState.PAUSED){
+        } else if(ClientYTPlayer.currentState == CustomStates.UNSTARTED ||
+                ClientYTPlayer.currentState == CustomStates.PAUSED){
             playVideo();
             socket.emit('play');
             // ClientYTPlayer.currentState = YT.PlayerState.PLAYING;
@@ -870,7 +890,7 @@ $(function(){
             // socket.emit('play', {});
         } else if(ClientYTPlayer.currentState == CustomStates.ENDED){
             startVideoOver();
-            socket.emit('startOver');
+            socket.emit('startOver', 0);
             // ClientYTPlayer.currentState = CustomStates.PLAYING;
             // ClientYTPlayer.videoTime = 0;
             // player.seekTo(ClientYTPlayer.videoTime);
@@ -880,7 +900,6 @@ $(function(){
             // socket.emit('play', {});
         }
     });
-
 
     function updateYTVideoTime(){
         if(!player || !player.getCurrentTime ||
@@ -971,16 +990,19 @@ $(function(){
     function stopYTEvent(event){
         playerInitialized = true;
         if(event.data == CustomStates.ENDED){
-            ClientYTPlayer.currentState = event.data;
+            document.getElementById('play-pause-icon').classList.remove("fa-pause");
+            document.getElementById('play-pause-icon').classList.add("fa-play");            
+            ClientYTPlayer.currentState = CustomStates.ENDED;
             if(ClientYTPlayer.looping){
                 startVideoOver();
-                socket.emit('startNew', {
-                    startTime: 0,
-                    id: ClientYTPlayer.clientURL
-                });
+                socket.emit('startOver', 0);
+                // socket.emit('startNew', {
+                //     startTime: 0,
+                //     id: ClientYTPlayer.clientURL
+                // });
             }
-            document.getElementById('play-pause-icon').classList.remove("fa-pause");
-            document.getElementById('play-pause-icon').classList.add("fa-play");
+            // document.getElementById('play-pause-icon').classList.remove("fa-pause");
+            // document.getElementById('play-pause-icon').classList.add("fa-play");
             // ClientYTPlayer.SendStateToServer({});                
         }
         // console.log("BEFORE anything: "+event.data);
@@ -1061,50 +1083,50 @@ $(function(){
     }
 
     function checkForMessages(){
-        let checkData = {
-            "name" : nameOnServer,
-            "user_id" : userID,
-            "initialized" : serverListInitialized
-        }
-        $.ajax({
-            url: '/messages',
-            method: 'GET',
-            contentType: 'application/json',
-            data: JSON.stringify(checkData, null, 2),
-            success: function (response){
-                let incMessage = response.message;
-                if(!incMessage) return;
-                incMessage.fromAnotherUser = true;
-                if(incMessage.message_id){
-                    let localID = parseInt(incMessage.message_id);
-                    if(incMessage.name != nameOnServer && !seenArray[localID]){
-                        console.log("Response: " + incMessage.message_data);
-                        addMessageToChat(response);
-                        if(isNaN(localID)) console.log("LOCAL ID BROKE!");                    
-                        seenArray[localID] = true;
-                    }
-                }
-            }
-        });
+        // let checkData = {
+        //     "name" : nameOnServer,
+        //     "user_id" : userID,
+        //     "initialized" : serverListInitialized
+        // }
+        // $.ajax({
+        //     url: '/messages',
+        //     method: 'GET',
+        //     contentType: 'application/json',
+        //     data: JSON.stringify(checkData, null, 2),
+        //     success: function (response){
+        //         let incMessage = response.message;
+        //         if(!incMessage) return;
+        //         incMessage.fromAnotherUser = true;
+        //         if(incMessage.message_id){
+        //             let localID = parseInt(incMessage.message_id);
+        //             if(incMessage.name != nameOnServer && !seenArray[localID]){
+        //                 console.log("Response: " + incMessage.message_data);
+        //                 addMessageToChat(response);
+        //                 if(isNaN(localID)) console.log("LOCAL ID BROKE!");                    
+        //                 seenArray[localID] = true;
+        //             }
+        //         }
+        //     }
+        // });
     }
 
     function checkForUserList(){
-        // player.playVideo();
-        let checkData = {
-            "name" : nameOnServer,
-            "user_id" : userID,
-            "initialized" : serverListInitialized
-        }
-        $.ajax({
-            url: '/user-list',
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify(checkData, null, 2),
-            success: function (response){                  
-                updateServerList(response);
-            }//success: function
-        });      
-        serverListInitialized = true;
+        // // player.playVideo();
+        // let checkData = {
+        //     "name" : nameOnServer,
+        //     "user_id" : userID,
+        //     "initialized" : serverListInitialized
+        // }
+        // $.ajax({
+        //     url: '/user-list',
+        //     method: 'POST',
+        //     contentType: 'application/json',
+        //     data: JSON.stringify(checkData, null, 2),
+        //     success: function (response){                  
+        //         updateServerList(response);
+        //     }//success: function
+        // });      
+        // serverListInitialized = true;
     }
 
     // const initializeInterval = setInterval(initializeServerList, 300);
@@ -1112,32 +1134,31 @@ $(function(){
     function initializeServerList(){
         console.log("("+new Date().toLocaleTimeString()+") Server List Initialized");
         // if(!serverListInitialized){
-            $.ajax({
-                url: '/initialize',
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({"name" : nameOnServer, "user_id" : userID}, null, 2),
-                success: function (response){                    
-                    serverListInitialized = true;
-                }
-            });
+            // $.ajax({
+            //     url: '/initialize',
+            //     method: 'POST',
+            //     contentType: 'application/json',
+            //     data: JSON.stringify({"name" : nameOnServer, "user_id" : userID}, null, 2),
+            //     success: function (response){                    
+            //         serverListInitialized = true;
+            //     }
+            // });
         // } else {
         //     clearInterval(initializeInterval);
         // }
         // clearInterval(initializeInterval);
-
     }
 
     function pingServer(){
-        $.ajax({
-            url: '/server-ping',
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({"name" : nameOnServer, "user_id" : userID}, null, 2),
-            success: function (response){
-                updateServerList(response);
-            }
-        });
+        // $.ajax({
+        //     url: '/server-ping',
+        //     method: 'POST',
+        //     contentType: 'application/json',
+        //     data: JSON.stringify({"name" : nameOnServer, "user_id" : userID}, null, 2),
+        //     success: function (response){
+        //         updateServerList(response);
+        //     }
+        // });
     }
 
     function addMessageToChat(response){
@@ -1313,13 +1334,13 @@ $(function(){
                             
         };//tempMessage
 
-            $.ajax({
-                url: '/messages',
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify(tempMessage, null, 2),
-                success: addMessageToChat
-            });       
+            // $.ajax({
+            //     url: '/messages',
+            //     method: 'POST',
+            //     contentType: 'application/json',
+            //     data: JSON.stringify(tempMessage, null, 2),
+            //     success: addMessageToChat
+            // });       
     });
 
     window.onbeforeunload = function(event){
@@ -1334,15 +1355,15 @@ $(function(){
             "id" : userID
         };
 
-        $.ajax({
-            url: '/messages',
-            method: 'DELETE',
-            contentType: 'application/json',
-            data: JSON.stringify(nameToRelease, null, 2),
-            success: function(response){
-                console.log(this.url);
-            }
-        });//$.ajax
+        // $.ajax({
+        //     url: '/messages',
+        //     method: 'DELETE',
+        //     contentType: 'application/json',
+        //     data: JSON.stringify(nameToRelease, null, 2),
+        //     success: function(response){
+        //         console.log(this.url);
+        //     }
+        // });//$.ajax
 
     }
 
@@ -1424,7 +1445,7 @@ $(function(){
             volumeSlider.addEventListener("input", changeVolume)
             // volumeSlider.addEventListener("mousemove", );
 
-            ClientYTPlayer.pingInterval = setInterval(pingVideoSetting, 200);
+            // ClientYTPlayer.pingInterval = setInterval(pingVideoSetting, 200);
         
             // setInterval(pingServer, 2500);
         

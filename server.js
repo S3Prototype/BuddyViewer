@@ -46,6 +46,10 @@ io.on('connection', socket=>{
         }
     });
 
+    socket.on('playrateChange', playRate=>{
+        socket.broadcast.emit('playrateChange', playRate);
+    });
+
     socket.on('play', videostate=>{
         socket.broadcast.emit('play', videostate);
     });
@@ -66,11 +70,8 @@ io.on('connection', socket=>{
         socket.broadcast.emit('startOver', time);
     });
 
-    socket.on('startNew', ({startTime, id})=>{
-        socket.broadcast.emit('startNew',{
-            startTime: startTime,
-            id: id
-        });
+    socket.on('startNew', data=>{
+        socket.broadcast.emit('startNew', data);
     });
 
     socket.on('disconnect', _=>{
