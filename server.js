@@ -26,6 +26,10 @@ let socketCount = 0;
 io.on('connection', socket=>{
     socketCount++;
 
+    socket.on('joinChat', userData=>{
+        socket.broadcast.emit('chatJoined', `${userData.name} has joined the chat!`);
+    });
+
     socket.on('sendState', data=>{
         if(!allStatesAligned && socketCount > 1){
             io.to(data.socketID).emit('initPlayer', data);

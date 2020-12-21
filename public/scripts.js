@@ -23,9 +23,13 @@ $(function(){
             ClientYTPlayer.clientURL = id;
             ClientYTPlayer.videoTime = startTime;
             ClientYTPlayer.addNewVideo();
-        } else {
+        } else {        
             player.seekTo(startTime);
             ClientYTPlayer.updateTimeUI(startTime);
+            if(state == CustomStates.PLAYING){
+                playVideo();
+                player.unMute();
+            }
         }
         initializeToolTip();
         initializeYTProgressBar();
@@ -86,6 +90,10 @@ $(function(){
         player.seekTo(time);
         ClientYTPlayer.updateTimeUI(time);
         playVideo();
+    });
+
+    socket.on('chatJoined', data=>{
+        console.log(JSON.stringify(data));
     });
 
     // socket.emit('message', letterArray);
@@ -1439,6 +1447,8 @@ $(function(){
             
 
             validateUserID();
+            socket.emit('joinChat', localName);
+
             initializeServerList();
 
             volumeSlider.addEventListener("change", changeVolume);
@@ -1458,6 +1468,16 @@ $(function(){
             setInterval(updateYTVideoTime, 500);
 
             initializeYTProgressBar();
+            initializeToolTip();
+
+            // const playerTime = player.getCurrentTime();
+            // if(Math.round(playerTime) != ClientYTPlayer.videoTime){
+            //     ClientYTPlayer.updateTimeUI(playerTime);
+            // }
+            // const bufferedTime = player.getVideoLoadedFraction() * player.getDuration();
+            // updateYTBufferBar(bufferedTime);
+            updateSeekToolTip(ClientYTPlayer.videoTime);
+
             progressBar.addEventListener('click', progressBarYTScrub);
             // inFullScreen = false;
 
