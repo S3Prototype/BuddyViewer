@@ -25,20 +25,6 @@ let socketCount = 0;
 
 io.on('connection', socket=>{
     socketCount++;
-        // When new user connects, emit to them the current video state.
-    // socket.emit("VideoState", {
-    //     bufferingID: VideoManager.bufferingID = "EMPTY",
-    //     universalUrl: VideoManager.universalUrl = "hjcXNK-zUFg",
-    //     settingsAltered: VideoManager.settingsAltered,
-    //     alterID: VideoManager.alterID,
-    //     universalPlaybackRate: VideoManager.universalPlaybackRate,
-    //     universalLooping: VideoManager.universalLooping,
-    //     seekingIDListEmpty: VideoManager.seekingIDListEmpty
-    // })
-
-        //Then send a message to everyone else that's connected.
-    // socket.aligned = false;
-    // io.emit('getState', "");
 
     socket.on('sendState', data=>{
         if(!allStatesAligned && socketCount > 1){
@@ -90,18 +76,13 @@ io.on('connection', socket=>{
     socket.on('disconnect', _=>{
         socketCount--;
     });
-})
-
-
-
+});
 
 var port = process.env.PORT || 8092;
 
 app.use(express.static(path.join(__dirname, '/public/')));
 app.use(bodyparser.json());
 app.use(router);
-// let messages = [{}];//was: JSON.parse(rawData);
-// let takenNames = [];
 
 class NameContainer{
     static #takenNames = [];

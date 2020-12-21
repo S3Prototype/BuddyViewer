@@ -25,14 +25,14 @@ $(function(){
             ClientYTPlayer.updateTimeUI(startTime);
         }
 
-        switch(state){
-            case CustomStates.PLAYING:
-                playVideo();
-                break;
-            default:
-                pauseVideo();
-                break;
-        }
+        // switch(state){
+        //     case CustomStates.PLAYING:
+        //         playVideo();
+        //         break;
+        //     default:
+        //         pauseVideo();
+        //         break;
+        // }
         initializeToolTip();
         initializeYTProgressBar();
     });
@@ -206,11 +206,21 @@ $(function(){
             }
             initializeYTProgressBar();
             initializeToolTip();
+            player.seekTo(ClientYTPlayer.videoTime);
+            ClientYTPlayer.updateTimeUI(ClientYTPlayer.videoTime);
             // ClientYTPlayer.previousState = ClientYTPlayer.currentState;
             // ClientYTPlayer.currentState = CustomStates.PLAYING;
             // document.getElementById('play-pause-icon').className = "fas fa-pause";
             player.setVolume(parseInt(volumeSlider.value));
             playerInitialized = true;
+
+            while(!progressBarInitialized){
+                initializeYTProgressBar();
+            }
+
+            while(!tooltipInitialized){
+                initializeToolTip();
+            }
             // if(ClientYTPlayer.timeShouldBeSaved){
             //     //if we're changing the closedcaptions, basically
             //     player.seekTo(ClientYTPlayer.videoTime);
@@ -282,6 +292,9 @@ $(function(){
             // $('#container').html("<div id='player'></div>");
             // const currURL = ClientYTPlayer.extractID(player.getVideoUrl());
             // if(currURL == ClientYTPlayer.clientURL) return;
+
+            tooltipInitialized = false;
+            progressBarInitialized = false;
             ClientYTPlayer.currentlySendingData = ClientYTPlayer.shouldSendState;
             // console.log("ADD NEW VIDEO STARTED");
                 player.destroy();
