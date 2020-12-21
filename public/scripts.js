@@ -14,15 +14,7 @@ $(function(){
 
     const socket = io();
 
-    socket.on('getState', _=>{
-        socket.emit('getState', {
-            state: ClientYTPlayer.currentState,
-            startTime: ClientYTPlayer.videoTime,
-            id: ClientYTPlayer.clientURL
-        });
-    });
-
-    socket.on('setState', ({state, startTime, id})=>{
+    socket.on('initPlayer', ({state, id, startTime})=>{
         ClientYTPlayer.currentState = state;
         if(id != ClientYTPlayer.clientURL){
             ClientYTPlayer.clientURL = id;
@@ -43,6 +35,15 @@ $(function(){
         }
         initializeToolTip();
         initializeYTProgressBar();
+    });
+
+    socket.on('getState', socketID=>{
+        socket.emit('sendState', {
+            state: ClientYTPlayer.currentState,
+            id: ClientYTPlayer.clientURL,
+            startTime: ClientYTPlayer.videoTime,
+            socketID
+        });        
     });
 
     socket.on('play', state=>{
@@ -196,7 +197,13 @@ $(function(){
             // event.target.addEventListener("onStateChange", ClientYTPlayer.SendStateToServer);
             console.log("initNewPlayer STARTED");            
             // event.target.playVideo();            
-            playVideo();
+            if(ClientYTPlayer.currentState == CustomStates.PLAYING ||
+                ClientYTPlayer.currentState == CustomStates.UNSTARTED ||
+                ClientYTPlayer.currentState == CustomStates.ENDED){
+                playVideo();
+            } else {
+                pauseVideo();
+            }
             initializeYTProgressBar();
             initializeToolTip();
             // ClientYTPlayer.previousState = ClientYTPlayer.currentState;
@@ -238,7 +245,8 @@ $(function(){
             // } else if (ClientYTPlayer.currentState == CustomStates.PAUSED){
             //     player.pauseVideo();
             // }
-            stayMuted || player.unMute();
+            // stayMuted || player.unMute();
+            player.unMute();
                 //Where do we clear the ping interval first?
             // ClientYTPlayer.pingInterval = setInterval(pingVideoSetting, 200);
             // console.log("initNewPlayer ENDED");            
@@ -591,7 +599,7 @@ $(function(){
         // ClientYTPlayer.pingInterval = setInterval(pingVideoSetting, 200);
         document.getElementById('join-room-modal').classList.remove('active');
         document.getElementById('join-room-modal-overlay').classList.remove('active');
-        
+        socket.emit('queryState');
         // const state = ClientYTPlayer.currentState;
         // if(state == CustomStates.PLAYING){
         //     // player.playVideo();

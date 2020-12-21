@@ -20,10 +20,11 @@ const server = http.createServer(app);
 const io = socketio(server);
 
 //let rawData = fs.readFileSync('messages.json');
-
+let allStatesAligned = true;
+let socketCount = 0;
 
 io.on('connection', socket=>{
-    
+    socketCount++;
         // When new user connects, emit to them the current video state.
     // socket.emit("VideoState", {
     //     bufferingID: VideoManager.bufferingID = "EMPTY",
@@ -36,24 +37,27 @@ io.on('connection', socket=>{
     // })
 
         //Then send a message to everyone else that's connected.
-    socket.aligned = false;
-    io.emit('getState', "");
+    // socket.aligned = false;
+    // io.emit('getState', "");
 
-    socket.on('getState', ({state, startTime, id})=>{
-        if(socket.aligned){
-           socket.broadcast.emit('setState', {
-               state,
-               startTime,
-               id
-            });
-        } else {
-            socket.emit('setState', {
-                state,
-                startTime,
-                id
-            });
+    socket.on('sendState', data=>{
+        if(!allStatesAligned && socketCount > 1){
+            io.to(data.socketID).emit('initPlayer', data);
+            allStatesAligned = true;
+            console.log("STATE SENT");
         }
-        socket.aligned = true;
+    });
+
+    function getStateIfNeeded(){
+    }
+
+    // getStateIfNeeded();
+
+    socket.on('queryState', data=>{
+        if(socketCount > 1){        
+            allStatesAligned = false;
+            socket.broadcast.emit('getState', socket.id);
+        }
     });
 
     socket.on('play', videostate=>{
@@ -81,6 +85,10 @@ io.on('connection', socket=>{
             startTime: startTime,
             id: id
         });
+    });
+
+    socket.on('disconnect', _=>{
+        socketCount--;
     });
 })
 
