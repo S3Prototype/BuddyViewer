@@ -1,5 +1,11 @@
 $(function(){
     
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+
+    const roomID = urlParams.get('roomID');
+    console.log('ROOM ID: '+roomID);
+    
     const maxNameLength = 18;
     $("#name-input").attr("maxlength", maxNameLength);
     let letterArray = ["a", "b", "c", "x", "y", "z"];
@@ -9,7 +15,7 @@ $(function(){
     let nameOnServer = null;//anonName;
 
     const volumeSlider = document.getElementById('volume-slider');
-    let stayMuted = false;
+    let stayMuted = false;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
     let mobileMode = false;
 
     const playrateText = document.getElementById('playrate-text');
@@ -1447,7 +1453,8 @@ $(function(){
             
 
             validateUserID();
-            socket.emit('joinChat', localName);
+            socket.emit('joinRoom', {localName, roomID});
+            // socket.emit('joinChat', localName);
 
             initializeServerList();
 
