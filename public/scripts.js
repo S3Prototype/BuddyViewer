@@ -16,6 +16,7 @@ $(function(){
     let userID = null; //localStorage.getItem('userID') || Math.random().toString(36).substring(7);
     let anonName = null; //'USER-' + userID;
     let nameOnServer = null;//anonName;
+    let pfp = null;
 
     const volumeSlider = document.getElementById('volume-slider');
     let stayMuted = false;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
@@ -608,7 +609,7 @@ $(function(){
         player.setPlaybackRate(nextRate);
         playRateOptionsShowing = false
         ClientYTPlayer.playbackRate = nextRate;
-        socket.emit('playrateChange', ClientYTPlayer.playbackRate);
+        socket.emit('playrateChange', ClientYTPlayer.playbackRate, roomID);
         // ClientYTPlayer.SendStateToServer({});
     });
 
@@ -1376,7 +1377,18 @@ $(function(){
         if(event.target.readyState === "complete"){                       
             validateUserID();
             socket = io();
-            socket.emit('joinRoom', {localName}, roomID);
+            const userData = {
+                localName,
+                serverName,
+                userID,
+                pfp
+            };
+
+            const videoData = {
+                videoID: ClientYTPlayer.clientURL,
+                videoTime: ClientYTPlayer.videoTime
+            };
+            socket.emit('joinRoom', userData, videoData, roomID);
 
             socket.on('initPlayer', ({state, id, startTime, playRate})=>{
                 ClientYTPlayer.currentState = state;

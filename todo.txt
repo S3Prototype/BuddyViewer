@@ -1,7 +1,21 @@
 DOING:
+* Gotta fix the joinroom code because it's not coded properly. Assumes we're using objects when we're using arrays.
 * Set up rooms
     ** Now rooms work in the basic sense. Hotjoining too.
     ** But hot-joining code is extremely janky. Write something that saves the info relative to the individual rooms, like counting how many people are in each room. Also find out how to check when someone DC's from the room.
+    ** To set up room-joining code, make an array of rooms that contains objects. When a new room is joined, check if that room already exists. If not, create that room in the array. Use the room name as the key in the index.
+        The room will be an object that holds:
+        {
+            users: { localName, serverName, userID, isHost, pfp },
+            host, //holds userID of host
+            videoID, //holds id most recently played video
+            videoTime, //most recent video time,
+            messages: [
+                        {
+                            mID, mContent, mUserID, mlocalName, mlocalTimeStamp, mUniversalTimeStamp
+                        }
+                    ]
+        };
 
 **MOST IMPORTANT TODO**
 * Return to rooms based on cookies

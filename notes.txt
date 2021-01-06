@@ -1,4 +1,9 @@
-12/2/20
+(1/6/21)
+
+
+
+
+(12/2/20)
 
 "Progress" is used to get the buffer data from the video. Is usefull to create some preloader buffer bar to you know how much video your browser is already downloaded. (for html5 video)
 

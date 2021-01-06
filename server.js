@@ -27,17 +27,76 @@ let allStatesAligned = true;
 let socketCount = 0;
 let meaninglessvar = "JUST A TEST THING.";
 
-let roomContainer = [];
+let rooms = [];
+
+function joinRoom(socket, userData, videoData, roomID){
+    if(!rooms.some(room=>room.roomID == roomID)){
+        createNewRoom(socket.id, userData, videoData, roomID);
+    } else {
+        addToRoom(socket.id, userData, videoData, roomID);
+    }
+
+    // rooms[roomID].users[userID].socketID
+
+    socket.join(roomID);
+}
+
+function addToRoom(socketID, userData, videoData, roomID){    
+    const { localName, serverName, userID, pfp } = userData;
+    const { videoID, videoTime } = videoData;
+    rooms[roomID].users[userID] = {
+        socketID, localName, serverName, userID, isHost: false, pfp
+    };
+    if(rooms[roomID].users.length <= 1){
+        //if this user is the only one in the room
+        rooms[roomID].users[userID].isHost = true;
+    }
+}
+
+function createNewRoom(socketID, userData, videoData, roomID){
+    const { localName, serverName, userID, pfp } = userData;
+    const { videoID, videoTime } = videoData;
+    rooms.push({
+        roomID,
+        users: [{
+            socketID, localName, serverName, userID, isHost: true, pfp
+        }],
+        userID, //holds userID of host
+        videoID, //holds id most recently played video
+        videoTime, //most recent video time,
+        messages: [
+                    {
+                        mID: 0,
+                        mContent: "Welcome to the room!",
+                        mUserID: "SERVER",
+                        mlocalName: "SERVER",
+                        mlocalTimeStamp: "",
+                        mUniversalTimeStamp: ""
+                    }
+                ]
+    });
+    // rooms[roomID].users[userID] = {
+    //     socketID, localName, serverName, userID, isHost: true, pfp
+    // }
+}
+
+function initUser(socketID, currRoom){
+    //emit to the host, asking for their video state
+    //when we receive it, set this user's video to that state
+}
 
 io.on('connection', socket=>{
-    socket.on('joinRoom', ({localName}, room)=>{
-        socket.join(room);
+
+    socket.on('joinRoom', (userData, videoData, room)=>{
+        joinRoom(socket, userData, videoData, room);
+        socket.to()
+        // initUser(socket.id, room[room]);
     })
 
     socketCount++;
 
     socket.on('joinChat', (userData, room)=>{
-        socket.to(room).broadcast.emit('chatJoined', `${userData.name} has joined the chat!`);
+        // socket.to(room).broadcast.emit('chatJoined', `${userData.name} has joined the chat!`);
     });
 
     socket.on('sendState', (data, room)=>{
@@ -46,12 +105,8 @@ io.on('connection', socket=>{
             allStatesAligned = true;
             console.log("STATE SENT");
         }
-    });
+    });                    
 
-    function getStateIfNeeded(){
-    }                                               
-
-    // getStateIfNeeded();
     socket.on('queryState', (data, room)=>{
         if(socketCount > 1){        
             allStatesAligned = false;
@@ -107,8 +162,9 @@ app.get('/', (req, res)=>{
 });
 
 app.get('/:roomID', (req, res)=>{
-    console.log(`ID IS ${req.params.roomID}`);
-    res.render('room', {roomID: req.params.roomID});
+    const currRoom = req.params.roomID;
+    console.log(`ID IS ${currRoom}`);
+    res.render('room', {roomID: currRoom});
 });
 
 app.post('/room', (req, res)=>{
