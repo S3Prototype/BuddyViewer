@@ -2,9 +2,9 @@
   "name": "chatproj",
   "version": "1.0.0",
   "description": "new chat project attempt (11/3/20)",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "babel-node": "babel-node --presets='@babel/preset-env' --ignore='foo|bar|baz'",
+    "@babel-node": "@babel-node --presets='@babel/preset-env' --ignore='foo'",
     "start": "nodemon server.js"
   },
   "repository": {
@@ -23,8 +23,6 @@
   "homepage": "https://github.com/S3Prototype/Chat-Project#readme",
   "dependencies": {
     "@babel/cli": "^7.12.1",
-    "babel-plugin-syntax-class-properties": "^6.13.0",
-    "babel-plugin-transform-class-properties": "^6.24.1",
     "body-parser": "^1.19.0",
     "cheerio": "^1.0.0-rc.3",
     "dotenv": "^8.2.0",
@@ -42,10 +40,13 @@
     "@babel/core": "^7.12.3",
     "@babel/node": "^7.12.6",
     "@babel/plugin-proposal-class-properties": "^7.12.1",
-    "@babel/preset-env": "^7.12.1",
+    "@babel/plugin-syntax-class-properties": "^7.12.1",
+    "@babel/preset-env": "^7.12.11",
     "@babel/preset-flow": "^7.12.1",
     "@babel/preset-react": "^7.12.5",
-    "@babel/preset-typescript": "^7.12.1",
-    "babel-preset-stage-0": "^6.24.1"
+    "@babel/preset-typescript": "^7.12.1"
+  },
+  "resolutions": {
+    "babel-core": "7.0.0-bridge.0"
   }
 }

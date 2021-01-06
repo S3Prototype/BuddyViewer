@@ -1,11 +1,36 @@
 DOING:
-* Confused about how to initialize a video that hotjoins with websockets.
+* Set up rooms
+    ** Now rooms work in the basic sense. Hotjoining too.
+    ** But hot-joining code is extremely janky. Write something that saves the info relative to the individual rooms, like counting how many people are in each room. Also find out how to check when someone DC's from the room.
+
+**MOST IMPORTANT TODO**
+* Return to rooms based on cookies
+* Adjust some minor issues
+    * There needs to be a room "host" whose video state is "THE" video state. Add functionality to both manage the hosts so if one person disconnects, someone else becomes the host is needed, as well as creating a host when room is empty, and manually switching who the host is if the users so desire.
+    * When I send the play and pause events, I should always seek to the time of the "host" of the room.
+        ** OR JUST ADD THE sync BUTTON SO USERS CAN DO THIS MANUALLY.
+* Create database to save room info.
+* Add play history
+* Add playlist functionality
+* Add livestream functionality
+* Add playing from other sites
+    * Will probably have to write in custom code for some big non-youtube sites so it just works. Also search feature.
+    * For the rest, when the link is added, just gather all available mp4's and create search results from them and let the user choose. Just make it clear that the options are the "Videos found at this link." Put a length.
+* Add your own recommended videos overlay when video is paused.
+* Fix up the chat.
 
 TODO:
+* If you can, add video length to the info on the search results.
+* For some reason the playback rate initializes as undefined in the html. Probably because of the initialization code when hotjoining.
+* Add a "re-align" button so if things get unaligned, just press that, boom. trigger the sendstate event
+* Fix the search so that if you return a number of results x that x % 4 != 0, then you insert 4 minus that amount of results. Such as, 21 results, 21 % 4 = 1, insert 4 - 1 results, meaning 3 fake results, so the results list balances out. Otherwise figure out how to make everything justify to the left rather than space out evenly.
 * Now just have to test everything thoroughly. All features.
 * Change the chat so it's ways floating
 * Show text to say who put in a video/pressed play/etc
+* When a yt video is played, search youtube for that video title or the uploader. Then in recommendeds, show the results.
+* Change icon to replay icon when video ended
 * Implement a history
+* When a video pauses or ends, above the recommended videos, show tips like "Press the reconnect button to re-align all the videos."
 * Add recommended videos overlay over the video when it reaches ended/paused status, with your own videos in that the viewer can click and add instantly.
 * Add overlay on video that catches the clicks and pauses/plays, to recreate clicking on the vid to pause/play.
 * In the description/title search results on the server, check for the html codes like &quot; etc, and convert them over to their actual characters.
@@ -53,8 +78,19 @@ THOUGHTS:
     ** This won't work. Instead, start the page with an HTML5 video just like watch2gether. A user can then create a player when they search and play a video.
 
 ~~~~~~~~~~~
+DONE
 ===========
 ~~~~~~~~~~~
+1/5/21
+* Set up rooms
+    * Got the basics of it working. Just gotta set it up so when you join a room, it actually aligns your state with the state of the others.
+
+====
+1/4/21
+* Set up the VS tools and improvements I learned about over the break. Come up with plan of attack to finish this project by the end of the month.
+* Confused about how to initialize a video that hotjoins with websockets.
+
+===
 12/15/20
 
 

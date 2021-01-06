@@ -1,12 +1,15 @@
 $(function(){
     
+    console.log(`Welcome to ${roomID}`);
+
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
 
-    const roomID = urlParams.get('roomID');
-    console.log('ROOM ID: '+roomID);
+    // const roomID = urlParams.get('roomID');
+    // console.log('ROOM ID: '+roomID);
     
     const maxNameLength = 18;
+    let TESTVAR = "YES THIS IS A TEST."
     $("#name-input").attr("maxlength", maxNameLength);
     let letterArray = ["a", "b", "c", "x", "y", "z"];
     let localName = '';
@@ -20,88 +23,8 @@ $(function(){
 
     const playrateText = document.getElementById('playrate-text');
 
-    const socket = io();
-
-    socket.on('initPlayer', ({state, id, startTime, playRate})=>{
-        ClientYTPlayer.currentState = state;
-        ClientYTPlayer.playbackRate = playRate;
-        if(id != ClientYTPlayer.clientURL){
-            ClientYTPlayer.clientURL = id;
-            ClientYTPlayer.videoTime = startTime;
-            ClientYTPlayer.addNewVideo();
-        } else {        
-            player.seekTo(startTime);
-            ClientYTPlayer.updateTimeUI(startTime);
-            if(state == CustomStates.PLAYING){
-                playVideo();
-                player.unMute();
-            }
-        }
-        initializeToolTip();
-        initializeYTProgressBar();
-    });
-
-    socket.on('getState', socketID=>{
-        socket.emit('sendState', {
-            state: ClientYTPlayer.currentState,
-            id: ClientYTPlayer.clientURL,
-            startTime: ClientYTPlayer.videoTime,
-            socketID,
-            playRate: ClientYTPlayer.playbackRate,            
-        });        
-    });
-
-    socket.on('playrateChange', playRate=>{
-        if(playRate != ClientYTPlayer.playbackRate){
-            ClientYTPlayer.playbackRate = playRate;
-            changePlayRate(ClientYTPlayer.playbackRate);
-            // document.getElementById('playrate-text').innerHTML = playRate +"x";
-        }
-    });
-
-    socket.on('play', state=>{
-        initializeToolTip();
-        initializeYTProgressBar();
-        playVideo();
-        // player.playVideo();
-        // player.setVolume(parseInt(volumeSlider.value));
-    });
-
-    socket.on('pause', state=>{
-        pauseVideo();
-    });
-
-    socket.on('seek', time=>{
-        player.seekTo(time);
-        ClientYTPlayer.updateTimeUI(time);
-    });
-
-    socket.on('startNew', ({id, startTime, playRate, state})=>{
-        ClientYTPlayer.currentState = state;
-        ClientYTPlayer.playbackRate = playRate;
-        if(id != ClientYTPlayer.clientURL){
-            ClientYTPlayer.clientURL = id;
-            ClientYTPlayer.videoTime = startTime;
-            ClientYTPlayer.addNewVideo();
-        } else {
-            player.seekTo(startTime);
-            ClientYTPlayer.updateTimeUI(startTime);
-            playVideo();
-        }
-        initializeToolTip();
-        initializeYTProgressBar();
-    });
-
-    socket.on('startOver', time=>{
-        player.seekTo(time);
-        ClientYTPlayer.updateTimeUI(time);
-        playVideo();
-    });
-
-    socket.on('chatJoined', data=>{
-        console.log(JSON.stringify(data));
-    });
-
+    let socket = {};
+    
     // socket.emit('message', letterArray);
 
     function validateUserID(){
@@ -447,7 +370,8 @@ $(function(){
                         id: result.videoID,
                         playRate: ClientYTPlayer.playbackRate,
                         state: ClientYTPlayer.currentState
-                    })
+                    },
+                    roomID);
                 }
 
                 const thumbnail = document.createElement('img');
@@ -643,7 +567,7 @@ $(function(){
         // ClientYTPlayer.pingInterval = setInterval(pingVideoSetting, 200);
         document.getElementById('join-room-modal').classList.remove('active');
         document.getElementById('join-room-modal-overlay').classList.remove('active');
-        socket.emit('queryState');
+        socket.emit('queryState', {}, roomID);
         // const state = ClientYTPlayer.currentState;
         // if(state == CustomStates.PLAYING){
         //     // player.playVideo();
@@ -672,7 +596,7 @@ $(function(){
         playRateOptionsShowing = false
         ClientYTPlayer.playbackRate = nextRate;
         // ClientYTPlayer.SendStateToServer({});
-        socket.emit('playrateChange', ClientYTPlayer.playbackRate);
+        socket.emit('playrateChange', ClientYTPlayer.playbackRate, roomID);
         console.log("PLAYRATE SHOULD BE: "+nextRate);
     });
 
@@ -708,7 +632,7 @@ $(function(){
                 playrateDropdown.style.display = 'none';
                 playRateOptionsShowing = false;
                 playrateText.innerHTML = playbackRateValue +"x";
-                socket.emit('playrateChange', ClientYTPlayer.playbackRate);
+                socket.emit('playrateChange', ClientYTPlayer.playbackRate, roomID);
                 //Now set the clientytplayer playrate and send state to server below
             });
         });
@@ -762,7 +686,8 @@ $(function(){
                 socket.emit('startNew', {
                     id: currURL,
                     startTime: 0
-                })
+                },
+                roomID)
                 console.log("End of search submit function");
             }
         } else {
@@ -879,7 +804,7 @@ $(function(){
         changeTriggeredByControls = true;
         if(ClientYTPlayer.currentState == CustomStates.PLAYING){
             pauseVideo();
-            socket.emit('pause');
+            socket.emit('pause', roomID);
             // if(inFullScreen){
             //     videoContainer.style.flexWrap = "nowrap";
             //     controlsToggled = true;
@@ -896,7 +821,7 @@ $(function(){
         } else if(ClientYTPlayer.currentState == CustomStates.UNSTARTED ||
                 ClientYTPlayer.currentState == CustomStates.PAUSED){
             playVideo();
-            socket.emit('play');
+            socket.emit('play', roomID);
             // ClientYTPlayer.currentState = YT.PlayerState.PLAYING;
             // player.playVideo();
             // document.getElementById('play-pause-icon').classList.remove("fa-play");
@@ -904,7 +829,7 @@ $(function(){
             // socket.emit('play', {});
         } else if(ClientYTPlayer.currentState == CustomStates.ENDED){
             startVideoOver();
-            socket.emit('startOver', 0);
+            socket.emit('startOver', 0, roomID);
             // ClientYTPlayer.currentState = CustomStates.PLAYING;
             // ClientYTPlayer.videoTime = 0;
             // player.seekTo(ClientYTPlayer.videoTime);
@@ -966,7 +891,7 @@ $(function(){
         player.seekTo(scrubTime);
         // ClientYTPlayer.currentState = CustomStates.SEEKING;
         ClientYTPlayer.updateTimeUI(scrubTime);
-        socket.emit('seek', scrubTime);
+        socket.emit('seek', scrubTime, roomID);
         // ClientYTPlayer.SendStateToServer({});
     }
 
@@ -1009,7 +934,7 @@ $(function(){
             ClientYTPlayer.currentState = CustomStates.ENDED;
             if(ClientYTPlayer.looping){
                 startVideoOver();
-                socket.emit('startOver', 0);
+                socket.emit('startOver', 0, roomID);
                 // socket.emit('startNew', {
                 //     startTime: 0,
                 //     id: ClientYTPlayer.clientURL
@@ -1448,12 +1373,93 @@ $(function(){
     document.addEventListener('readystatechange', event => { 
     
         // When window loaded ( external resources are loaded too- `css`,`src`, etc...) 
-        if(event.target.readyState === "complete"){ 
-            
-            
-
+        if(event.target.readyState === "complete"){                       
             validateUserID();
-            socket.emit('joinRoom', {localName, roomID});
+            socket = io();
+            socket.emit('joinRoom', {localName}, roomID);
+
+            socket.on('initPlayer', ({state, id, startTime, playRate})=>{
+                ClientYTPlayer.currentState = state;
+                ClientYTPlayer.playbackRate = playRate;
+                if(id != ClientYTPlayer.clientURL){
+                    ClientYTPlayer.clientURL = id;
+                    ClientYTPlayer.videoTime = startTime;
+                    ClientYTPlayer.addNewVideo();
+                } else {        
+                    player.seekTo(startTime);
+                    ClientYTPlayer.updateTimeUI(startTime);
+                    if(state == CustomStates.PLAYING){
+                        playVideo();
+                        player.unMute();
+                    }
+                }
+                initializeToolTip();
+                initializeYTProgressBar();
+            });
+        
+            socket.on('getState', socketID=>{
+                socket.emit('sendState', {
+                    state: ClientYTPlayer.currentState,
+                    id: ClientYTPlayer.clientURL,
+                    startTime: ClientYTPlayer.videoTime,
+                    socketID,
+                    playRate: ClientYTPlayer.playbackRate,            
+                },
+                roomID);        
+            });
+        
+            socket.on('playrateChange', playRate=>{
+                if(playRate != ClientYTPlayer.playbackRate){
+                    ClientYTPlayer.playbackRate = playRate;
+                    changePlayRate(ClientYTPlayer.playbackRate);
+                    // document.getElementById('playrate-text').innerHTML = playRate +"x";
+                }
+            });
+        
+            socket.on('play', state=>{
+                initializeToolTip();
+                initializeYTProgressBar();
+                playVideo();
+                // player.playVideo();
+                // player.setVolume(parseInt(volumeSlider.value));
+            });
+        
+            socket.on('pause', state=>{
+                pauseVideo();
+            });
+        
+            socket.on('seek', time=>{
+                player.seekTo(time);
+                ClientYTPlayer.updateTimeUI(time);
+            });
+        
+            socket.on('startNew', ({id, startTime, playRate, state})=>{
+                ClientYTPlayer.currentState = state;
+                ClientYTPlayer.playbackRate = playRate;
+                if(id != ClientYTPlayer.clientURL){
+                    ClientYTPlayer.clientURL = id;
+                    ClientYTPlayer.videoTime = startTime;
+                    ClientYTPlayer.addNewVideo();
+                } else {
+                    player.seekTo(startTime);
+                    ClientYTPlayer.updateTimeUI(startTime);
+                    playVideo();
+                }
+                initializeToolTip();
+                initializeYTProgressBar();
+            });
+        
+            socket.on('startOver', time=>{
+                player.seekTo(time);
+                ClientYTPlayer.updateTimeUI(time);
+                playVideo();
+            });
+        
+            socket.on('chatJoined', data=>{
+                console.log(JSON.stringify(data));
+            });
+        
+
             // socket.emit('joinChat', localName);
 
             initializeServerList();

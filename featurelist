@@ -1,10 +1,6 @@
 FEATURE LIST:
 
 * Chat should be like a floating tray. It should be like the userlist tray in Watch2Gether, always on the bottom, able to be popped up and popped down.
-* Closed captions option
-* Full screen button
-* Looping
-* Playback rate change
 * Should have a row in the video player that shows the most recently sent message in the chat, maybe with a higher z-index so it just appears above the video and then eventually fades away.
 * Also have a little chat icon button in the video player so you can bring the chat up at the side. If you're in fullscreen, chat appears in a z-index above the player.
 * Uploading your own videos temporarily for sharing
@@ -17,3 +13,11 @@ FEATURE LIST:
 * Add a "desync my videos" button that lets the player play locally without sending state to server or aligning state.x11vnc
 * Put your own overlay over the video whenever it's paused/ended so users can click a video and it'll load in the player.
     **This will require setting the iframe display to none in css everytime it pauses/stops, Perhaps leave an empty div in the video_container beneath the iframe, then whenever we set the iframe's display to none, we can set that placeholder div's display so it shows, and then put our stuff in there.
+
+DONE:
+* Closed captions option
+* Full screen button
+* Looping
+* Playback rate change
+
+

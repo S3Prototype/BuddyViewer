@@ -25,22 +25,24 @@ const io = socketio(server);
 //let rawData = fs.readFileSync('messages.json');
 let allStatesAligned = true;
 let socketCount = 0;
+let meaninglessvar = "JUST A TEST THING.";
+
+let roomContainer = [];
 
 io.on('connection', socket=>{
-
-    socket.on('joinRoom', ({localName, roomID})=>{
-        socket.join(roomID);
+    socket.on('joinRoom', ({localName}, room)=>{
+        socket.join(room);
     })
 
     socketCount++;
 
-    socket.on('joinChat', userData=>{
-        socket.broadcast.emit('chatJoined', `${userData.name} has joined the chat!`);
+    socket.on('joinChat', (userData, room)=>{
+        socket.to(room).broadcast.emit('chatJoined', `${userData.name} has joined the chat!`);
     });
 
-    socket.on('sendState', data=>{
+    socket.on('sendState', (data, room)=>{
         if(!allStatesAligned && socketCount > 1){
-            io.to(data.socketID).emit('initPlayer', data);
+            io.to(room).to(data.socketID).emit('initPlayer', data);
             allStatesAligned = true;
             console.log("STATE SENT");
         }
@@ -50,40 +52,39 @@ io.on('connection', socket=>{
     }                                               
 
     // getStateIfNeeded();
-
-    socket.on('queryState', data=>{
+    socket.on('queryState', (data, room)=>{
         if(socketCount > 1){        
             allStatesAligned = false;
-            socket.broadcast.emit('getState', socket.id);
+            socket.to(room).broadcast.emit('getState', socket.id);
         }
     });
 
-    socket.on('playrateChange', playRate=>{
-        socket.broadcast.emit('playrateChange', playRate);
+    socket.on('playrateChange', (playRate, room)=>{
+        socket.to(room).broadcast.emit('playrateChange', playRate);
     });
 
-    socket.on('play', videostate=>{
-        socket.broadcast.emit('play', videostate);
+    socket.on('play', (room)=>{
+        socket.to(room).broadcast.emit('play', CustomStates.PLAYING);
     });
 
-    socket.on('pause', videostate=>{
-        socket.broadcast.emit('pause', videostate);
+    socket.on('pause', (room)=>{
+        socket.to(room).broadcast.emit('pause', CustomStates.PAUSED);
     });
 
-    socket.on('seek', time=>{
-        socket.broadcast.emit('seek', time);
+    socket.on('seek', (time, room)=>{
+        socket.to(room).broadcast.emit('seek', time);
     });
 
-    socket.on('message', letterArray=>{
+    socket.on('message', (letterArray, room)=>{
         console.log(letterArray);
     });
 
-    socket.on('startOver', time=>{
-        socket.broadcast.emit('startOver', time);
+    socket.on('startOver', (time, room)=>{
+        socket.to(room).broadcast.emit('startOver', time);
     });
 
-    socket.on('startNew', data=>{
-        socket.broadcast.emit('startNew', data);
+    socket.on('startNew', (data, room)=>{
+        socket.to(room).broadcast.emit('startNew', data);
     });
 
     socket.on('disconnect', _=>{
@@ -93,13 +94,21 @@ io.on('connection', socket=>{
 
 var port = process.env.PORT || 8092;
 
+app.set('views', './views');
 app.set('view engine', 'ejs');
-app.use(express.static(path.join(__dirname, '/public/')));
+app.use(express.static('public'));
+app.use(express.urlencoded({extended: true}));
 app.use(bodyparser.json());
 app.use(router);
 
-app.get('/watch', (req, res)=>{
-    res.redirect(`/watch.html?roomID=${uuidV4()}`);
+app.get('/', (req, res)=>{
+    // res.render('room', {roomID: uuidV4()});
+    res.redirect(`/${uuidV4()}`);
+});
+
+app.get('/:roomID', (req, res)=>{
+    console.log(`ID IS ${req.params.roomID}`);
+    res.render('room', {roomID: req.params.roomID});
 });
 
 app.post('/room', (req, res)=>{
@@ -107,9 +116,6 @@ app.post('/room', (req, res)=>{
     res.redirect(res.body.room);
 });
 
-app.get('/watch?:roomID', (req, res)=>{
-    res.render('watch', {roomID: req.params.roomID});
-});
 
 class CustomStates{
     static UNSTARTED = -1;
