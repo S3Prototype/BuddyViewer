@@ -16,8 +16,6 @@ const {v4: uuidV4} = require('uuid');
 
 const socketio = require('socket.io');
 
-const rooms = {name:{}};
-
 var app = express();
 const server = http.createServer(app);
 const io = socketio(server);
@@ -30,40 +28,43 @@ let meaninglessvar = "JUST A TEST THING.";
 let rooms = [];
 
 function joinRoom(socket, userData, videoData, roomID){
-    if(!rooms.some(room=>room.roomID == roomID)){
+    if(!rooms.some(room=>{return room.roomID == roomID})){
         createNewRoom(socket.id, userData, videoData, roomID);
     } else {
         addToRoom(socket.id, userData, videoData, roomID);
     }
-
-    // rooms[roomID].users[userID].socketID
-
     socket.join(roomID);
 }
 
 function addToRoom(socketID, userData, videoData, roomID){    
-    const { localName, serverName, userID, pfp } = userData;
+    const { localName, nameOnServer, userID, pfp } = userData;
     const { videoID, videoTime } = videoData;
-    rooms[roomID].users[userID] = {
-        socketID, localName, serverName, userID, isHost: false, pfp
-    };
-    if(rooms[roomID].users.length <= 1){
+    const currRoom = rooms.find(room=>{return room.roomID == roomID});
+    let isHost = false;
+    if(currRoom.users.length < 1 || !currRoom.hostSocketID){
         //if this user is the only one in the room
-        rooms[roomID].users[userID].isHost = true;
+        isHost = true;
+        currRoom.hostSocketID = socketID;
     }
+    currRoom.users.push({
+        socketID, localName, nameOnServer, userID, isHost, pfp
+    });
+    console.log(` ${JSON.stringify(currRoom, null, 2)}`);
 }
 
 function createNewRoom(socketID, userData, videoData, roomID){
-    const { localName, serverName, userID, pfp } = userData;
+    const { localName, nameOnServer, userID, pfp } = userData;
     const { videoID, videoTime } = videoData;
-    rooms.push({
+    const thisRoom = rooms.push({
         roomID,
+        hostSocketID: socketID,
         users: [{
-            socketID, localName, serverName, userID, isHost: true, pfp
+            socketID, localName, nameOnServer, userID, isHost: true, pfp
         }],
-        userID, //holds userID of host
         videoID, //holds id most recently played video
         videoTime, //most recent video time,
+        videoState: CustomStates.UNSTARTED,//most recent state
+        playRate: 1,
         messages: [
                     {
                         mID: 0,
@@ -75,75 +76,153 @@ function createNewRoom(socketID, userData, videoData, roomID){
                     }
                 ]
     });
+    console.log(`Just joined ${JSON.stringify(thisRoom, null, 2)}`);
     // rooms[roomID].users[userID] = {
     //     socketID, localName, serverName, userID, isHost: true, pfp
     // }
 }
 
-function initUser(socketID, currRoom){
-    //emit to the host, asking for their video state
-    //when we receive it, set this user's video to that state
+function getRoomHostSocketID(roomID){
+    return rooms.find(room=>{return room.roomID == roomID}).hostSocketID;
+}
+
+function removeFromRoom(socket){
+    if(rooms.length < 1) return;
+    const currRoom = rooms.find(
+        room=>{ return room.users.some(
+            user=>{return user.socketID == socket.id})
+        }
+    );
+
+    roomIndex = rooms.indexOf(currRoom);
+    // rooms[roomIndex].hostSocketID = "";
+
+    socket.leave(currRoom.roomID);
+
+    currRoom.users = currRoom.users.filter(
+        user=>{
+            return user.socketID != socket.id;
+        }
+    );
+
+    if(currRoom.users.length < 1){
+        currRoom.hostSocketID = "";
+    } else if(currRoom.hostSocketID == socket.id){
+        //If there are still users,
+        //assign host to a random ID in the user array.
+        currRoom.hostSocketID = currRoom.users[
+            Math.floor(Math.random() * currRoom.users.length)
+        ].socketID;
+    }
+}
+
+function checkIfHost(roomID, socketID){
+    return getRoomHostSocketID(roomID) == socketID;
+}
+
+function findRoom(roomID){
+    return rooms.find(room=>{return room.roomID == roomID});    
+}
+
+function updateRoomState({videoTime, videoID, playRate}, roomID, newState){
+    const currRoom = findRoom(roomID);
+    currRoom.videoTime = videoTime;
+    currRoom.videoState = newState;
+    currRoom.videoID = videoID;
+    currRoom.playRate = playRate;
 }
 
 io.on('connection', socket=>{
 
-    socket.on('joinRoom', (userData, videoData, room)=>{
-        joinRoom(socket, userData, videoData, room);
-        socket.to()
-        // initUser(socket.id, room[room]);
-    })
-
-    socketCount++;
+    socket.on('joinRoom', (userData, videoData, roomID)=>{
+        joinRoom(socket, userData, videoData, roomID);
+            //Now ask for the state from the host:
+        const hostSocketID = getRoomHostSocketID(roomID);
+        if(hostSocketID != socket.id){
+            console.log(`Trying to get state from host (${hostSocketID})`);
+            io.to(hostSocketID).emit('requestState', socket.id);
+        }
+    });
 
     socket.on('joinChat', (userData, room)=>{
         // socket.to(room).broadcast.emit('chatJoined', `${userData.name} has joined the chat!`);
     });
 
-    socket.on('sendState', (data, room)=>{
-        if(!allStatesAligned && socketCount > 1){
-            io.to(room).to(data.socketID).emit('initPlayer', data);
-            allStatesAligned = true;
-            console.log("STATE SENT");
-        }
+    socket.on('sendState', (data)=>{
+        // data.senderSocketID = socket.id;
+        const {requesterSocketID} = data;
+        io.to(requesterSocketID).emit('initPlayer', data);
+        const requesterLocalName = data.localName;
+        console.log(`STATE SENT TO ${requesterLocalName}`);
     });                    
 
-    socket.on('queryState', (data, room)=>{
-        if(socketCount > 1){        
-            allStatesAligned = false;
-            socket.to(room).broadcast.emit('getState', socket.id);
+    // socket.on('queryState', (data, room)=>{
+    //     if(socketCount > 1){        
+    //         allStatesAligned = false;
+    //         socket.to(room).broadcast.emit('getState', socket.id);
+    //     }
+    // });
+
+    socket.on('playrateChange', (playRate, roomID)=>{
+        socket.to(roomID).broadcast.emit('playrateChange', playRate);
+    });
+
+    socket.on('play', (data, roomID)=>{
+        const isHost = checkIfHost(roomID, socket.id);
+        const newState = CustomStates.PLAYING;
+        if(isHost){
+            updateRoomState(data, roomID, newState)
+        }        
+        socket.to(roomID).broadcast.emit('play', {
+            state: newState,
+            isHost,
+            time: data.videoTime
+        });
+    });
+
+    socket.on('pause', (data, roomID)=>{
+        const isHost = checkIfHost(roomID, socket.id);
+        const newState = CustomStates.PAUSED;
+        if(isHost){
+            updateRoomState(data, roomID, newState)
+        }        
+        socket.to(roomID).broadcast.emit('pause',{
+            state: newState,
+            isHost,
+            time: data.videoTime
+        });
+    });
+
+    socket.on('seek', (time, roomID)=>{
+        socket.to(roomID).broadcast.emit('seek', time);
+    });
+
+    socket.on('sync', roomID=>{
+        const currRoom = findRoom(roomID);
+        const data = {
+            state: currRoom.videoState,
+            videoID: currRoom.videoID,
+            startTime: currRoom.videoTime,
+            playRate: currRoom.playRate
         }
+        io.to(roomID).emit('initPlayer', data);
     });
 
-    socket.on('playrateChange', (playRate, room)=>{
-        socket.to(room).broadcast.emit('playrateChange', playRate);
-    });
-
-    socket.on('play', (room)=>{
-        socket.to(room).broadcast.emit('play', CustomStates.PLAYING);
-    });
-
-    socket.on('pause', (room)=>{
-        socket.to(room).broadcast.emit('pause', CustomStates.PAUSED);
-    });
-
-    socket.on('seek', (time, room)=>{
-        socket.to(room).broadcast.emit('seek', time);
-    });
-
-    socket.on('message', (letterArray, room)=>{
+    socket.on('message', (letterArray, roomID)=>{
         console.log(letterArray);
     });
 
-    socket.on('startOver', (time, room)=>{
-        socket.to(room).broadcast.emit('startOver', time);
+    socket.on('startOver', (roomID)=>{
+        socket.to(roomID).broadcast.emit('startOver', 0);
     });
 
-    socket.on('startNew', (data, room)=>{
-        socket.to(room).broadcast.emit('startNew', data);
+    socket.on('startNew', (data, roomID)=>{
+        socket.to(roomID).broadcast.emit('startNew', data);
     });
 
     socket.on('disconnect', _=>{
-        socketCount--;
+        console.log("DISCONNECTING!!");
+        removeFromRoom(socket);
     });
 });
 
@@ -162,9 +241,9 @@ app.get('/', (req, res)=>{
 });
 
 app.get('/:roomID', (req, res)=>{
-    const currRoom = req.params.roomID;
-    console.log(`ID IS ${currRoom}`);
-    res.render('room', {roomID: currRoom});
+    const currRoomID = req.params.roomID;
+    console.log(`ID IS ${currRoomID}`);
+    res.render('room', {roomID: currRoomID});
 });
 
 app.post('/room', (req, res)=>{
@@ -221,7 +300,7 @@ app.post('/get-search-results', function(req, res){
     
     const results = YouTubeSearchManager.searchResults[req.body.user_id];
     if(results){
-        results.forEach(result=>console.log(`${new Date().toLocaleTimeString()} Result is: ${JSON.stringify(result, null, 2)}`));
+        // results.forEach(result=>console.log(`${new Date().toLocaleTimeString()} Result is: ${JSON.stringify(result, null, 2)}`));
         YouTubeSearchManager.searchResults[req.body.user_id] = null;
     }// if(results) YouTubeSearchManager.searchResults[req.body.user_id] = null;
 

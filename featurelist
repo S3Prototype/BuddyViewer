@@ -1,5 +1,7 @@
 FEATURE LIST:
 
+* Users should be able to choose who the room host is
+* Should have a re-sync button to align everyone to the host if shit gets weird.
 * Chat should be like a floating tray. It should be like the userlist tray in Watch2Gether, always on the bottom, able to be popped up and popped down.
 * Should have a row in the video player that shows the most recently sent message in the chat, maybe with a higher z-index so it just appears above the video and then eventually fades away.
 * Also have a little chat icon button in the video player so you can bring the chat up at the side. If you're in fullscreen, chat appears in a z-index above the player.

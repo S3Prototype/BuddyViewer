@@ -1,28 +1,10 @@
 DOING:
-* Gotta fix the joinroom code because it's not coded properly. Assumes we're using objects when we're using arrays.
-* Set up rooms
-    ** Now rooms work in the basic sense. Hotjoining too.
-    ** But hot-joining code is extremely janky. Write something that saves the info relative to the individual rooms, like counting how many people are in each room. Also find out how to check when someone DC's from the room.
-    ** To set up room-joining code, make an array of rooms that contains objects. When a new room is joined, check if that room already exists. If not, create that room in the array. Use the room name as the key in the index.
-        The room will be an object that holds:
-        {
-            users: { localName, serverName, userID, isHost, pfp },
-            host, //holds userID of host
-            videoID, //holds id most recently played video
-            videoTime, //most recent video time,
-            messages: [
-                        {
-                            mID, mContent, mUserID, mlocalName, mlocalTimeStamp, mUniversalTimeStamp
-                        }
-                    ]
-        };
+* Return to rooms based on cookies
+    * Can't intelligently do this.
+    * Instead, create an index page that has a list of all public rooms (rooms start private by default)
+        * You can join any room, or just create your own.
 
 **MOST IMPORTANT TODO**
-* Return to rooms based on cookies
-* Adjust some minor issues
-    * There needs to be a room "host" whose video state is "THE" video state. Add functionality to both manage the hosts so if one person disconnects, someone else becomes the host is needed, as well as creating a host when room is empty, and manually switching who the host is if the users so desire.
-    * When I send the play and pause events, I should always seek to the time of the "host" of the room.
-        ** OR JUST ADD THE sync BUTTON SO USERS CAN DO THIS MANUALLY.
 * Create database to save room info.
 * Add play history
 * Add playlist functionality
@@ -95,6 +77,36 @@ THOUGHTS:
 DONE
 ===========
 ~~~~~~~~~~~
+
+1/6/21
+
+* Adjust some minor issues
+    * ADD THE SYNC BUTTON SO USERS CAN SYNC MANUALLY.
+* When host presses play or pause, send their time. If their time is > or < 5 seconds, jump other users to their time.
+* Gotta fix the joinroom code because it's not coded properly. Assumes we're using objects when we're using arrays.
+    ** When video is initalized, it's not seeking to the proper time. Everything else seems to work for hotjoining.
+    ** That's all fixed, but it seems the host is not being swapped out when people leave the room.
+    ** All fixed.
+    * There needs to be a room "host" whose video state is "THE" video state. Add functionality to both manage the hosts so if one person disconnects, someone else becomes the host is needed, as well as creating a host when room is empty, and manually switching who the host is if the users so desire.
+
+* Set up rooms
+    ** Now rooms work in the basic sense. Hotjoining too.
+    ** But hot-joining code is extremely janky. Write something that saves the info relative to the individual rooms, like counting how many people are in each room. Also find out how to check when someone DC's from the room.
+    ** To set up room-joining code, make an array of rooms that contains objects. When a new room is joined, check if that room already exists. If not, create that room in the array. Use the room name as the key in the index.
+        The room will be an object that holds:
+        {
+            users: { localName, serverName, userID, isHost, pfp },
+            host, //holds userID of host
+            videoID, //holds id most recently played video
+            videoTime, //most recent video time,
+            messages: [
+                        {
+                            mID, mContent, mUserID, mlocalName, mlocalTimeStamp, mUniversalTimeStamp
+                        }
+                    ]
+        };
+
+=====
 1/5/21
 * Set up rooms
     * Got the basics of it working. Just gotta set it up so when you join a room, it actually aligns your state with the state of the others.
