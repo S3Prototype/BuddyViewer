@@ -3,9 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <link rel="stylesheet" href="index_styles.css" type="text/css" />
+    <title>Test Chat Room</title>
+    <script>
+        const rooms = "<%= rooms %>";
+    </script>
 </head>
 <body>
-    <h1>INDEX ROOM</h1>
+    <div id="create-room-container" class="create-room-container">
+        <form action="/create-new-room" method="post">
+            <button id="create-room-button" class="create-room-button">
+                <h3 id="create-room-text" class="create-room-text">
+                    Create Room
+                </h3>
+                <span id="create-room-icon" class="fas fa-plus-square">        
+                </span>
+            </button>
+            <input name="roomName" type="text" placeholder="Room Name" id="room-name-input">
+            <input name="roomDescription" type="text" placeholder="Room Description" id="room-description-input">
+                <!-- Security radios: -->
+            <input type="radio" id="open-security-radio" name="securitySetting" value="open">
+                <label for="male">Open</label>
+            <input type="radio" id="locked-security-radio" name="securitySetting" value="locked">
+                    <label for="male">Locked</label>
+            <input checked type="radio" id="private-security-radio" name="securitySetting" value="private">
+                    <label for="male">Private</label>
+        </form>
+        <!-- <button id="create-room-button" class="create-room-button">
+            <h1 id="create-room-text" class="create-room-text">
+                Create Room
+            </h1>
+            <span id="create-room-icon" class="fas fa-plus-square">        
+            </span>
+        </button> -->
+    </div>
+    <div id="room-list-container" class="room-list-container">
+    </div>
+    <div id="room-list-controls" class="room-list-controls">
+        <button id="refresh-button" class="refresh-button">
+            <span id="refresh-icon" class="fas fa-sync-alt"></i></span>
+        </button>
+    </div>
 </body>
+<!-- <script src="/socket.io/socket.io.js"></script> -->
+<script src="https://kit.fontawesome.com/ab8bbc25ce.js" crossorigin="anonymous"></script>
+<script src="jquery-3.5.1.js"></script>
+<script defer src="indexScripts.js"></script>
+<script>
+    Notification.requestPermission()
+</script>
 </html>

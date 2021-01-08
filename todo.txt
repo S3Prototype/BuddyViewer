@@ -1,8 +1,4 @@
 DOING:
-* Return to rooms based on cookies
-    * Can't intelligently do this.
-    * Instead, create an index page that has a list of all public rooms (rooms start private by default)
-        * You can join any room, or just create your own.
 
 **MOST IMPORTANT TODO**
 * Create database to save room info.
@@ -77,6 +73,28 @@ THOUGHTS:
 DONE
 ===========
 ~~~~~~~~~~~
+
+1/7/21
+
+* Return to rooms based on cookies
+    ** Check if you can do an ajax call as soon as roomID is set. It's a get request. On server side, if the id passed through the request is the id of any room, res.redirect to that room.
+    * Can't intelligently do this.
+    * Instead, create an index page that has a list of all public rooms (rooms start private by default)
+        * You can join any room, or just create your own.
+* Add ability to change room name separate from room ID.
+    ** Basically no rooms can be anything but a uuid or name+uuid.
+        * Adjust how the routes work so this is the case.
+        * Generate random name when room is first made, if one not provided
+    ** Have to change room generation so all rooms have their custom uuid.
+    ** Do like w2g and append the room name to the front of the uuid
+* Ability to add room details:
+    * name,
+    * thumbnail
+    * nsfw: true/false
+        ** This automatically flicks to true if not watching youtube.
+    * description
+
+===
 
 1/6/21
 

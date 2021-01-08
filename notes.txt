@@ -1,7 +1,11 @@
-(1/6/21)
+(1/7/21)
+Layout for room list item:
 
+|ROOM_LOGO| |THUMBNAIL|  |ROOM_NAME||USER_COUNT||HOST_COUNTRY_FLAG|
+|ROOM_LOGO| |THUMBNAIL|  |DESCRIPTION|         |LOCK/UNLOCK SYMBOL|
 
-
+When you hover over the thumbnail it shows a box with the video name,
+description, and a progressbar set to their saved timestamp.
 
 (12/2/20)
 

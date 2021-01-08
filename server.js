@@ -1,5 +1,6 @@
 const path = require('path');
 const http = require('http');
+var randomWords = require('random-words');
 var express = require('express');
 var bodyparser = require('body-parser');
 const router = express.Router();
@@ -13,17 +14,28 @@ const { google } = require('googleapis');
 const { title } = require('process');
 
 const {v4: uuidV4} = require('uuid');
+const isUuid = require('isuuid');
 
 const socketio = require('socket.io');
 
+var jsonParser = bodyparser.json();
+// var urlencodedParser = bodyparser.urlencoded({ extended: false });
+
 var app = express();
 const server = http.createServer(app);
+
+app.set('views', './views');
+app.set('view engine', 'ejs');
+app.use(express.static('public'));
+app.use(express.urlencoded({extended: true}));
+// app.use(bodyparser.json());
+// app.use(bodyparser.urlencoded({extended: true}));
+app.use(express.json());
+app.use(router);
+
 const io = socketio(server);
 
 //let rawData = fs.readFileSync('messages.json');
-let allStatesAligned = true;
-let socketCount = 0;
-let meaninglessvar = "JUST A TEST THING.";
 
 let rooms = [];
 
@@ -52,11 +64,53 @@ function addToRoom(socketID, userData, videoData, roomID){
     console.log(` ${JSON.stringify(currRoom, null, 2)}`);
 }
 
+class RoomSecurity{
+    static OPEN = 0;
+    static LOCKED = 1;
+    static PRIVATE = 2;
+}
+
+const defaultDescription = "A lovely room for watching videos! Join!";
+const defaultThumbnail = "https://i.ytimg.com/vi/l-7--PSbfbI/maxresdefault.jpg";
+const defaultSecuritySetting = RoomSecurity.OPEN;
+
+function createEmptyRoom(securitySetting, roomName, roomDescription, roomID){
+    if(!roomName){
+        roomName = randomWords();
+    }
+    if(!roomDescription){
+        roomDescription = defaultDescription;
+    }
+    const newRoom = {
+        roomID: roomName+'-'+roomID,
+        roomName,
+        roomDescription,
+        nsfw: false,
+        securitySetting,
+        thumbnail: defaultThumbnail,
+        users: [],
+        videoID: "", //holds id most recently played video
+        videoTime: 0, //most recent video time,
+        videoState: CustomStates.UNSTARTED,//most recent state
+        playRate: 1,
+        messages: []
+    };
+    rooms.push(newRoom);
+    console.log("empty room created");
+    return newRoom;
+}
+
 function createNewRoom(socketID, userData, videoData, roomID){
     const { localName, nameOnServer, userID, pfp } = userData;
     const { videoID, videoTime } = videoData;
-    const thisRoom = rooms.push({
-        roomID,
+    const randomName = randomWords();
+    const thisRoom = {
+        roomID: randomName+'-'+roomID,
+        roomName: randomName,
+        roomDescription: defaultDescription,
+        nsfw: false,
+        securitySetting: defaultSecuritySetting,
+        thumbnail: defaultThumbnail,
         hostSocketID: socketID,
         users: [{
             socketID, localName, nameOnServer, userID, isHost: true, pfp
@@ -75,11 +129,16 @@ function createNewRoom(socketID, userData, videoData, roomID){
                         mUniversalTimeStamp: ""
                     }
                 ]
-    });
+        }
+    rooms.push(thisRoom);
     console.log(`Just joined ${JSON.stringify(thisRoom, null, 2)}`);
-    // rooms[roomID].users[userID] = {
-    //     socketID, localName, serverName, userID, isHost: true, pfp
-    // }
+    return thisRoom;
+}
+
+function changeRoomName(roomName, roomID){
+    const foundRoom = findRoom(roomID);
+    foundRoom.roomName = roomName;
+    foundRoom.roomID = roomName+'-'+roomID;
 }
 
 function getRoomHostSocketID(roomID){
@@ -93,6 +152,10 @@ function removeFromRoom(socket){
             user=>{return user.socketID == socket.id})
         }
     );
+
+    if(!currRoom){
+        return;
+    }
 
     roomIndex = rooms.indexOf(currRoom);
     // rooms[roomIndex].hostSocketID = "";
@@ -132,6 +195,8 @@ function updateRoomState({videoTime, videoID, playRate}, roomID, newState){
     currRoom.playRate = playRate;
 }
 
+const listRoomID = "LISTROOM";
+
 io.on('connection', socket=>{
 
     socket.on('joinRoom', (userData, videoData, roomID)=>{
@@ -142,6 +207,17 @@ io.on('connection', socket=>{
             console.log(`Trying to get state from host (${hostSocketID})`);
             io.to(hostSocketID).emit('requestState', socket.id);
         }
+    });
+
+    socket.on('joinListRoom', _=>{
+        socket.join(listRoomID);
+    });
+
+    socket.on('refreshRequest', _=>{
+        const data = {
+            rooms
+        };
+        io.to(socket.id).emit('refreshResponse', data);
     });
 
     socket.on('joinChat', (userData, room)=>{
@@ -228,29 +304,58 @@ io.on('connection', socket=>{
 
 var port = process.env.PORT || 8092;
 
-app.set('views', './views');
-app.set('view engine', 'ejs');
-app.use(express.static('public'));
-app.use(express.urlencoded({extended: true}));
-app.use(bodyparser.json());
-app.use(router);
+app.post('/check-saved-roomID', (req, res)=>{
+    console.log("GET FIRED");
+    //This code means we should probably require uers to name their
+    //rooms if they save them to the DB.
+    console.log(`ROOM IS: ${JSON.stringify(req.body.currRoomID, null, 2)}`);
+    // if(isUuid(req.body.currRoomID)){
+    //     console.log("ALREADY A ROOM");
+    //     res.send("User not redirected; already in randomly-generated room.");
+    // }
+
+    const shouldRedirect = isUuid(req.body.currRoomID) && findRoom(req.body.storedRoomID);
+    res.send(shouldRedirect);
+});
 
 app.get('/', (req, res)=>{
     // res.render('room', {roomID: uuidV4()});
-    res.redirect(`/${uuidV4()}`);
+    // res.redirect(`/${uuidV4()}`);
+    console.log(`SENDING DOWN: ${JSON.stringify(rooms, null, 2)}`);
+    res.render('index', {rooms: rooms});
 });
 
 app.get('/:roomID', (req, res)=>{
     const currRoomID = req.params.roomID;
     console.log(`ID IS ${currRoomID}`);
-    res.render('room', {roomID: currRoomID});
+    foundRoom = findRoom(currRoomID);
+    if(!foundRoom){
+            //If room doesn't exist, send them to homepage.
+        res.redirect('/');
+    } else {
+        res.render('room', {roomID: currRoomID});
+    }
 });
 
-app.post('/room', (req, res)=>{
-    rooms[req.body.room] = {users: {}};
-    res.redirect(res.body.room);
+app.post('/create-new-room', (req, res)=>{
+    const {securitySetting, roomDescription, roomName} = req.body;
+    const newID = uuidV4();
+    let securityResult = RoomSecurity.PRIVATE;
+    switch(securitySetting){
+        case "open":
+            securityResult = RoomSecurity.OPEN;
+            break;
+        case "locked":
+            securityResult = RoomSecurity.LOCKED;
+            break;
+        case "private":
+            securityResult = RoomSecurity.PRIVATE;
+            break;
+    }
+    console.log("SECURITY SETTING: "+securitySetting+`(${securityResult})`);
+    const createdRoom = createEmptyRoom(securityResult, roomName, roomDescription, newID);
+    res.redirect(`/${createdRoom.roomID}`);
 });
-
 
 class CustomStates{
     static UNSTARTED = -1;
@@ -266,6 +371,14 @@ class CustomStates{
 class YouTubeSearchManager{
     static searchResults = [];
 }
+
+app.post('/get-rooms-list', (req, res)=>{
+
+    const data = {
+        rooms: rooms.filter(room=>room.securitySetting != RoomSecurity.PRIVATE)
+    }
+    res.send(data);
+});
 
 app.post('/search', function(req, res){
     // console.log(`${new Date().toLocaleTimeString()} Searching for: ${JSON.stringify(req.body, null, 2)}`);

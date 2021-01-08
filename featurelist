@@ -1,5 +1,10 @@
 FEATURE LIST:
 
+* Rooms in the roomlist should show the flag of the host. But that's complex, involves IP resolving through 3rd party libraries.
+* Banning users from your room.
+* Setting rooms to private so they're not on the list
+* Setting rooms to locked so they're on the list but require pword
+* In the room list page, when you hover over the thumbnail it shows a box with the video name, description, and a progressbar set to their saved timestamp.
 * Users should be able to choose who the room host is
 * Should have a re-sync button to align everyone to the host if shit gets weird.
 * Chat should be like a floating tray. It should be like the userlist tray in Watch2Gether, always on the bottom, able to be popped up and popped down.

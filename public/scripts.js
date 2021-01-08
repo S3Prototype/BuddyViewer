@@ -1,6 +1,26 @@
 $(function(){
     
     console.log(`Welcome to ${roomID}`);
+    const storedRoomID = localStorage.getItem('roomID');
+    console.log(`STORED ID IS ${storedRoomID}`);
+    if(storedRoomID && storedRoomID != roomID){
+        // $.ajax({
+        //     url: '/check-saved-roomID',
+        //     method: 'POST',
+        //     contentType: 'application/json',
+        //     data: JSON.stringify({storedRoomID, currRoomID: roomID}, null, 2),
+        //     success: function(res){
+        //         console.log("RESULT IS "+res.shouldRedirect);
+        //         if(res.shouldRedirect){
+        //             const roomIndex = location.href.indexOf('2/') + 2;
+        //             const linkWithoutRoom = window.location.href.substring(0, roomIndex);
+        //             location.href = linkWithoutRoom+storedRoomID;
+        //         }
+        //     }
+        // });
+    } else {
+        localStorage.setItem('roomID', roomID);
+    }
     
     const maxNameLength = 18;
     $("#name-input").attr("maxlength", maxNameLength);

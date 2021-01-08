@@ -1,0 +1,49 @@
+body {
+    color: white;
+    background-color: rgb(14, 24, 64);
+    font-family: Helvetica, Arial, sans-serif;
+    display: grid;
+    grid-template-rows: [top] 1fr [create-room] .25fr [room-list] 500px [bottom] 1fr;
+    grid-template-columns: [left-sidebar] 1fr [main] 30fr [right-sidebar] 1fr;
+    grid-gap: 15px;
+}
+
+#room-list-container{
+    background-color: gray;
+    grid-row: room-list;
+    grid-column: main;
+    display: flex;
+    overflow: auto;
+}
+
+.room-result{
+    /* background-color: blueviolet; */
+    /* display: flex; */
+}
+
+#room-list-controls{
+    background-color: black;
+    display: flex;
+}
+
+.room-thumbnail-div{
+    width: 240px;
+    height: 170px;
+    flex-basis: 0;
+    flex-grow: 0;
+}
+
+.room-thumbnail{
+    width: 100%;
+    height: 100%;
+}
+
+#refresh-icon{
+    color: white;
+}
+
+#create-room-container{
+    background-color: gray;
+    grid-row: create-room;
+    grid-column: main;
+}
