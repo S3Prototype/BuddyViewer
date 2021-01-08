@@ -3,7 +3,7 @@ body {
     background-color: rgb(14, 24, 64);
     font-family: Helvetica, Arial, sans-serif;
     display: grid;
-    grid-template-rows: [top] 1fr [create-room] .25fr [room-list] 500px [bottom] 1fr;
+    grid-template-rows: [top-row] 1fr [create-room] .25fr [room-list] 500px [bottom-row] 1fr;
     grid-template-columns: [left-sidebar] 1fr [main] 30fr [right-sidebar] 1fr;
     grid-gap: 15px;
 }
@@ -12,13 +12,18 @@ body {
     background-color: gray;
     grid-row: room-list;
     grid-column: main;
-    display: flex;
+    display: block;
     overflow: auto;
 }
 
 .room-result{
     /* background-color: blueviolet; */
     /* display: flex; */
+    background-color: rgb(0, 0, 107);
+    margin: 5px;
+    display: grid;
+    grid-template-rows: [title-row] 50px [info-row] 50px;
+    grid-template-columns: [thumbnail] 1fr [name-desc] 2fr [user-count] .25fr [lock-nsfw] .25fr;
 }
 
 #room-list-controls{
@@ -27,15 +32,79 @@ body {
 }
 
 .room-thumbnail-div{
-    width: 240px;
-    height: 170px;
-    flex-basis: 0;
-    flex-grow: 0;
+    margin: 5px;
+    width: 160px;
+    height: 90px;
+    grid-row: title-row;
+    grid-column: thumbnail;
 }
 
 .room-thumbnail{
     width: 100%;
     height: 100%;
+}
+
+.name-description-container{
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    text-align: left;
+    align-items: baseline;
+    grid-row: title-row / -1;
+    grid-column: name-desc;
+}
+
+.room-name{
+    /* background-color: turquoise; */
+    margin-top: 10px;
+    order: 1;
+    padding-left: 5px;
+    width: 100%;
+}
+
+.room-description{
+    order: 2;
+    /* background-color: tomato; */
+    width: 100%;
+    padding-left: 5px;
+}
+
+.room-user-count{
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    text-align: center;
+    align-items: baseline;
+    margin: 10px;
+    grid-row: title-row / -1;
+    grid-column: user-count;
+}
+
+.security-status{
+}
+
+.lock-nsfw-container{    
+    grid-row: title-row /-1;
+    grid-column: lock-nsfw;
+    display: inline-flex;
+    flex-direction: column;
+    justify-content:space-around;
+    text-align: center;
+    align-items: baseline;
+    margin-left: 15px;
+}
+
+.nsfw-status{
+    /* grid-row: info-row;
+    grid-column: lock-nsfw; */
+}
+
+.nsfw-green{
+    color: rgb(0, 170, 0);
+}
+
+.nsfw-yellow{
+    color: yellow;
 }
 
 #refresh-icon{

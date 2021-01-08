@@ -13,6 +13,8 @@ require('dotenv').config();
 const { google } = require('googleapis');
 const { title } = require('process');
 
+const RoomModel = require('./models/room');
+
 const {v4: uuidV4} = require('uuid');
 const isUuid = require('isuuid');
 
@@ -21,8 +23,27 @@ const socketio = require('socket.io');
 var jsonParser = bodyparser.json();
 // var urlencodedParser = bodyparser.urlencoded({ extended: false });
 
+const mongoose = require('mongoose');
+
 var app = express();
 const server = http.createServer(app);
+
+let rooms = [];
+const dbURI = 'mongodb+srv://'+process.env.DB_USERNAME+':'+process.env.DB_PASS+'@cluster0.agmjg.mongodb.net/'+process.env.DB_NAME+'?retryWrites=true&w=majority';
+mongoose.connect(dbURI, {useNewUrlParser: true, useUnifiedTopology: true})
+.then((result)=>{
+    server.listen(port, function(){
+        RoomModel.find().then((result)=>{
+            rooms = result;
+        }).catch((err)=>{
+            console.log(`Failed to get rooms from DB\n${err}`);
+        });
+        console.log('Connected to DB...');
+        console.log(`Server listening on: ${port}`);
+        console.log("Server start date/time: "+new Date().toLocaleDateString() + " / " + new Date().toLocaleTimeString());
+        console.log("======");
+    });
+}).catch(err=>console.log(err));
 
 app.set('views', './views');
 app.set('view engine', 'ejs');
@@ -36,8 +57,6 @@ app.use(router);
 const io = socketio(server);
 
 //let rawData = fs.readFileSync('messages.json');
-
-let rooms = [];
 
 function joinRoom(socket, userData, videoData, roomID){
     if(!rooms.some(room=>{return room.roomID == roomID})){
@@ -61,7 +80,14 @@ function addToRoom(socketID, userData, videoData, roomID){
     currRoom.users.push({
         socketID, localName, nameOnServer, userID, isHost, pfp
     });
-    console.log(` ${JSON.stringify(currRoom, null, 2)}`);
+
+    updateRoomUsersDB(currRoom.users, currRoom.roomID);
+    // RoomModel.updateOne(
+    //     {roomID: currRoom.roomID}, //query for the room to update
+    //     {$set: {users: currRoom.users}} //value to update
+    // );    
+    //Update room in DB.
+    // console.log(` ${JSON.stringify(currRoom, null, 2)}`);
 }
 
 class RoomSecurity{
@@ -95,9 +121,16 @@ function createEmptyRoom(securitySetting, roomName, roomDescription, roomID){
         playRate: 1,
         messages: []
     };
-    rooms.push(newRoom);
+    // rooms.push(newRoom);
     console.log("empty room created");
     return newRoom;
+}
+
+function updateRoomUsersDB(users, roomID){
+    RoomModel.updateOne(
+        {roomID: roomID}, //query for the room to update
+        {$set: {users: users}} //value to update
+    );
 }
 
 function createNewRoom(socketID, userData, videoData, roomID){
@@ -130,15 +163,25 @@ function createNewRoom(socketID, userData, videoData, roomID){
                     }
                 ]
         }
-    rooms.push(thisRoom);
-    console.log(`Just joined ${JSON.stringify(thisRoom, null, 2)}`);
-    return thisRoom;
+    const roomForDB = new RoomModel(thisRoom);
+    roomForDB.save().then((result)=>{
+        rooms.push(result);
+    }).catch(err=>console.log(`Failed to create new Room.\n ${err}`));
+        // console.log(`Just joined ${JSON.stringify(thisRoom, null, 2)}`);
+    // return thisRoom;
 }
 
 function changeRoomName(roomName, roomID){
     const foundRoom = findRoom(roomID);
-    foundRoom.roomName = roomName;
-    foundRoom.roomID = roomName+'-'+roomID;
+    RoomModel.updateOne(
+        {roomID}, //query for the room to update
+        {$set: {roomName, roomID: roomName+'-'+roomID}} //value to update
+    ).then((result)=>{
+        foundRoom.roomName = result.roomName;
+        foundRoom.roomID = result.roomID;
+    }).catch((err)=>{
+        console.log(`Failed to change room name.\n${err}`);
+    });
 }
 
 function getRoomHostSocketID(roomID){
@@ -147,6 +190,7 @@ function getRoomHostSocketID(roomID){
 
 function removeFromRoom(socket){
     if(rooms.length < 1) return;
+
     const currRoom = rooms.find(
         room=>{ return room.users.some(
             user=>{return user.socketID == socket.id})
@@ -157,7 +201,7 @@ function removeFromRoom(socket){
         return;
     }
 
-    roomIndex = rooms.indexOf(currRoom);
+    // roomIndex = rooms.indexOf(currRoom);
     // rooms[roomIndex].hostSocketID = "";
 
     socket.leave(currRoom.roomID);
@@ -177,6 +221,8 @@ function removeFromRoom(socket){
             Math.floor(Math.random() * currRoom.users.length)
         ].socketID;
     }
+
+    updateRoomUsersDB(currRoom.users, currRoom.roomID);
 }
 
 function checkIfHost(roomID, socketID){
@@ -184,15 +230,31 @@ function checkIfHost(roomID, socketID){
 }
 
 function findRoom(roomID){
-    return rooms.find(room=>{return room.roomID == roomID});    
+    return RoomModel.findOne({roomID}).then((result)=>{
+        return result;
+    }).catch((err=>{
+        return undefined;
+    }));
+    // return rooms.find(room=>{return room.roomID == roomID});    
 }
 
-function updateRoomState({videoTime, videoID, playRate}, roomID, newState){
-    const currRoom = findRoom(roomID);
-    currRoom.videoTime = videoTime;
-    currRoom.videoState = newState;
-    currRoom.videoID = videoID;
-    currRoom.playRate = playRate;
+function updateRoomState({videoTime, videoID, playRate, thumbnail}, roomID, newState){
+    // const currRoom = findRoom(roomID);
+    RoomModel.updateOne(
+        {roomID: roomID}, //query for the room to update
+        {$set: {videoTime, videoID, playRate, thumbnail}} //value to update
+    ).then((result)=>{
+
+        // currRoom.videoTime = result.videoTime;
+        // currRoom.videoState = result.newState;
+        // currRoom.videoID = result.videoID;
+        // currRoom.playRate = result.playRate;
+        // currRoom.thumbnail = result.thumbnail; //? result.thumbnail : defaultThumbnail;
+    }).catch((err)=>{
+        //I assume for now that if there's an error, the room doesn't exist.                
+        console.log(`Failed to update room state\n${err}`);
+        //should probably make a function like logFailure('update room state', err);
+    });
 }
 
 const listRoomID = "LISTROOM";
@@ -245,12 +307,11 @@ io.on('connection', socket=>{
 
     socket.on('play', (data, roomID)=>{
         const isHost = checkIfHost(roomID, socket.id);
-        const newState = CustomStates.PLAYING;
         if(isHost){
-            updateRoomState(data, roomID, newState)
+            updateRoomState(data, roomID, CustomStates.PLAYING)
         }        
         socket.to(roomID).broadcast.emit('play', {
-            state: newState,
+            state: CustomStates.PLAYING,
             isHost,
             time: data.videoTime
         });
@@ -258,12 +319,11 @@ io.on('connection', socket=>{
 
     socket.on('pause', (data, roomID)=>{
         const isHost = checkIfHost(roomID, socket.id);
-        const newState = CustomStates.PAUSED;
         if(isHost){
-            updateRoomState(data, roomID, newState)
+            updateRoomState(data, roomID, CustomStates.PAUSED)
         }        
         socket.to(roomID).broadcast.emit('pause',{
-            state: newState,
+            state: CustomStates.PAUSED,
             isHost,
             time: data.videoTime
         });
@@ -293,6 +353,7 @@ io.on('connection', socket=>{
     });
 
     socket.on('startNew', (data, roomID)=>{
+        updateRoomState(data, roomID, CustomStates.PAUSED);
         socket.to(roomID).broadcast.emit('startNew', data);
     });
 
@@ -306,14 +367,6 @@ var port = process.env.PORT || 8092;
 
 app.post('/check-saved-roomID', (req, res)=>{
     console.log("GET FIRED");
-    //This code means we should probably require uers to name their
-    //rooms if they save them to the DB.
-    console.log(`ROOM IS: ${JSON.stringify(req.body.currRoomID, null, 2)}`);
-    // if(isUuid(req.body.currRoomID)){
-    //     console.log("ALREADY A ROOM");
-    //     res.send("User not redirected; already in randomly-generated room.");
-    // }
-
     const shouldRedirect = isUuid(req.body.currRoomID) && findRoom(req.body.storedRoomID);
     res.send(shouldRedirect);
 });
@@ -321,7 +374,7 @@ app.post('/check-saved-roomID', (req, res)=>{
 app.get('/', (req, res)=>{
     // res.render('room', {roomID: uuidV4()});
     // res.redirect(`/${uuidV4()}`);
-    console.log(`SENDING DOWN: ${JSON.stringify(rooms, null, 2)}`);
+    // console.log(`SENDING DOWN: ${JSON.stringify(rooms, null, 2)}`);
     res.render('index', {rooms: rooms});
 });
 
@@ -338,7 +391,8 @@ app.get('/:roomID', (req, res)=>{
 });
 
 app.post('/create-new-room', (req, res)=>{
-    const {securitySetting, roomDescription, roomName} = req.body;
+    const {securitySetting, roomDescription} = req.body;
+    let {roomName} = req.body;
     const newID = uuidV4();
     let securityResult = RoomSecurity.PRIVATE;
     switch(securitySetting){
@@ -352,9 +406,25 @@ app.post('/create-new-room', (req, res)=>{
             securityResult = RoomSecurity.PRIVATE;
             break;
     }
+    if(roomName.includes(' ')){
+        roomName = roomName.split(' ').join('');
+    }
+
+    if(roomName.length > 50){
+        roomName = roomName.substring(0, 50);
+    }
+
     console.log("SECURITY SETTING: "+securitySetting+`(${securityResult})`);
     const createdRoom = createEmptyRoom(securityResult, roomName, roomDescription, newID);
-    res.redirect(`/${createdRoom.roomID}`);
+    
+    const roomForDB = new RoomModel(createdRoom);
+    roomForDB.save().then((result)=>{
+        rooms.push(result);
+        res.redirect(`/${result.roomID}`);
+    }).catch((err)=>{
+        console.log(err);
+        res.send(err);
+    });
 });
 
 class CustomStates{
@@ -418,12 +488,4 @@ app.post('/get-search-results', function(req, res){
     }// if(results) YouTubeSearchManager.searchResults[req.body.user_id] = null;
 
     res.send(results);
-});
-
-server.listen(port, function(){
-    console.log(`Server listening on: ${port}`);
-    console.log("Server start date/time: "+new Date().toLocaleDateString() + " / " + new Date().toLocaleTimeString());
-    console.log("======");
-    // setInterval(NameContainer.checkPings, 2500);
-    // setInterval(VideoManager.checkPings, 1000);
 });

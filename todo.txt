@@ -10,8 +10,12 @@ DOING:
     * For the rest, when the link is added, just gather all available mp4's and create search results from them and let the user choose. Just make it clear that the options are the "Videos found at this link." Put a length.
 * Add your own recommended videos overlay when video is paused.
 * Fix up the chat.
+* Give rooms logos. Would be cool.
 
 TODO:
+* Consider deleted the rooms array and having all code interface directly with the DB, nothing saved in local storage.
+* When host leaves a room and it becomes empty, it reverts to a default state. Shouldn't do that.
+* Make room passwords work. Require new entrants to enter the password if they want to actually execute the joinRoom code. Perhaps have a password prompt replace the joinButton interface.
 * If you can, add video length to the info on the search results.
 * For some reason the playback rate initializes as undefined in the html. Probably because of the initialization code when hotjoining.
 * Add a "re-align" button so if things get unaligned, just press that, boom. trigger the sendstate event
@@ -73,7 +77,11 @@ THOUGHTS:
 DONE
 ===========
 ~~~~~~~~~~~
+1/8/21
+* Make room list in index look a little better so we can actually work with it.
+* Have host update info about the room state when they press play or pause. This includes the id, thumbnail, etc.
 
+=======
 1/7/21
 
 * Return to rooms based on cookies

@@ -27,8 +27,8 @@
 }
 
 .result-thumbnail-div{
-    width: 100%;
-    height: 170px;
+    width: 220px;
+    height: 135px;
     flex-basis: 0;
     flex-grow: 0;
 }
