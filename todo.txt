@@ -1,4 +1,7 @@
 DOING:
+* Code for leaving a room doesn't work. Issue is, we only have the socket.id to work with, so we have to find the room based on that alone. Will be a little frustrating.
+* Rooms don't initialize when you join them anymore.
+* Seems like a lot is broken. If you try to enter a room via direct link, it doesn't actually send you there. It's just broken.
 
 **MOST IMPORTANT TODO**
 * Create database to save room info.
@@ -77,9 +80,11 @@ THOUGHTS:
 DONE
 ===========
 ~~~~~~~~~~~
+
 1/8/21
 * Make room list in index look a little better so we can actually work with it.
 * Have host update info about the room state when they press play or pause. This includes the id, thumbnail, etc.
+* Convert everything in server over from the locally saved rooms array to using the DB.
 
 =======
 1/7/21

@@ -1464,10 +1464,10 @@ $(function(){
             initializeToolTip();
             initializeYTProgressBar();
             if(data.isHost){
-                if(ClientYTPlayer.videoTime > data.time + 5 ||
-                   ClientYTPlayer.videoTime < data.time - 5){
-                    player.seekTo(time);
-                    ClientYTPlayer.updateTimeUI(time);
+                if(ClientYTPlayer.videoTime > data.videoTime + 5 ||
+                   ClientYTPlayer.videoTime < data.videoTime - 5){
+                    player.seekTo(data.videoTime);
+                    ClientYTPlayer.updateTimeUI(data.videoTime);
                 }
             }
             playVideo();
@@ -1478,18 +1478,18 @@ $(function(){
         const maxGap = 5;
         socket.on('pause', data=>{
             if(data.isHost){
-                if(ClientYTPlayer.videoTime > data.time + maxGap ||
-                   ClientYTPlayer.videoTime < data.time - maxGap){
-                    player.seekTo(time);
-                    ClientYTPlayer.updateTimeUI(time);
+                if(ClientYTPlayer.videoTime > data.videoTime + maxGap ||
+                   ClientYTPlayer.videoTime < data.videoTime - maxGap){
+                    player.seekTo(data.videoTime);
+                    ClientYTPlayer.updateTimeUI(data.videoTime);
                 }
             }
             pauseVideo();
         });
     
-        socket.on('seek', time=>{
-            player.seekTo(time);
-            ClientYTPlayer.updateTimeUI(time);
+        socket.on('seek', videoTime=>{
+            player.seekTo(videoTime);
+            ClientYTPlayer.updateTimeUI(videoTime);
         });
     
         socket.on('startNew', ({videoID, videoTime, playRate, videoState, thumbnail})=>{

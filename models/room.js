@@ -28,7 +28,9 @@ const roomScheme = new Schema({
     },
     hostSocketID: {
         type: String,
-        required: false
+        required: false,
+        text: true,
+        index: true
     },
     users: {
         type: Array,

@@ -24,6 +24,7 @@ var jsonParser = bodyparser.json();
 // var urlencodedParser = bodyparser.urlencoded({ extended: false });
 
 const mongoose = require('mongoose');
+mongoose.set('useCreateIndex', true);
 
 var app = express();
 const server = http.createServer(app);
@@ -58,6 +59,10 @@ const io = socketio(server);
 
 //let rawData = fs.readFileSync('messages.json');
 
+function getAllRooms(){
+    return RoomModel.find();
+}
+
 function joinRoom(socket, userData, videoData, roomID){
     if(!rooms.some(room=>{return room.roomID == roomID})){
         createNewRoom(socket.id, userData, videoData, roomID);
@@ -67,21 +72,41 @@ function joinRoom(socket, userData, videoData, roomID){
     socket.join(roomID);
 }
 
+function logFailure(goal, error){
+    console.log(`Failed to ${goal} becuase: \n${error}`);
+}
+
 function addToRoom(socketID, userData, videoData, roomID){    
     const { localName, nameOnServer, userID, pfp } = userData;
     const { videoID, videoTime } = videoData;
-    const currRoom = rooms.find(room=>{return room.roomID == roomID});
-    let isHost = false;
-    if(currRoom.users.length < 1 || !currRoom.hostSocketID){
-        //if this user is the only one in the room
-        isHost = true;
-        currRoom.hostSocketID = socketID;
-    }
-    currRoom.users.push({
-        socketID, localName, nameOnServer, userID, isHost, pfp
-    });
+    findRoom(roomID)
+    .then(currRoom=>{
+        let isHost = false;
+        if(currRoom.users.length < 1 || !currRoom.hostSocketID){
+            //if this user is the only one in the room
+            isHost = true;
+            currRoom.hostSocketID = socketID;
+        }
+        
+        currRoom.users.push({
+            socketID, localName, nameOnServer, userID, isHost, pfp
+        });
 
-    updateRoomUsersDB(currRoom.users, currRoom.roomID);
+        RoomModel.updateOne(
+            {roomID: currRoom.roomID},
+            {$set: {
+                users: currRoom.users,
+            }}
+        )
+        .then(result=>{})
+        .catch(err=>{
+            logFailure('add to room', err);
+        });;
+        // updateRoomUsers(currRoom.users, currRoom.roomID)
+    })
+    .catch(err=>{
+        logFailure(`find room ${roomID}`, err);
+    });;
     // RoomModel.updateOne(
     //     {roomID: currRoom.roomID}, //query for the room to update
     //     {$set: {users: currRoom.users}} //value to update
@@ -123,11 +148,13 @@ function createEmptyRoom(securitySetting, roomName, roomDescription, roomID){
     };
     // rooms.push(newRoom);
     console.log("empty room created");
-    return newRoom;
+    // return newRoom;
+    return new RoomModel(newRoom).save()
+    // .catch(err=>logFailure(`creat empty room from ${roomID}`, err));
 }
 
-function updateRoomUsersDB(users, roomID){
-    RoomModel.updateOne(
+function updateRoomUsers(users, roomID){
+    return RoomModel.updateOne(
         {roomID: roomID}, //query for the room to update
         {$set: {users: users}} //value to update
     );
@@ -163,10 +190,11 @@ function createNewRoom(socketID, userData, videoData, roomID){
                     }
                 ]
         }
-    const roomForDB = new RoomModel(thisRoom);
-    roomForDB.save().then((result)=>{
-        rooms.push(result);
-    }).catch(err=>console.log(`Failed to create new Room.\n ${err}`));
+    new RoomModel(thisRoom).save()
+    .then((result)=>{
+        // rooms.push(result);
+    })
+    .catch(err=>logFailure(`create new Room at ${roomID}`, err));
         // console.log(`Just joined ${JSON.stringify(thisRoom, null, 2)}`);
     // return thisRoom;
 }
@@ -177,52 +205,37 @@ function changeRoomName(roomName, roomID){
         {roomID}, //query for the room to update
         {$set: {roomName, roomID: roomName+'-'+roomID}} //value to update
     ).then((result)=>{
-        foundRoom.roomName = result.roomName;
-        foundRoom.roomID = result.roomID;
-    }).catch((err)=>{
-        console.log(`Failed to change room name.\n${err}`);
-    });
+        // foundRoom.roomName = result.roomName;
+        // foundRoom.roomID = result.roomID;
+    }).catch((err)=>logFailure(`change room name at ${roomID}`, err));
 }
 
 function getRoomHostSocketID(roomID){
-    return rooms.find(room=>{return room.roomID == roomID}).hostSocketID;
+    return findRoom(roomID);
 }
 
 function removeFromRoom(socket){
-    if(rooms.length < 1) return;
+    RoomModel.findOne({$text: {$search: socket.id}})
+    .then(result=>{
+        const {users} = result;
+        const thisUser = result.users
+                            .find(user=>user.socketID == socket.id);
+    
+        socket.leave(result.roomID); 
 
-    const currRoom = rooms.find(
-        room=>{ return room.users.some(
-            user=>{return user.socketID == socket.id})
+        result.users = result.users
+                    .filter(user=>user.socketID != socket.id);
+
+        if(result.users.length < 1){
+            result.hostSocketID = "";
+        } else if(result.hostSocketID == socket.id){
+            result.hostSocketID = result.users[
+                Math.floor(Math.random() * result.users.length)
+            ].socketID;
         }
-    );
-
-    if(!currRoom){
-        return;
-    }
-
-    // roomIndex = rooms.indexOf(currRoom);
-    // rooms[roomIndex].hostSocketID = "";
-
-    socket.leave(currRoom.roomID);
-
-    currRoom.users = currRoom.users.filter(
-        user=>{
-            return user.socketID != socket.id;
-        }
-    );
-
-    if(currRoom.users.length < 1){
-        currRoom.hostSocketID = "";
-    } else if(currRoom.hostSocketID == socket.id){
-        //If there are still users,
-        //assign host to a random ID in the user array.
-        currRoom.hostSocketID = currRoom.users[
-            Math.floor(Math.random() * currRoom.users.length)
-        ].socketID;
-    }
-
-    updateRoomUsersDB(currRoom.users, currRoom.roomID);
+        updateRoomUsers(room.users, room.roomID)
+        .catch(err=>logFailure(`delete user ${socket.id}`, err));
+    });
 }
 
 function checkIfHost(roomID, socketID){
@@ -230,11 +243,12 @@ function checkIfHost(roomID, socketID){
 }
 
 function findRoom(roomID){
-    return RoomModel.findOne({roomID}).then((result)=>{
-        return result;
-    }).catch((err=>{
-        return undefined;
-    }));
+    return RoomModel.findOne({roomID});
+    // .then((result)=>{
+    //     return result;
+    // }).catch((err=>{
+    //     return undefined;
+    // }));
     // return rooms.find(room=>{return room.roomID == roomID});    
 }
 
@@ -243,14 +257,8 @@ function updateRoomState({videoTime, videoID, playRate, thumbnail}, roomID, newS
     RoomModel.updateOne(
         {roomID: roomID}, //query for the room to update
         {$set: {videoTime, videoID, playRate, thumbnail}} //value to update
-    ).then((result)=>{
-
-        // currRoom.videoTime = result.videoTime;
-        // currRoom.videoState = result.newState;
-        // currRoom.videoID = result.videoID;
-        // currRoom.playRate = result.playRate;
-        // currRoom.thumbnail = result.thumbnail; //? result.thumbnail : defaultThumbnail;
-    }).catch((err)=>{
+    ).then((result)=>{})
+    .catch((err)=>{
         //I assume for now that if there's an error, the room doesn't exist.                
         console.log(`Failed to update room state\n${err}`);
         //should probably make a function like logFailure('update room state', err);
@@ -264,11 +272,14 @@ io.on('connection', socket=>{
     socket.on('joinRoom', (userData, videoData, roomID)=>{
         joinRoom(socket, userData, videoData, roomID);
             //Now ask for the state from the host:
-        const hostSocketID = getRoomHostSocketID(roomID);
-        if(hostSocketID != socket.id){
-            console.log(`Trying to get state from host (${hostSocketID})`);
-            io.to(hostSocketID).emit('requestState', socket.id);
-        }
+        // const hostSocketID = 
+        findRoom(roomID)
+        .then(({hostSocketID})=>{
+            if(hostSocketID != socket.id){
+                console.log(`Trying to get state from host (${hostSocketID})`);
+                io.to(hostSocketID).emit('requestState', socket.id);
+            }
+        })
     });
 
     socket.on('joinListRoom', _=>{
@@ -302,46 +313,73 @@ io.on('connection', socket=>{
     // });
 
     socket.on('playrateChange', (playRate, roomID)=>{
-        socket.to(roomID).broadcast.emit('playrateChange', playRate);
+            //No need to update DB every time the playrate changes.
+            //Just wait until the host presses play/pause.    
+        socket.to(roomID).broadcast.emit('playrateChange', playRate)
+        // RoomModel.updateOne(
+        //     {roomID: roomID}, //query for the room to update
+        //     {$set: {playRate}} //value to update
+        // )
+        // .then(result=>{
+        //     socket.to(roomID).broadcast.emit('playrateChange', playRate)
+        // });
     });
 
     socket.on('play', (data, roomID)=>{
-        const isHost = checkIfHost(roomID, socket.id);
-        if(isHost){
-            updateRoomState(data, roomID, CustomStates.PLAYING)
-        }        
-        socket.to(roomID).broadcast.emit('play', {
-            state: CustomStates.PLAYING,
-            isHost,
-            time: data.videoTime
+        // const isHost = checkIfHost(roomID, socket.id);
+        findRoom(roomID)
+        .then(({hostSocketID})=>{
+            const isHost = hostSocketID == socket.id
+            if(isHost){
+                updateRoomState(data, roomID, CustomStates.PLAYING)
+            }
+            socket.to(roomID).broadcast.emit('play', {
+                state: CustomStates.PLAYING,
+                isHost,
+                videoTime: data.videoTime
+            });
         });
     });
 
     socket.on('pause', (data, roomID)=>{
-        const isHost = checkIfHost(roomID, socket.id);
-        if(isHost){
-            updateRoomState(data, roomID, CustomStates.PAUSED)
-        }        
-        socket.to(roomID).broadcast.emit('pause',{
-            state: CustomStates.PAUSED,
-            isHost,
-            time: data.videoTime
+        findRoom(roomID)
+        .then(({hostSocketID})=>{
+            const isHost = hostSocketID == socket.id
+            if(isHost){
+                updateRoomState(data, roomID, CustomStates.PAUSED)
+            }
+            socket.to(roomID).broadcast.emit('play', {
+                state: CustomStates.PAUSED,
+                isHost,
+                videoTime: data.videoTime
+            });
         });
     });
 
-    socket.on('seek', (time, roomID)=>{
-        socket.to(roomID).broadcast.emit('seek', time);
+    socket.on('seek', (videoTime, roomID)=>{
+        socket.to(roomID).broadcast.emit('seek', videoTime);
     });
 
     socket.on('sync', roomID=>{
-        const currRoom = findRoom(roomID);
-        const data = {
-            state: currRoom.videoState,
-            videoID: currRoom.videoID,
-            startTime: currRoom.videoTime,
-            playRate: currRoom.playRate
-        }
-        io.to(roomID).emit('initPlayer', data);
+        findRoom(roomID)
+        .then(room=>{
+            const data = {
+                state: room.videoState,
+                videoID: room.videoID,
+                startTime: room.videoTime,
+                playRate: room.playRate
+            }
+            io.to(roomID).emit('initPlayer', data);
+
+        })
+        // const currRoom = findRoom(roomID);
+        // const data = {
+        //     state: currRoom.videoState,
+        //     videoID: currRoom.videoID,
+        //     startTime: currRoom.videoTime,
+        //     playRate: currRoom.playRate
+        // }
+        // io.to(roomID).emit('initPlayer', data);
     });
 
     socket.on('message', (letterArray, roomID)=>{
@@ -375,25 +413,36 @@ app.get('/', (req, res)=>{
     // res.render('room', {roomID: uuidV4()});
     // res.redirect(`/${uuidV4()}`);
     // console.log(`SENDING DOWN: ${JSON.stringify(rooms, null, 2)}`);
-    res.render('index', {rooms: rooms});
+    getAllRooms()
+    .then(allRooms=>{
+        res.render('index', {rooms: allRooms});
+    })
+    .catch(error=>{
+        res.render('error', {error});//Show error page
+    });
 });
 
 app.get('/:roomID', (req, res)=>{
-    const currRoomID = req.params.roomID;
-    console.log(`ID IS ${currRoomID}`);
-    foundRoom = findRoom(currRoomID);
-    if(!foundRoom){
-            //If room doesn't exist, send them to homepage.
+    // const currRoomID = req.params.roomID;
+    // console.log(`ID IS ${currRoomID}`);
+    findRoom(req.params.roomID)
+    .then(room=>{
+        if(room){
+            res.render('room', {roomID: room.roomID});
+        } else {
+            console.log("Someone tried to enter a room that didn't exist.");
+            res.redirect('/');
+        }
+    })
+    .catch(err=>{
+        console.log(err);
         res.redirect('/');
-    } else {
-        res.render('room', {roomID: currRoomID});
-    }
+    });
 });
 
 app.post('/create-new-room', (req, res)=>{
     const {securitySetting, roomDescription} = req.body;
     let {roomName} = req.body;
-    const newID = uuidV4();
     let securityResult = RoomSecurity.PRIVATE;
     switch(securitySetting){
         case "open":
@@ -414,17 +463,24 @@ app.post('/create-new-room', (req, res)=>{
         roomName = roomName.substring(0, 50);
     }
 
+    const rawID = uuidV4();
     console.log("SECURITY SETTING: "+securitySetting+`(${securityResult})`);
-    const createdRoom = createEmptyRoom(securityResult, roomName, roomDescription, newID);
-    
-    const roomForDB = new RoomModel(createdRoom);
-    roomForDB.save().then((result)=>{
-        rooms.push(result);
-        res.redirect(`/${result.roomID}`);
-    }).catch((err)=>{
-        console.log(err);
+    createEmptyRoom(securityResult, roomName, roomDescription, rawID)
+    .then(({roomID})=>{
+        res.redirect(`/${roomID}`);
+    })
+    .catch(err=>{
+        console.log(`Failed to create new Room.\n ${err}`);
         res.send(err);
     });
+    
+    // const roomForDB = new RoomModel(createdRoom);
+    // roomForDB.save().then((result)=>{
+    //     rooms.push(result);
+    // }).catch((err)=>{
+    //     console.log(err);
+    //     res.send(err);
+    // });
 });
 
 class CustomStates{
