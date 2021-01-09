@@ -1,11 +1,9 @@
 $(function(){
 
-    checkServerForRooms();
-
     function createRoomsList(roomsList){
         const roomListContainer = document.getElementById('room-list-container');
         roomListContainer.innerHTML = "";
-        const url = "http://localhost:8092/";
+        const url = "http://localhost:8092";
         roomsList.map((room)=>{
             if(room.securitySetting != 2){
                     //Create the div that holds everything.
@@ -21,7 +19,7 @@ $(function(){
                 thumbnail.setAttribute('src', room.thumbnail);
                     //Add a tag
                 const thumbLink = document.createElement('a');
-                thumbLink.setAttribute('href', url+room.roomID);                    
+                thumbLink.setAttribute('href', url+"/"+room.roomID);                    
                     //Add thumbnail to the a tag containing it                                        
                 thumbLink.appendChild(thumbnail);
                     //Add a tag to thumbdiv
@@ -38,7 +36,7 @@ $(function(){
                 const description = document.createElement('span');
                 description.setAttribute('class', 'room-description');
                 const elipses = room.roomDescription.length > 160 ? ' ...' : '';
-                const shortenedDescription = "Description:\n"+room.roomDescription.substring(0, 160) + elipses; 
+                const shortenedDescription = "Description:\\n"+room.roomDescription.substring(0, 160) + elipses; 
                 const descriptionText = document.createTextNode(shortenedDescription);
                 description.appendChild(descriptionText);
 
@@ -90,7 +88,7 @@ $(function(){
                 roomListContainer.append(resultDiv);
             }//if securitysetting != 2
         });//map
-        console.log(JSON.stringify(roomListContainer, null, 2));
+        // console.log(JSON.stringify(roomListContainer, null, 2));
     }//createRoomsList()
 
     function checkServerForRooms(){
@@ -101,16 +99,15 @@ $(function(){
             data: JSON.stringify({userID: localStorage.getItem('userID')}, null, 2),
             success: res=>{
                 //use res.rooms
-                console.log(`ROOMS ARE: ${JSON.stringify(res.rooms, null, 2)}`);
-                    //Fill the container div with divs that have
-                    //display mode of grid, with their contents
-                    //aligned to inner grids. The results will be
-                    //flex items, because the container div is a
-                    //flexbox
-                    createRoomsList(res.rooms);
+                // console.log(`ROOMS ARE: ${JSON.stringify(res.rooms, null, 2)}`);
+                createRoomsList(res.rooms);
             }
         });
     }
+
+    checkServerForRooms();
+
+    // createRoomsList(rooms);
 
     $('#refresh-button').click(e=>{
         $.ajax({
@@ -120,7 +117,7 @@ $(function(){
             data: JSON.stringify({userID: localStorage.getItem('userID')}, null, 2),
             success: res=>{
                 //use res.rooms
-                console.log(`ROOMS ARE: ${JSON.stringify(res.rooms, null, 2)}`);
+                // console.log(`ROOMS ARE: ${JSON.stringify(res.rooms, null, 2)}`);
                     //Fill the container div with divs that have
                     //display mode of grid, with their contents
                     //aligned to inner grids. The results will be
