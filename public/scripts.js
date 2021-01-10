@@ -130,6 +130,9 @@ $(function(){
             modestbranding: 1,
             mute: 1
         };
+        
+        static videoTitle = "";
+        static videoLength = 0;
         static playbackRate = 1;
         static videoTime = 0;
         static currentlySendingData = false;
@@ -348,13 +351,13 @@ $(function(){
                 data: JSON.stringify({user_id: userID, query: query}, null, 2),
                 success: function (results){
                 console.log(`${new Date().toLocaleTimeString()} Executed search. Preliminary results are: ${JSON.stringify(results, null, 2)}`);
-                    if(!results || results.length < 1){
-                        ClientYTPlayer.keepCheckingForResults();                        
-                    } else {
+                    // if(!results || results.length < 1){
+                    //     ClientYTPlayer.keepCheckingForResults();                        
+                    // } else {
                         console.log(results[0]);
                         ClientYTPlayer.addSearchResults(results);
                         ClientYTPlayer.searchCount = 0;
-                    }
+                    // }
                 }
             });
         }
@@ -376,13 +379,16 @@ $(function(){
                     ClientYTPlayer.thumbnail = result.thumbnail;
                     ClientYTPlayer.clientURL = result.videoID;
                     ClientYTPlayer.currentState = CustomStates.PLAYING;
-                    ClientYTPlayer.addNewVideo();                    
+                    ClientYTPlayer.videoTitle = result.title;
+                    ClientYTPlayer.addNewVideo();  
+                    // ClientYTPlayer.videoLength = player.getDuration();
                     socket.emit('startNew', {
                         videoTime: 0,
                         videoID: result.videoID,
                         playRate: ClientYTPlayer.playbackRate,
                         videoState: ClientYTPlayer.currentState,
-                        thumbnail: ClientYTPlayer.thumbnail
+                        thumbnail: ClientYTPlayer.thumbnail,
+                        videoTitle: ClientYTPlayer.videoTitle
                     },
                     roomID);
                 }
@@ -696,7 +702,11 @@ $(function(){
                 ClientYTPlayer.currentState = CustomStates.PLAYING;
                 socket.emit('startNew', {
                     videoID: currURL,
-                    startTime: 0
+                    videoTime: 0,
+                    playRate: ClientYTPlayer.playbackRate,
+                    videoState: ClientYTPlayer.currentState,
+                    thumbnail: ClientYTPlayer.thumbnail,
+                    videoTitle: ClientYTPlayer.videoTitle
                 },
                 roomID)
                 console.log("End of search submit function");
@@ -820,7 +830,8 @@ $(function(){
             videoTime: ClientYTPlayer.videoTime,
             videoID: ClientYTPlayer.clientURL,
             thumbnail: ClientYTPlayer.thumbnail,
-            playRate: ClientYTPlayer.playbackRate
+            playRate: ClientYTPlayer.playbackRate,
+            videoLength: ClientYTPlayer.videoLength                
         };
 
         changeTriggeredByControls = true;
@@ -848,7 +859,8 @@ $(function(){
                 videoTime: ClientYTPlayer.videoTime,
                 videoID: ClientYTPlayer.clientURL,
                 thumbnail: ClientYTPlayer.thumbnail,
-                playRate: ClientYTPlayer.playbackRate
+                playRate: ClientYTPlayer.playbackRate,
+                videoLength: ClientYTPlayer.videoLength                
             };
             data.videoState = ClientYTPlayer.currentState;
             socket.emit('play', data, roomID);
@@ -950,7 +962,8 @@ $(function(){
             progressBarInitialized = false;
             return;
         }
-        const maxTime = Math.round(player.getDuration());
+        ClientYTPlayer.videoLength = player.getDuration();
+        const maxTime = Math.round(ClientYTPlayer.videoLength);
         progressBar.setAttribute('max', maxTime);        
         progressBarInitialized = true;
         bufferBar.setAttribute('max', maxTime);
@@ -1492,10 +1505,11 @@ $(function(){
             ClientYTPlayer.updateTimeUI(videoTime);
         });
     
-        socket.on('startNew', ({videoID, videoTime, playRate, videoState, thumbnail})=>{
+        socket.on('startNew', ({videoTitle, videoID, videoTime, playRate, videoState, thumbnail})=>{
             ClientYTPlayer.currentState = videoState;
             ClientYTPlayer.playbackRate = playRate;
             if(videoID != ClientYTPlayer.clientURL){
+                ClientYTPlayer.videoTitle = videoTitle;
                 ClientYTPlayer.clientURL = videoID;
                 ClientYTPlayer.videoTime = videoTime;
                 ClientYTPlayer.thumbnail = thumbnail;

@@ -13,6 +13,8 @@ require('dotenv').config();
 const { google } = require('googleapis');
 const { title } = require('process');
 
+const expressLayouts = require('express-ejs-layouts');
+
 const RoomModel = require('./models/room');
 
 const {v4: uuidV4} = require('uuid');
@@ -34,11 +36,11 @@ const dbURI = 'mongodb+srv://'+process.env.DB_USERNAME+':'+process.env.DB_PASS+'
 mongoose.connect(dbURI, {useNewUrlParser: true, useUnifiedTopology: true})
 .then((result)=>{
     server.listen(port, function(){
-        RoomModel.find().then((result)=>{
-            // rooms = result;
-        }).catch((err)=>{
-            console.log(`Failed to get rooms from DB\n${err}`);
-        });
+        // RoomModel.find().then((result)=>{
+        //     // rooms = result;
+        // }).catch((err)=>{
+        //     console.log(`Failed to get rooms from DB\n${err}`);
+        // });
         console.log('Connected to DB...');
         console.log(`Server listening on: ${port}`);
         console.log("Server start date/time: "+new Date().toLocaleDateString() + " / " + new Date().toLocaleTimeString());
@@ -46,14 +48,17 @@ mongoose.connect(dbURI, {useNewUrlParser: true, useUnifiedTopology: true})
     });
 }).catch(err=>console.log(err));
 
+// app.use(expressLayouts);
 app.set('views', './views');
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
-app.use(express.urlencoded({extended: true}));
+app.use(express.urlencoded({extended: false}));
+app.use(express.json());
+app.use('/', require('./routes/index'));
+app.use('/user', require('./routes/user'));
+app.use(router);
 // app.use(bodyparser.json());
 // app.use(bodyparser.urlencoded({extended: true}));
-app.use(express.json());
-app.use(router);
 
 const io = socketio(server);
 
@@ -134,18 +139,19 @@ const defaultDescription = "A lovely room for watching videos! Join!";
 const defaultThumbnail = "https://i.ytimg.com/vi/l-7--PSbfbI/maxresdefault.jpg";
 const defaultSecuritySetting = RoomSecurity.OPEN;
 
-function createEmptyRoom(securitySetting, roomName, roomDescription, roomID){
+async function createEmptyRoom(securitySetting, roomName, roomDescription, roomID){
     if(!roomName){
         roomName = randomWords();
     }
     if(!roomDescription){
         roomDescription = defaultDescription;
     }
-    const newRoom = {
+    const newRoom = await RoomModel.create({
         roomID: roomName+'-'+roomID,
         hostSocketID: "",
         roomName,
         roomDescription,
+        history: [],
         nsfw: false,
         securitySetting,
         thumbnail: defaultThumbnail,
@@ -155,23 +161,25 @@ function createEmptyRoom(securitySetting, roomName, roomDescription, roomID){
         videoState: CustomStates.UNSTARTED,//most recent state
         playRate: 1,
         messages: []
-    };
+    });
     // rooms.push(newRoom);
     console.log(`Room created:\n${newRoom}`);
     // console.log("empty room created");
     // return newRoom;
-    return new RoomModel(newRoom).save();
+    // return new RoomModel(newRoom).save();
+    return newRoom.save();
     // .catch(err=>logFailure(`creat empty room from ${roomID}`, err));
 }
 
-function createNewRoom(socketID, userData, videoData, roomID){
+async function createNewRoom(socketID, userData, videoData, roomID){
     const { localName, nameOnServer, userID, pfp } = userData;
     const { videoID, videoTime } = videoData;
     const randomName = randomWords();
-    const thisRoom = {
+    const thisRoom = await RoomModel.create({
         roomID: randomName+'-'+roomID,
         roomName: randomName,
         roomDescription: defaultDescription,
+        history: [],
         nsfw: false,
         securitySetting: defaultSecuritySetting,
         thumbnail: defaultThumbnail,
@@ -193,8 +201,9 @@ function createNewRoom(socketID, userData, videoData, roomID){
                         mUniversalTimeStamp: ""
                     }
                 ]
-        }
-    new RoomModel(thisRoom).save()
+        })
+    // new RoomModel(thisRoom).save()
+    thisRoom.save()
     .catch(err=>logFailure(`create new Room at ${roomID}`, err));
         // console.log(`Just joined ${JSON.stringify(thisRoom, null, 2)}`);
     // return thisRoom;
@@ -273,18 +282,58 @@ function findRoom(roomID){
     // return rooms.find(room=>{return room.roomID == roomID});    
 }
 
-function updateRoomState({videoTime, videoID, playRate, thumbnail}, roomID, newState){
+function updateRoomState(data, roomID, newState){
     // const currRoom = findRoom(roomID);
-    RoomModel.updateOne(
-        {roomID: roomID}, //query for the room to update
-        {$set: {videoTime, videoID, playRate, thumbnail}} //value to update
-    ).then((result)=>{})
+    const {videoTitle, videoTime, videoID, playRate, thumbnail} = data;
+    RoomModel.findOne({roomID})
+    .then(room=>{                
+        room.videoTitle = videoTitle;
+        room.videoTime = videoTime;
+        room.videoID = videoID;
+        room.playRate = playRate;
+        room.thumbnail = thumbnail;
+        room.videoLength = 0;
+        if(data.videoLength){
+            room.videoLength = data.videoLength;
+        }
+        let history = room.history;
+        if(!history){
+            history = [];
+        }
+
+        if(!history.some(item=>item.videoID == videoID)){
+            history.push({
+                videoTitle, videoTime, videoID, thumbnail
+            });
+        }
+        console.log('======');
+        console.log(JSON.stringify(history, null, 2));
+        console.log('======');
+
+        RoomModel.updateOne(
+            {roomID}, //query for the room to update
+            {$set: {
+                videoTime,
+                videoID,
+                playRate,
+                thumbnail,
+                videoTitle,
+                videoLength: room.videoLength,
+                history
+            }} //value to update
+        ).then(result=>{
+            console.log(`Room history is now:`);
+            console.log(JSON.stringify(result.history, null, 2));
+        });
+    })
     .catch((err)=>{
         //I assume for now that if there's an error, the room doesn't exist.                
         console.log(`Failed to update room state\n${err}`);
         //should probably make a function like logFailure('update room state', err);
     });
+    // .then((result)=>{})
 }
+    
 
 const listRoomID = "LISTROOM";
 
@@ -430,22 +479,22 @@ app.post('/check-saved-roomID', (req, res)=>{
     res.send(shouldRedirect);
 });
 
-app.get('/', (req, res)=>{
-    // res.render('room', {roomID: uuidV4()});
-    // res.redirect(`/${uuidV4()}`);
-    // console.log(`SENDING DOWN: ${JSON.stringify(rooms, null, 2)}`);
-    // res.render('index', {rooms: allRooms});
-    getAllRooms()
-    .then(allRooms=>{
-        // console.log(`ROOMS: ${allRooms}`);
-        res.render('index');
-    })
-    .catch(error=>{
-        res.render('error', {error});//Show error page
-    });
-});
+// app.get('/', (req, res)=>{
+//     // res.render('room', {roomID: uuidV4()});
+//     // res.redirect(`/${uuidV4()}`);
+//     // console.log(`SENDING DOWN: ${JSON.stringify(rooms, null, 2)}`);
+//     // res.render('index', {rooms: allRooms});
+//     getAllRooms()
+//     .then(allRooms=>{
+//         // console.log(`ROOMS: ${allRooms}`);
+//         res.render('index');
+//     })
+//     .catch(error=>{
+//         res.render('error', {error});//Show error page
+//     });
+// });
 
-app.get('/:roomID', (req, res)=>{
+app.get('/room/:roomID', (req, res)=>{
     // const currRoomID = req.params.roomID;
     // console.log(`ID IS ${currRoomID}`);
     findRoom(req.params.roomID)
@@ -454,7 +503,7 @@ app.get('/:roomID', (req, res)=>{
             res.render('room', {roomID: room.roomID});
         } else {
             console.log("Someone tried to enter a room that didn't exist.");
-            res.render('index');
+            res.render('homepage');
         }
     })
     .catch(err=>{
@@ -524,7 +573,7 @@ app.post('/get-rooms-list', (req, res)=>{
     });
 });
 
-app.post('/search', function(req, res){
+app.post('/search', function(req, response){
     // console.log(`${new Date().toLocaleTimeString()} Searching for: ${JSON.stringify(req.body, null, 2)}`);
     // console.log('===================================');    
     google.youtube('v3').search.list({
@@ -532,12 +581,11 @@ app.post('/search', function(req, res){
         part: "snippet",
         q: req.body.query,
         maxResults: 20
-    }).then((res)=>{
+    }).then(({ data })=>{
         const searchData = [];
-        const { data } = res;
-        data.items.forEach(function(item){
+        data.items.forEach((item)=>{
             if(item.id.kind == "youtube#video"){
-                const snippet = item.snippet;
+                const {snippet} = item;
                 searchData.push({
                     title: snippet.title,
                     description: snippet.description,
@@ -547,10 +595,11 @@ app.post('/search', function(req, res){
                 });
             }
         });
-        YouTubeSearchManager.searchResults[req.body.user_id] = searchData;
+        response.send(searchData);
+        // YouTubeSearchManager.searchResults[req.body.user_id] = searchData;
     })
     .catch(e=>console.log(e));
-    res.send(YouTubeSearchManager.searchResults[req.body.user_id]);
+    // res.send(YouTubeSearchManager.searchResults[req.body.user_id]);
 });
 
 app.post('/get-search-results', function(req, res){

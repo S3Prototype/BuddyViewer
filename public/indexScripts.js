@@ -3,8 +3,16 @@ $(function(){
     function createRoomsList(roomsList){
         const roomListContainer = document.getElementById('room-list-container');
         roomListContainer.innerHTML = "";
-        const url = "http://localhost:8092";
+        const url = "/room";
         roomsList.map((room)=>{
+            console.log(`HISTORY FOR ${room.roomName}:`);
+            console.log('-------------------');
+            if(room.history){
+                console.log(JSON.stringify(room.history, null, 2));
+            } else {
+                console.log('NONE');                
+            }
+            console.log('-------------------');
             if(room.securitySetting != 2){
                     //Create the div that holds everything.
                 const resultDiv = document.createElement('div');
@@ -36,7 +44,7 @@ $(function(){
                 const description = document.createElement('span');
                 description.setAttribute('class', 'room-description');
                 const elipses = room.roomDescription.length > 160 ? ' ...' : '';
-                const shortenedDescription = "Description:\\n"+room.roomDescription.substring(0, 160) + elipses; 
+                const shortenedDescription = "Description:\n"+room.roomDescription.substring(0, 160) + elipses; 
                 const descriptionText = document.createTextNode(shortenedDescription);
                 description.appendChild(descriptionText);
 

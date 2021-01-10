@@ -1,5 +1,6 @@
 DOING:
 * Add play history
+    ** History implemented server-side. Just have to show it on the room page as a popup.
 
 *THOUGHTS:
 
@@ -20,6 +21,8 @@ DOING:
 * Give rooms logos. Would be cool.
 
 TODO:
+* Add an overlay over the room that says "PLEASE REFRESH THE PAGE, but disappears if you press join room. This way, the join room modal always happens. No idea why tf it's not always popping up now.
+* Why does it say someone tried to join a room that didn't exist when you got '/'?
 * Consider deleted the rooms array and having all code interface directly with the DB, nothing saved in local storage.
 * When host leaves a room and it becomes empty, it reverts to a default state. Shouldn't do that.
 * Make room passwords work. Require new entrants to enter the password if they want to actually execute the joinRoom code. Perhaps have a password prompt replace the joinButton interface.

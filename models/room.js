@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const roomScheme = new Schema({
+const roomSchema = new Schema({
     roomName: {
         type: String,
         required: true
@@ -25,6 +25,10 @@ const roomScheme = new Schema({
     thumbnail: {
         type: String,
         required: false
+    },
+    history: {
+        type: Array,
+        required: true
     },
     hostSocketID: {
         type: String,
@@ -55,11 +59,15 @@ const roomScheme = new Schema({
     messages: {
         type: Array,
         required: false
+    },
+    videoLength: {
+        type: Number,
+        require: false
     }
 },
 {timestamps: true}
 );
 
-const Room = mongoose.model('Room', roomScheme);
+const Room = mongoose.model('Room', roomSchema);
 
 module.exports = Room;

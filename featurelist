@@ -1,5 +1,7 @@
 FEATURE LIST:
 
+* People can become "admins" of rooms. These users always have host rights, and can change it so only certain people are able to change the video, play/pause, etc.
+    * Maybe a premium feature.
 * On the room list, say what's currently being watched. Try to get that damn gif youtube has when you hover over thumbnails.
 * share secret link feature. Sends a link that contains the password, or a "secret" style link that is a different url with a key param in it that, when it hits the server, gets the users redirected to the room with the password stored.
 * If users are watching NSFW content, show a default thumbnail
