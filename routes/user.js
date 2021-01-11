@@ -5,9 +5,20 @@ const bcrypt = require('bcryptjs');
 const {v4: uuidV4} = require('uuid');
 const passport = require('passport');
 // const {getAllRooms} = require('../utils/roomQueries');
+const {ensureAuthenticated} = require('../config/auth');
 
 router.get('/login', (req, res)=>{
     res.render('login');
+});
+
+router.get('/dashboard', ensureAuthenticated, (req, res)=>{
+    res.render('dashboard');
+});
+
+router.get('/logout', (req, res)=>{
+    req.logout();
+    req.flash('success_msg', "You are logged out!");
+    res.redirect('/user/login');
 });
 
 router.get('/signup', (req, res)=>{
@@ -82,7 +93,8 @@ router.post('/signup', (req, res)=>{
                                 .then(savedUser=>{
                                     console.log(savedUser);
                                     // res.send(savedUser);
-                                    res.redirect('/users/login');
+                                    req.flash('success_msg', "You're now registered!");
+                                    res.redirect('/user/login');
                                 });
                             }
                         });
@@ -95,8 +107,8 @@ router.post('/signup', (req, res)=>{
 //Login handle
 router.post('/login', (req, res, next)=>{
     passport.authenticate('local',{
-        successRedirect: '/users/dashboard',
-        failureRedirect: '/users/login',
+        successRedirect: '/user/dashboard',
+        failureRedirect: '/user/login',
         failureFlash: true
     })(req, res, next);
 });

@@ -27,10 +27,7 @@ module.exports = function(passport){
                                     return done(null, foundUser);
                                 }
                             }//err, isMatch
-                        )//compare()
-                        .catch(err=>{
-
-                        });
+                        )//compare()                        
                     }//else
 
                 });

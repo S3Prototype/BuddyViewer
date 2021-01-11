@@ -1,16 +1,9 @@
 DOING:
-* Add play history
-    ** History implemented server-side. Just have to show it on the room page as a popup.
+
 
 *THOUGHTS:
 
 **MOST IMPORTANT TODO**
-* Add user account abilities.
-    * Gotta have user auth
-    * Encrypted passwords
-    * Gotta implement a different session store from the default.
-        ** https://github.com/expressjs/session#compatible-session-stores
-* Add yt playlist functionality
 * Add livestream functionality
     *livestreaming already basically works...
 * Add playing from other sites
@@ -21,6 +14,8 @@ DOING:
 * Give rooms logos. Would be cool.
 
 TODO:
+* Gotta implement a different session store from the default.
+    ** https://github.com/expressjs/session#compatible-session-stores
 * Try to use ejs layouts.
 * Add an overlay over the room that says "PLEASE REFRESH THE PAGE, but disappears if you press join room. This way, the join room modal always happens. No idea why tf it's not always popping up now.
 * Why does it say someone tried to join a room that didn't exist when you got '/'?
@@ -89,7 +84,18 @@ DONE
 ===========
 ~~~~~~~~~~~
 
+1/11/21
+
+* Add user account abilities.
+    * Gotta have user auth
+    * Encrypted passwords
+    * Add yt playlist functionality
+
+======
+
 1/8/21
+* Add play history
+    ** History implemented server-side. Just have to show it on the room page as a popup.
 * Create database to save room info.
 * Host ID is undefined. That tells me that we're not setting host ID to new people. Likely because we're no longer filtering the array when people leave.
     *"Someone tired to enter a room that didn't exist" happens when 
@@ -101,6 +107,7 @@ DONE
 * Convert everything in server over from the locally saved rooms array to using the DB.
 
 =======
+
 1/7/21
 
 * Return to rooms based on cookies

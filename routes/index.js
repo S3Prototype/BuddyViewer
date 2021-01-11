@@ -15,12 +15,12 @@ router.get('/', (req, res, next)=>{
     })
     .catch(error=>{
         console.log(error);
-        // res.send('error', {error});//Show error page
+        res.send('error', {error});//Show error page
     })
     .finally(_=>{
-        res.render('homepage');
+        // res.render('homepage');
     });
-    res.render('homepage');
+    // res.render('homepage');
 });
 
 module.exports = router;
