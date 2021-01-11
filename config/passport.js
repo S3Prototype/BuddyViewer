@@ -16,22 +16,34 @@ module.exports = function(passport){
                 )
                 .then(foundUser=>{
                     if(!foundUser){
-                        done(null, false, 'That email is not registered.');
+                        done(null, false, {message: 'That email is not registered.'});
                     } else {
                         bcrypt.compare(password, foundUser.password,
                             (err, isMatch)=>{
                                 if(err) console.log(err);
                                 if(!isMatch){
-                                    return done(null, false, 'Incorrect username/email or password');
+                                    return done(null, false, {message: 'Incorrect username/email or password'});
                                 } else {
                                     return done(null, foundUser);
                                 }
                             }//err, isMatch
                         )//compare()
+                        .catch(err=>{
+
+                        });
                     }//else
 
-                })
-            }
-        )//new LocalStrategy
-    )//passport.use()
+                });
+            })//new LocalStrategy
+    );//passport.use
+
+    passport.serializeUser((user, done)=>{
+        done(null, user.id);
+    });
+
+    passport.deserializeUser((id, done)=>{
+        UserModel.findById(id, (err, user)=>{
+            done(err, user);
+        });
+    });
 }

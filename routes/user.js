@@ -3,6 +3,7 @@ const router = express.Router();
 const UserModel = require('../models/user');
 const bcrypt = require('bcryptjs');
 const {v4: uuidV4} = require('uuid');
+const passport = require('passport');
 // const {getAllRooms} = require('../utils/roomQueries');
 
 router.get('/login', (req, res)=>{
@@ -91,5 +92,13 @@ router.post('/signup', (req, res)=>{
     }
 });
 
+//Login handle
+router.post('/login', (req, res, next)=>{
+    passport.authenticate('local',{
+        successRedirect: '/users/dashboard',
+        failureRedirect: '/users/login',
+        failureFlash: true
+    })(req, res, next);
+});
 
 module.exports = router;

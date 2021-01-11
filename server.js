@@ -2,6 +2,7 @@ const path = require('path');
 const http = require('http');
 const flash = require('connect-flash');
 const session = require('express-session');
+const passport = require('passport');
 var randomWords = require('random-words');
 var express = require('express');
 var bodyparser = require('body-parser');
@@ -31,24 +32,26 @@ const mongoose = require('mongoose');
 mongoose.set('useCreateIndex', true);
 
 var app = express();
+
+require('./config/passport')(passport);
 const server = http.createServer(app);
 
 // let rooms = [];
 const dbURI = 'mongodb+srv://'+process.env.DB_USERNAME+':'+process.env.DB_PASS+'@cluster0.agmjg.mongodb.net/'+process.env.DB_NAME+'?retryWrites=true&w=majority';
 mongoose.connect(dbURI, {useNewUrlParser: true, useUnifiedTopology: true})
-.then((result)=>{
-    server.listen(port, function(){
-        // RoomModel.find().then((result)=>{
-        //     // rooms = result;
-        // }).catch((err)=>{
-        //     console.log(`Failed to get rooms from DB\n${err}`);
-        // });
-        console.log('Connected to DB...');
-        console.log(`Server listening on: ${port}`);
-        console.log("Server start date/time: "+new Date().toLocaleDateString() + " / " + new Date().toLocaleTimeString());
-        console.log("======");
-    });
-}).catch(err=>console.log(err));
+    .then((result)=>{
+        server.listen(port, function(){
+            // RoomModel.find().then((result)=>{
+            //     // rooms = result;
+            // }).catch((err)=>{
+            //     console.log(`Failed to get rooms from DB\n${err}`);
+            // });
+            console.log('Connected to DB...');
+            console.log(`Server listening on: ${port}`);
+            console.log("Server start date/time: "+new Date().toLocaleDateString() + " / " + new Date().toLocaleTimeString());
+            console.log("======");
+        });
+    }).catch(err=>console.log(err));
 
 // app.use(expressLayouts);
 app.set('views', './views');
@@ -58,10 +61,13 @@ app.use(express.urlencoded({extended: false}));
 app.use(express.json());
 
 app.use(session({
-    secret: port.env.SESSION_SECRET,
+    secret: process.env.SESSION_SECRET,
     resave: true,
     saveUninitialized: true
   }));
+
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.use(flash);
 
