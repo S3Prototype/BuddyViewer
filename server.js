@@ -1,5 +1,7 @@
 const path = require('path');
 const http = require('http');
+const flash = require('connect-flash');
+const session = require('express-session');
 var randomWords = require('random-words');
 var express = require('express');
 var bodyparser = require('body-parser');
@@ -54,6 +56,15 @@ app.set('view engine', 'ejs');
 app.use(express.static('public'));
 app.use(express.urlencoded({extended: false}));
 app.use(express.json());
+
+app.use(session({
+    secret: port.env.SESSION_SECRET,
+    resave: true,
+    saveUninitialized: true
+  }));
+
+app.use(flash);
+
 app.use('/', require('./routes/index'));
 app.use('/user', require('./routes/user'));
 app.use(router);

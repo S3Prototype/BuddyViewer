@@ -1,5 +1,7 @@
 FEATURE LIST:
 
+* Playlists. People should be able to add to a custom playlist in the actual room, and the history should also be able to be played like a playlist. Users can add to the playlist if the admin allows it, or remove videos from the playlist.
+* Add partials for the signup forms and room creation forms.
 * People can become "admins" of rooms. These users always have host rights, and can change it so only certain people are able to change the video, play/pause, etc.
     * Maybe a premium feature.
 * On the room list, say what's currently being watched. Try to get that damn gif youtube has when you hover over thumbnails.

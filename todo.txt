@@ -8,8 +8,8 @@ DOING:
 * Add user account abilities.
     * Gotta have user auth
     * Encrypted passwords
-    * Consider just letting people use their google accounts.
-        * Probably the best idea for now. Don't have infinite time.
+    * Gotta implement a different session store from the default.
+        ** https://github.com/expressjs/session#compatible-session-stores
 * Add yt playlist functionality
 * Add livestream functionality
     *livestreaming already basically works...
@@ -21,6 +21,7 @@ DOING:
 * Give rooms logos. Would be cool.
 
 TODO:
+* Try to use ejs layouts.
 * Add an overlay over the room that says "PLEASE REFRESH THE PAGE, but disappears if you press join room. This way, the join room modal always happens. No idea why tf it's not always popping up now.
 * Why does it say someone tried to join a room that didn't exist when you got '/'?
 * Consider deleted the rooms array and having all code interface directly with the DB, nothing saved in local storage.

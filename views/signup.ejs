@@ -6,13 +6,23 @@
     <title>Sign Up</title>
     <link rel="stylesheet" href="https://bootswatch.com/4/journal/bootstrap.min.css">
     <script src="https://kit.fontawesome.com/ab8bbc25ce.js" crossorigin="anonymous"></script>
+    
 </head>
 <body>
     <form action="/user/signup" method="POST">
             <input
+                type="userName"
+                name="userName"
+                id="userName"
+                placeholder="User Name"
+                class="form-control"
+                value="<%= typeof userName != 'undefined' ? firstName : '' %>"
+                required    
+            >
+            <input
                 type="firstName"
                 name="firstName"
-                id="name"
+                id="firstName"
                 placeholder="First Name"
                 class="form-control"
                 value="<%= typeof firstName != 'undefined' ? firstName : '' %>"
@@ -21,7 +31,7 @@
             <input
                 type="lastName"
                 name="lastName"
-                id="name"
+                id="lastName"
                 placeholder="Last Name"
                 class="form-control"
                 value="<%= typeof lastName != 'undefined' ? lastName : '' %>"                    
@@ -41,16 +51,16 @@
                 id="password"
                 placeholder="Password"
                 class="form-control"
-                value="<%= typeof email != 'undefined' ? email : '' %>"
+                value="<%= typeof password != 'undefined' ? email : '' %>"
                 required    
             >
             <input
                 type="password"
                 name="password2"
-                id="email"
+                id="password2"
                 placeholder="Confirm Password"
                 class="form-control"
-                value="<%= typeof email != 'undefined' ? email : '' %>"
+                value="<%= typeof password2 != 'undefined' ? email : '' %>"
                 required    
             >
         <button class="bt btn-primary btn-block">Sign Up</button>
