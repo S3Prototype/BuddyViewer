@@ -561,7 +561,7 @@ app.post('/create-new-room', (req, res)=>{
     console.log("SECURITY SETTING: "+securitySetting+`(${securityResult})`);
     createEmptyRoom(securityResult, roomName, roomDescription, rawID)
     .then(({roomID})=>{
-        res.redirect(`/${roomID}`);
+        res.redirect(`/room/${roomID}`);
     })
     .catch(err=>{
         logFailure(`create new Room`, err);

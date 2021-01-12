@@ -21,6 +21,15 @@ $(function(){
     } else {
         localStorage.setItem('roomID', roomID);
     }
+
+    const VideoSource = {
+        YOUTUBE: 1,
+        VIMEO: 2,
+        TWITTER: 3,
+        OTHERONE: 4
+    }
+    let videoSource = VideoSource.YOUTUBE;
+    let previousSource = VideoSource.YOUTUBE;
     
     const maxNameLength = 18;
     $("#name-input").attr("maxlength", maxNameLength);
@@ -683,13 +692,105 @@ $(function(){
         // ClientYTPlayer.SendStateToServer({});
     });
 
+    function tryForYoutube(url){
+// const startIndex = url.indexOf('v=') + 2;
+        if(url.indexOf('y') != 0 && url.indexOf('https:') != 0){
+            //if the url is not the first thing in the text, fail.
+            url = null
+            return url;
+        }
+        if(url.includes('&')){
+            url = url.substring(0, url.indexOf('&'));
+        }
+
+        if(url.includes('v=')){
+            url = url.substring(url.indexOf('v=') + 2)
+        } else if(url.includes('youtu.be')){
+            url = url.substring(url.indexOf('youtu.be/') + 9);
+        } else if (url.includes('/embed/')){
+            url = url.substring(url.indexOf('/embed/') + 7);
+        } else if (url.includes('yt.be/')){
+            url = url.substring(url.indexOf('yt.be/') + 6);            
+        } else {
+            url = null;
+        }
+
+        if(url){
+            console.log("YOU entered ID: "+url);         
+            videoSource = VideoSource.YOUTUBE;
+        }
+
+        return url;
+    }
+
+    function tryForOtherOne(url){
+        
+        let viewKeyIndex = url.indexOf('viewkey=');
+        if(viewKeyIndex > -1){
+            url = url.substring(viewKeyIndex+8);
+            // let viewKeyVal = url.substring(viewKeyIndex, viewKeyIndex+8);
+            // url = url.substring(0, url.indexOf('view_video'));
+            // url = url + 'embed/'+viewKeyVal;
+            videoSource = VideoSource.OTHERONE;
+        } else {
+            return null;
+        }
+
+        return url;
+    }
+
+    function extractID(url){
+        let result = null;
+        
+        result = tryForYoutube(url);
+
+        if(!result) result = tryForOtherOne(url);
+        //Keep checking if !result and trying for others.
+
+        return result;
+    }
+
     $('#ytsearch').on('submit', function(event){
         event.preventDefault();           
-        const newVid = youtubeInput.val();
-        if(newVid == '') return;
-        const currURL = ClientYTPlayer.extractID(newVid);
-        console.log("BEFORE NEW VIDEO SET. URL: "+currURL);
+        const inputText = youtubeInput.val();
+        if(inputText == '') return;
+        const currURL = extractID(inputText);
+        // console.log("BEFORE NEW VIDEO SET. URL: "+currURL);
         if(currURL){
+            switch(videoSource){
+                case VideoSource.YOUTUBE:
+                    if(currURL){
+                        ytCreatePlayer(currURL);
+                    } else{
+                        console.log("SEARCHING FOR! "+ inputText);
+                        ClientYTPlayer.videoSearch(inputText);
+                    }
+                    break;
+                case VideoSource.OTHERONE:
+                    otherOneCreatePlayer(currURL);
+                    break;
+            }//switch
+        } else {
+
+        }
+        searchResultsContainer.scrollTop = 0;
+    });
+
+    function otherOneCreatePlayer(currURL){
+        if(previousSource == VideoSource.YOUTUBE){
+            if(player) player.destroy();
+        }
+        const iframeCode = `<iframe 
+                src="https://www.pornhub.com/embed/${currURL}"
+                frameborder="0" width="100%" id="otherOne"
+                height="100%" scrolling="no"
+                allowfullscreen></iframe>`;
+        // $('#player').append(newElement);
+        console.log(iframeCode);        
+        $('#player').html(iframeCode);
+    }
+
+    function ytCreatePlayer(currURL){
             if(currURL != ClientYTPlayer.clientURL){
                 console.log("Trying to start URL: "+currURL);
                 console.log("Client URL before change: "+ClientYTPlayer.clientURL);
@@ -711,12 +812,7 @@ $(function(){
                 roomID)
                 console.log("End of search submit function");
             }
-        } else {
-            console.log("SEARCHING FOR! "+newVid);
-            ClientYTPlayer.videoSearch(newVid);
-        }
-        searchResultsContainer.scrollTop = 0;
-    });
+    }
     
     let inFullScreen = false;
     $('#fullscreen-button').click(function(event){
@@ -812,11 +908,28 @@ $(function(){
     });
 
     $('#play-pause-button').click(function(event){
+        switch(videoSource){
+            case VideoSource.YOUTUBE:
+                ytPlayPause(event);
+                break;
+            case VideoSource.OTHERONE:
+                otherOnePlayPause(event);
+                break;
+        }
+    });
+
+    function otherOnePlayPause(event){
+        console.log('trying to play otherone');
+        let player =  $('#otherOne').contents()
+            .find('#player').css({"color": "red", "border": "50px solid red"});
+        // player.trigger('click');
+    }
+
+    function ytPlayPause(event){
         if(!player){
             console.log("PLAY BUTTON FAILED")
             return;  
         }
-
         if(!progressBarInitialized){
             initializeYTProgressBar();
         }
@@ -880,7 +993,7 @@ $(function(){
             // document.getElementById('play-pause-icon').classList.add("fa-pause");
             // socket.emit('play', {});
         }
-    });
+    }
 
     function updateYTVideoTime(){
         if(!player || !player.getCurrentTime ||
