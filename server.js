@@ -15,6 +15,60 @@ require('dotenv').config();
 const { google } = require('googleapis');
 const { title } = require('process');
 
+//!Testing running python code
+// const {spawn} = require('child_process');
+// try{
+//     const childPython = spawn('python', ['test.py', 'URL!']);
+    
+//     childPython.stdout.on('data', (data)=>{
+//         console.log(`stdout: ${data}`);
+//     });
+//     childPython.stderr.on('data', (data)=>{
+//         console.error(`stderr: ${data}`);
+//     });
+//     childPython.on('data', (data)=>{
+//         console.log(`child ended with code: ${data}`);
+//     });
+// } catch(error) {
+//     console.log("PYTHON ERROR: "+error);
+// }
+
+const fs = require('fs')
+const youtubedl = require('youtube-dl')
+
+// const video = youtubedl('past_url_here')
+
+try{
+    youtubedl.getInfo(url, [], function(err, info) {
+        if (err) throw err
+        
+    console.log('id:', info.id)
+    console.log('title:', info.title)
+    console.log('url:', info.url)
+    console.log('thumbnail:', info.thumbnail)
+    console.log('description:', info.description)
+    console.log('filename:', info._filename)
+    console.log('format id:', info.format_id)
+    });
+} catch(err){
+    console.log("Couldn't get vid info: "+err);
+}
+// Will be called when the download starts.
+// video.on('info', function(info) {
+//   console.log('Download started');
+//   console.log('filename: ' + info._filename);
+//   console.log('size: ' + info.size);
+// })
+// video.pipe(fs.createWriteStream('myvideo.mp4'));
+// // Will be called if download was already completed and there is nothing more to download.
+// video.on('complete', function complete(info) {
+//     'use strict';
+//     console.log('filename: ' + info._filename + ' already downloaded.');
+// });
+// video.on('end', function() {
+//     console.log('finished downloading!')
+// });
+
 const expressLayouts = require('express-ejs-layouts');
 
 const RoomModel = require('./models/room');
@@ -355,7 +409,6 @@ function updateRoomState(data, roomID, newState){
     });
     // .then((result)=>{})
 }
-    
 
 const listRoomID = "LISTROOM";
 
@@ -501,21 +554,6 @@ app.post('/check-saved-roomID', (req, res)=>{
     res.send(shouldRedirect);
 });
 
-// app.get('/', (req, res)=>{
-//     // res.render('room', {roomID: uuidV4()});
-//     // res.redirect(`/${uuidV4()}`);
-//     // console.log(`SENDING DOWN: ${JSON.stringify(rooms, null, 2)}`);
-//     // res.render('index', {rooms: allRooms});
-//     getAllRooms()
-//     .then(allRooms=>{
-//         // console.log(`ROOMS: ${allRooms}`);
-//         res.render('index');
-//     })
-//     .catch(error=>{
-//         res.render('error', {error});//Show error page
-//     });
-// });
-
 app.get('/room/:roomID', (req, res)=>{
     // const currRoomID = req.params.roomID;
     // console.log(`ID IS ${currRoomID}`);
@@ -561,10 +599,6 @@ app.post('/create-new-room', (req, res)=>{
     console.log("SECURITY SETTING: "+securitySetting+`(${securityResult})`);
     createEmptyRoom(securityResult, roomName, roomDescription, rawID)
     .then(({roomID})=>{
-        res.redirect(`/room/${roomID}`);
-    })
-    .catch(err=>{
-        logFailure(`create new Room`, err);
         res.send(err);
     });
 });
