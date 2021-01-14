@@ -156,8 +156,8 @@ $(function(){
         static initNewPlayer(event){
             // event.target.addEventListener("onStateChange", ClientYTPlayer.SendStateToServer);
             console.log("initNewPlayer STARTED");
-            initializeYTProgressBar();
-            initializeToolTip();
+            // initializeYTProgressBar();
+            // initializeToolTip();
             player.seekTo(ClientYTPlayer.videoTime);
             ClientYTPlayer.updateTimeUI(ClientYTPlayer.videoTime);
             // event.target.playVideo();            
@@ -181,13 +181,13 @@ $(function(){
             player.setVolume(parseInt(volumeSlider.value));
             playerInitialized = true;
 
-            while(!progressBarInitialized){
-                initializeYTProgressBar();
-            }
+            // while(!progressBarInitialized){
+            //     initializeYTProgressBar();
+            // }
 
-            while(!tooltipInitialized){
-                initializeToolTip();
-            }
+            // while(!tooltipInitialized){
+            //     initializeToolTip();
+            // }
             // if(ClientYTPlayer.timeShouldBeSaved){
             //     //if we're changing the closedcaptions, basically
             //     player.seekTo(ClientYTPlayer.videoTime);
@@ -278,8 +278,6 @@ $(function(){
                     },        
                     playerVars: ClientYTPlayer.options
                   });
-            // console.log("ADD NEW VIDEO ENDED");
-            // ClientYTPlayer.SendStateToServer({});
         }
         static getTime(){
             if(!player || !playerInitialized){
@@ -295,13 +293,6 @@ $(function(){
             updateSeekToolTip(time);
         }
         static getYTPlayerState(){
-            // if(ClientYTPlayer.currentState == ClientYTPlayer.CustomState.SEEKING){
-            //     return ClientYTPlayer.CustomState.SEEKING;
-            // } else {
-            //     ClientYTPlayer.currentState = player.getPlayerState();
-            //     return player.getPlayerState();
-            // }
-
             return ClientYTPlayer.currentState;
         }
 
@@ -430,177 +421,15 @@ $(function(){
             }
 
         }
-        static SendStateToServer(event){
-
-            // ClientYTPlayer.currentlySendingData = true;
-            // // ClientYTPlayer.currentState = ;            
-            // let sendData = {
-            //     "name" : nameOnServer,
-            //     "user_id" : userID,
-            //     "state" : ClientYTPlayer.currentState,
-            //     "video_time" : ClientYTPlayer.videoTime,
-            //     "video_url": ClientYTPlayer.clientURL,
-            //     "video_playbackrate": ClientYTPlayer.playbackRate,
-            //     "video_looping": ClientYTPlayer.looping
-            // };
-
-            // //Here we check if the state is anything weird.
-
-            // console.log("("+ new Date().toLocaleTimeString()+") TELL SERVER TO "+sendData.state);
-            // $.ajax({
-            //     url: '/alter-video-settings',
-            //     method: 'POST',
-            //     contentType: 'application/json',
-            //     data: JSON.stringify(sendData, null, 2),
-            //     success: function (response){
-            //         console.log(`${new Date().toLocaleTimeString()} Reults are: ${response.name}`);
-            //         ClientYTPlayer.currentlySendingData = false;
-            //         // ClientYTPlayer.addSearchResults(response.results);
-            //         console.log("("+ new Date().toLocaleTimeString()+") Sendstate from this client done.");
-            //         initializeYTProgressBar();
-            //         // ClientYTPlayer.clientState = player.getPlayerState();
-            //     }
-            // });
-        }
-        static alignWithServerState(response){
-            // //If ytplayer not made yet, or the person who altered server
-            // //state last was me, just end it.
-            // if(!player) return;
-            // if(!progressBarInitialized) initializeYTProgressBar();
-
-            // // console.log("PLAYBACK RATE IS NOW: "+player.getPlaybackRate());
-            // const serverState = response.state;
-            // const serverTime = Math.round(response.video_time);
-            // const serverURL = response.video_url;
-            // const serverPlaybackRate = response.video_playbackrate;
-            // ClientYTPlayer.looping = response.video_looping;
-            // const loopingButton = document.getElementById('loop-button');
-            // if(ClientYTPlayer.looping){
-            //     loopingButton.style.color = "white"
-            //     localStorage.setItem('looping', "true");
-            // } else {
-            //     loopingButton.style.color = "gray";
-            //     localStorage.setItem('looping', "false");
-            // }
-            
-
-            // if(serverURL != ClientYTPlayer.clientURL){
-            //     ClientYTPlayer.clientURL = serverURL;
-            //     if(serverState != CustomStates.PLAYING){
-            //         ClientYTPlayer.videoTime = serverTime;
-            //     }                
-            //     ClientYTPlayer.shouldSendState = false;
-            //     ClientYTPlayer.addNewVideo();
-            //     return;
-            // }
-            
-            // if(serverState != ClientYTPlayer.currentState){
-            //     console.log("("+ new Date().toLocaleTimeString()+") RECEIVED STATE "+serverState);                
-            //     changeTriggeredByControls = true;
-            //     if(serverState == YT.PlayerState.PLAYING){
-            //         ClientYTPlayer.currentState = serverState;
-            //         player.playVideo();
-            //         document.getElementById('play-pause-icon').classList.remove("fa-play");
-            //         document.getElementById('play-pause-icon').classList.add("fa-pause");
-            //     } else if(serverState == YT.PlayerState.PAUSED){
-            //         ClientYTPlayer.currentState = serverState;
-            //         player.pauseVideo();
-            //         document.getElementById('play-pause-icon').classList.remove("fa-pause");
-            //         document.getElementById('play-pause-icon').classList.add("fa-play");
-            //     } else if(serverState == YT.PlayerState.SEEKING){
-            //         ClientYTPlayer.currentState = serverState;
-            //         player.seekTo(serverTime);
-            //         ClientYTPlayer.updateTimeUI(serverTime);                    
-            //         // const seekIcon = serverTime > ClientYTPlayer.videoTime ? "fas fa-forward" : "fas fa-backward";
-            //         // document.getElementById('play-pause-icon').className = seekIcon;                    
-            //     }
-            // } else if(serverState == ClientYTPlayer.currentState) {
-            // }
-
-            // if(serverState == CustomStates.ENDED){
-            //     if(ClientYTPlayer.looping){
-            //         ClientYTPlayer.currentState = CustomStates.PLAYING;
-            //         ClientYTPlayer.videoTime = 0;
-            //         document.getElementById('play-pause-icon').classList.remove("fa-play");
-            //         document.getElementById('play-pause-icon').classList.add("fa-pause");
-            //         player.seekTo(0);
-            //         player.playVideo();
-            //         ClientYTPlayer.SendStateToServer({})
-            //     }
-            // }
-                
-            // const currTime = ClientYTPlayer.videoTime;
-            // // console.log("TIME NOW IS: "+currTime +"| SERVER TIME: "+serverTime);
-            // if(currTime < serverTime - 5 || currTime > serverTime + 5){
-            //     // console.log("Adjusting client to server time");
-            //     // console.log("==================");
-            //     // console.log(`Client time: ${currTime} | Server time: ${serverTime}`);
-            //     // console.log("==================");
-            //     player.seekTo(serverTime);
-            //     if(serverState == CustomStates.PAUSED){
-            //         // player.pauseVideo();
-            //     }
-            //     ClientYTPlayer.updateTimeUI(serverTime);                                   
-            // }
-
-            // if(serverPlaybackRate != ClientYTPlayer.playbackRate){
-            //     ClientYTPlayer.playbackRate = serverPlaybackRate;
-            //     player.setPlaybackRate(serverPlaybackRate);
-            //     document.getElementById('playrate-text').innerHTML = serverPlaybackRate +"x";
-            // }
-
-            
-            // // ClientYTPlayer.currentState = player.getPlayerState();
-        }
-    }
-
-    function pingVideoSetting(){
-        // if(!player) return;
-        // if(ClientYTPlayer.currentlySendingData) return;
-
-        // const playerData = {
-        //     "name" : nameOnServer,
-        //     "user_id" : userID,
-        //     "state" : ClientYTPlayer.currentState,
-        //     "video_time": ClientYTPlayer.videoTime,
-        //     "video_url": ClientYTPlayer.clientURL,
-        // };
-        // $.ajax({
-        //     url: '/check-server-video-state',
-        //     method: 'POST',
-        //     contentType: 'application/json',
-        //     data: JSON.stringify(playerData, null, 2),
-        //     success: function (response){
-        //         if(ClientYTPlayer.currentlySendingData) return;
-        //         ClientYTPlayer.alignWithServerState(response); 
-        //     }
-        // });
-
     }
 
     const bufferBar = document.getElementById('buffer-bar');
     const joinButton = document.getElementById('join-room-button');
 
     joinButton.addEventListener('click', function(event){
-        // ClientYTPlayer.pingInterval = setInterval(pingVideoSetting, 200);
         document.getElementById('join-room-modal').classList.remove('active');
         document.getElementById('join-room-modal-overlay').classList.remove('active');
         initSocket();
-        // socket.emit('queryState', {}, roomID);
-        // const state = ClientYTPlayer.currentState;
-        // if(state == CustomStates.PLAYING){
-        //     // player.playVideo();
-        //     document.getElementById('play-pause-icon').classList.remove("fa-play");
-        //     document.getElementById('play-pause-icon').classList.add("fa-pause");
-        // } else if(state == CustomStates.PAUSED){
-        //     // player.pauseVideo();
-        //     document.getElementById('play-pause-icon').classList.remove("fa-pause");
-        //     document.getElementById('play-pause-icon').classList.add("fa-play");
-        // }
-
-        // initializeYTProgressBar();
-        // initializeToolTip();
-
     });
 
     const increasePlayrateButton = document.getElementById('increase-playrate-button');
@@ -801,6 +630,7 @@ $(function(){
         vimeoCreatePlayer(videoID);
     }
 
+
     function scriptExists(source){
         //Check if the script already exists
         return $(`script[src="${PlayerScripts[source]}"]`).length
@@ -814,6 +644,9 @@ $(function(){
         //set all relevant vars so all functions
         //know what to do
         
+        volumeSlider.setAttribute('step', 0.01);
+        volumeSlider.setAttribute('value', 0.5);
+        volumeSlider.setAttribute('max', 1);
         if(!scriptExists(PlayerScripts.VIMEO)){
             loadPlayerScript(PlayerScripts.VIMEO, ()=>{
                 //Initialize a video.
@@ -941,14 +774,15 @@ $(function(){
     });
 
     $('#mute-button').click(function(event){
-        if(player.isMuted()){
-            stayMuted = false;
-            player.unMute();         
+        if(buddyPlayer.isMuted()){
+            // stayMuted = false;
+            buddyPlayer.unMute();         
+            volumeSlider.value = buddyPlayer.getVolume();
             document.getElementById('mute-icon').classList.remove("fa-volume-mute");
             document.getElementById('mute-icon').classList.add("fa-volume-up");
         } else {            
-            stayMuted = true;
-            player.mute();  
+            // stayMuted = true;
+            buddyPlayer.mute();  
             document.getElementById('mute-icon').classList.remove("fa-volume-up");
             document.getElementById('mute-icon').classList.add("fa-volume-mute"); 
         }
@@ -1004,6 +838,10 @@ $(function(){
         //         vimeoPlayPause(event);
         //         break;
         // }
+        if(!buddyPlayer.isInitialized()){
+            initializeToolTip(buddyPlayer.getDuration());
+            initializeProgressBar(buddyPlayer.getDuration());
+        }
         buddyPlayer.playPause();
     });
 
@@ -1060,9 +898,9 @@ $(function(){
             console.log("PLAY BUTTON FAILED");
             return;  
         }
-        if(!progressBarInitialized){
-            initializeYTProgressBar();
-        }
+        // if(!progressBarInitialized){
+        //     initializeYTProgressBar();
+        // }
         if(!tooltipInitialized){
             initializeToolTip();
             player.setVolume(parseInt(volumeSlider.value));
@@ -1108,25 +946,32 @@ $(function(){
         }
     }
 
-    function updateYTVideoTime(){
-        if(!player || !player.getCurrentTime ||
-            ClientYTPlayer.currentState == YT.PlayerState.ENDED ||
-            ClientYTPlayer.currentState == YT.PlayerState.UNSTARTED ||
-            ClientYTPlayer.currentState == CustomStates.PAUSED){
+    function updateVideoTime(){
+        if(!buddyPlayer ||
+            buddyPlayer.getState() != CustomStates.PLAYING){
+                // if(buddyPlayer){
+                //     console.dir("BUDDY PLAYER: "+ buddyPlayer);
+                //     console.log("Time is: "+buddyPlayer.getPlayerTime());
+                //     console.log("Player state: "+buddyPlayer.getState());
+                // }
                 return;
+            }
+        // const rawPlayerTime = buddyPlayer.getPlayerTime();
+        const playerTime = Math.round(buddyPlayer.getPlayerTime());
+        // console.log("PLAYER TIME IS: "+playerTime);
+        if(playerTime != buddyPlayer.getSavedTime()){
+            buddyPlayer.setSavedTime(playerTime);
+            updateTimeUI(playerTime);
         }
-        const playerTime = player.getCurrentTime();
-        if(Math.round(playerTime) != ClientYTPlayer.videoTime){
-            ClientYTPlayer.updateTimeUI(playerTime);
-        }
-        const bufferedTime = player.getVideoLoadedFraction() * player.getDuration();
-        updateYTBufferBar(bufferedTime);
+        // const bufferedTime = player.getVideoLoadedFraction() * player.getDuration();
+        // const bufferedTime = buddyPlayer.getBuffered();
+        updateBufferBar(buddyPlayer.getBuffered());
     }
 
-    function updateYTBufferBar(updateTime){
-        bufferBar.value = updateTime;
+    function updateBufferBar(buffVal){
+        bufferBar.value = buffVal;
     }
-
+    
     function updateYTProgressBar(updateTime){
         //You can just pass the value because youtube's
         //.getCurrentTime() always returns the value in seconds
@@ -1134,9 +979,8 @@ $(function(){
     }
 
     function updateSeekToolTip(seekTime){
-        const time = Math.round(seekTime);
-        let minutes = parseInt(time / 60);
-        let seconds = time % 60;
+        let minutes = parseInt(seekTime / 60);
+        let seconds = seekTime % 60;
         let hours = 0;
         if(minutes >= 60){
             hours = parseInt(minutes / 60);
@@ -1152,23 +996,29 @@ $(function(){
         seekToolTip.textContent = timeDisplay+" | "+tooltipDuration;
     }
 
-    function progressBarYTScrub(event) {
-        if(!progressBarInitialized) initializeYTProgressBar();
-        const scrubTime = (event.offsetX / progressBar.offsetWidth) * player.getDuration();
+    function progressBarScrub(event) {
+        // if(!progressBarInitialized) initializeYTProgressBar();
+        const scrubTime = Math.round(
+            (event.offsetX / progressBar.offsetWidth) *
+            buddyPlayer.getDuration()
+        );
         changeTriggeredByControls = true;
-        player.seekTo(scrubTime);
-        // ClientYTPlayer.currentState = CustomStates.SEEKING;
-        ClientYTPlayer.updateTimeUI(scrubTime);
-        socket.emit('seek', scrubTime, roomID);
-        // ClientYTPlayer.SendStateToServer({});
+        buddyPlayer.seek(scrubTime);
+        updateTimeUI(scrubTime);
+        // socket.emit('seek', scrubTime, roomID);
     }
 
-    function initializeToolTip(){
-        if(!player.getDuration){
-            tooltipInitialized = false;
-            return;
+    function updateTimeUI(time){
+        if(!buddyPlayer.isInitialized()){
+            initializeToolTip(buddyPlayer.getDuration());
+            initializeProgressBar(buddyPlayer.getDuration());
         }
-        const currTime = Math.round(player.getDuration());
+        progressBar.value = time;
+        updateSeekToolTip(time);
+    }
+
+    function initializeToolTip(duration){
+        const currTime = Math.round(duration);
         let maxMinutes = parseInt(currTime / 60);
         let maxSeconds = currTime % 60;
         let maxHours = 0;
@@ -1183,15 +1033,9 @@ $(function(){
         tooltipInitialized = true;
     }
 
-    function initializeYTProgressBar(){
-        if(!player.getDuration){
-            progressBarInitialized = false;
-            return;
-        }
-        ClientYTPlayer.videoLength = player.getDuration();
-        const maxTime = Math.round(ClientYTPlayer.videoLength);
+    function initializeProgressBar(duration){
+        const maxTime = Math.round(duration);
         progressBar.setAttribute('max', maxTime);        
-        progressBarInitialized = true;
         bufferBar.setAttribute('max', maxTime);
     }    
 
@@ -1204,49 +1048,8 @@ $(function(){
             if(ClientYTPlayer.looping){
                 startVideoOver();
                 socket.emit('startOver', roomID);
-                // socket.emit('startNew', {
-                //     startTime: 0,
-                //     id: ClientYTPlayer.clientURL
-                // });
-            }
-            // document.getElementById('play-pause-icon').classList.remove("fa-pause");
-            // document.getElementById('play-pause-icon').classList.add("fa-play");
-            // ClientYTPlayer.SendStateToServer({});                
+            }           
         }
-        // console.log("BEFORE anything: "+event.data);
-        // if(event.data == YT.PlayerState.BUFFERING){                    
-        //     return;
-        // }
-
-        //     //If event is what the state already is, that's fine.
-        // if(ClientYTPlayer.currentState == event.data){
-        //     return;
-        // } else {    
-        //     //If event doesn't match state, it's been triggered
-        //     //externally, so we do the reverse.
-        //     switch(event.data){
-        //         case YT.PlayerState.PLAYING:
-        //             event.target.pauseVideo();
-        //             break;
-        //         case YT.PlayerState.PAUSED:
-        //             event.target.playVideo();
-        //             break;
-        //     }
-        // }
-        // if(changeTriggeredByControls){
-        //     changeTriggeredByControls = false;
-        //     return;                
-        // }
-
-        // if(event.data == YT.PlayerState.PLAYING){
-        //     changeTriggeredByControls = true;
-        //     console.log("PAUSING");
-        //     event.target.pauseVideo();                    
-        // } else if (event.data == YT.PlayerState.PAUSED){
-        //     changeTriggeredByControls = true;
-        //     console.log("PLAYING");
-        //     event.target.playVideo();
-        // }
     }
 
     messageInput.keypress(function(event){
@@ -1255,89 +1058,6 @@ $(function(){
             $('#input-form').submit();
         }
     });
-
-    function updateServerList(response){
-        const incUserList = response.list;             
-        const listID = response.listID;
-        // if(listID != mostRecentListID){
-        //     console.log('LIST: '+incUserList.length+' ID: '+listID);
-        // }
-        let i = 0;
-        if(incUserList && incUserList.length > 0
-           && listID != mostRecentListID){
-            userListTbody.empty();
-            incUserList.forEach(function(user, index){
-                // let user = incUserList[i];
-                // let userListHTML = '\
-                // <tr class="userlist-row"><td class="userlist-username">'+
-                // user.name +'(</td>\
-                // <td class="userlist-userid">' + user.id +
-                // ')</td> <td class="userlist-index">[' + index +']\
-                // </td></tr>';
-
-                let userListHTML = '\
-                <tr class="userlist-row"><td class="userlist-name">'+
-                user.name +'('+user.id +')</td></tr>'; 
-                userListTbody.append(userListHTML.toString());
-                // userListTable.scrollTop(chatTable.height() * chatMessage.message_id);                        
-                // let messageID = parseInt(chatMessage.message_id);
-                // seenArray[messageID] = true;                          
-                // console.log("USER: "+user.name+"("+user.id+") ADDED TO LIST("+i+")");
-                i++;
-            });
-            mostRecentListID = listID;
-            //console.log();
-        }//if
-    }
-
-    function checkForMessages(){
-        // let checkData = {
-        //     "name" : nameOnServer,
-        //     "user_id" : userID,
-        //     "initialized" : serverListInitialized
-        // }
-        // $.ajax({
-        //     url: '/messages',
-        //     method: 'GET',
-        //     contentType: 'application/json',
-        //     data: JSON.stringify(checkData, null, 2),
-        //     success: function (response){
-        //         let incMessage = response.message;
-        //         if(!incMessage) return;
-        //         incMessage.fromAnotherUser = true;
-        //         if(incMessage.message_id){
-        //             let localID = parseInt(incMessage.message_id);
-        //             if(incMessage.name != nameOnServer && !seenArray[localID]){
-        //                 console.log("Response: " + incMessage.message_data);
-        //                 addMessageToChat(response);
-        //                 if(isNaN(localID)) console.log("LOCAL ID BROKE!");                    
-        //                 seenArray[localID] = true;
-        //             }
-        //         }
-        //     }
-        // });
-    }
-
-    function checkForUserList(){
-        // // player.playVideo();
-        // let checkData = {
-        //     "name" : nameOnServer,
-        //     "user_id" : userID,
-        //     "initialized" : serverListInitialized
-        // }
-        // $.ajax({
-        //     url: '/user-list',
-        //     method: 'POST',
-        //     contentType: 'application/json',
-        //     data: JSON.stringify(checkData, null, 2),
-        //     success: function (response){                  
-        //         updateServerList(response);
-        //     }//success: function
-        // });      
-        // serverListInitialized = true;
-    }
-
-    // bigscriptTest('Yo dawg');
     
     function loadBigScript(scriptURL, callback) {
         var script = document.createElement("script")
@@ -1358,41 +1078,6 @@ $(function(){
 
         script.src = scriptURL;
         document.getElementsByTagName("head")[0].appendChild(script);
-    }
-
-    
-
-
-    // const initializeInterval = setInterval(initializeServerList, 300);
-
-    function initializeServerList(){
-        console.log("("+new Date().toLocaleTimeString()+") Server List Initialized");
-        // if(!serverListInitialized){
-            // $.ajax({
-            //     url: '/initialize',
-            //     method: 'POST',
-            //     contentType: 'application/json',
-            //     data: JSON.stringify({"name" : nameOnServer, "user_id" : userID}, null, 2),
-            //     success: function (response){                    
-            //         serverListInitialized = true;
-            //     }
-            // });
-        // } else {
-        //     clearInterval(initializeInterval);
-        // }
-        // clearInterval(initializeInterval);
-    }
-
-    function pingServer(){
-        // $.ajax({
-        //     url: '/server-ping',
-        //     method: 'POST',
-        //     contentType: 'application/json',
-        //     data: JSON.stringify({"name" : nameOnServer, "user_id" : userID}, null, 2),
-        //     success: function (response){
-        //         updateServerList(response);
-        //     }
-        // });
     }
 
     function addMessageToChat(response){
@@ -1521,13 +1206,17 @@ $(function(){
     }
 
     function changeVolume(event){
-        if(!player) return;
-        if(player.isMuted()){
-            player.unMute();
+        if(!buddyPlayer) return;
+        if(buddyPlayer.isMuted()){
+            buddyPlayer.unMute();
             document.getElementById('mute-icon').classList.remove("fa-volume-mute");
             document.getElementById('mute-icon').classList.add("fa-volume-up");
         }
-        player.setVolume(parseInt(volumeSlider.value));
+        //! When you do the youtube version of this, make sure 
+        //! in the class method for setVolume you convert the
+        //! parameter input with parseInt
+        // console.log(parseFloat(volumeSlider.value));
+        buddyPlayer.setVolume(volumeSlider.value);
     }
 
     $('#name-form').on('submit', function(event){
@@ -1579,26 +1268,10 @@ $(function(){
 
     window.onbeforeunload = function(event){
         /*doesn't work on IE*/
-        //if the user closes the window
- 
-        // if(nameOnServer == anonName){
-        //     return;//If it's the anonName, nothing to do
-        // }
         let nameToRelease = {
             "name" : nameOnServer,
             "id" : userID
         };
-
-        // $.ajax({
-        //     url: '/messages',
-        //     method: 'DELETE',
-        //     contentType: 'application/json',
-        //     data: JSON.stringify(nameToRelease, null, 2),
-        //     success: function(response){
-        //         console.log(this.url);
-        //     }
-        // });//$.ajax
-
     }
 
     const bigIcon = 'fa-3x';
@@ -1692,16 +1365,16 @@ $(function(){
                 ClientYTPlayer.addNewVideo();
             } else {        
                 if(startTime > 0){
-                    player.seekTo(startTime);
+                    buddyPlayer.seek(startTime);
                 }
                 ClientYTPlayer.updateTimeUI(startTime);
                 if(state == CustomStates.PLAYING){
                     playVideo();
-                    player.unMute();
+                    buddyPlayer.unMute();
                 }
             }
-            initializeToolTip();
-            initializeYTProgressBar();
+            // initializeToolTip();
+            // initializeYTProgressBar();
         });
     
         socket.on('requestState', requesterSocketID=>{
@@ -1726,8 +1399,8 @@ $(function(){
         });
     
         socket.on('play', data=>{
-            initializeToolTip();
-            initializeYTProgressBar();
+            // initializeToolTip();
+            // initializeYTProgressBar();
             if(data.isHost){
                 if(ClientYTPlayer.videoTime > data.videoTime + 5 ||
                    ClientYTPlayer.videoTime < data.videoTime - 5){
@@ -1736,8 +1409,6 @@ $(function(){
                 }
             }
             playVideo();
-            // player.playVideo();
-            // player.setVolume(parseInt(volumeSlider.value));
         });
     
         const maxGap = 5;
@@ -1771,8 +1442,8 @@ $(function(){
                 ClientYTPlayer.updateTimeUI(startTime);
                 playVideo();
             }
-            initializeToolTip();
-            initializeYTProgressBar();
+            // initializeToolTip();
+            // initializeYTProgressBar();
         });
     
         socket.on('startOver', _=>{
@@ -1788,54 +1459,32 @@ $(function(){
 
 
     let controlsToggled = false;
-    document.addEventListener('readystatechange', event => { 
-    
+    document.addEventListener('readystatechange', event => {
+        document.getElementById('join-room-modal').classList.add('active');
+        document.getElementById('join-room-modal-overlay').classList.add('active');
+
         // When window loaded ( external resources are loaded too- `css`,`src`, etc...) 
-        if(event.target.readyState === "complete"){                       
+        if(event.target.readyState === "complete"){
+            setInterval(updateVideoTime, 250);
+            document.addEventListener('initialize', (event)=>{
+                console.log("Initializing toolbars");
+                initializeProgressBar(buddyPlayer.getDuration());
+                initializeToolTip(buddyPlayer.getDuration());
+            }, false);
+                                  
             validateUserID();        
-            // socket.emit('joinChat', localName);
-
-            initializeServerList();
-
             volumeSlider.addEventListener("change", changeVolume);
             volumeSlider.addEventListener("input", changeVolume)
-            // volumeSlider.addEventListener("mousemove", );
-
-            // ClientYTPlayer.pingInterval = setInterval(pingVideoSetting, 200);
-        
-            // setInterval(pingServer, 2500);
-        
-            // setInterval(checkForMessages, 500);
-        
-            // setInterval(checkForUserList, 650);
             player.addEventListener("onStateChange", stopYTEvent);
             ClientYTPlayer.currentState = YT.PlayerState.UNSTARTED;
-
-            setInterval(updateYTVideoTime, 500);
-
-            initializeYTProgressBar();
-            initializeToolTip();
-
-            // const playerTime = player.getCurrentTime();
-            // if(Math.round(playerTime) != ClientYTPlayer.videoTime){
-            //     ClientYTPlayer.updateTimeUI(playerTime);
-            // }
-            // const bufferedTime = player.getVideoLoadedFraction() * player.getDuration();
-            // updateYTBufferBar(bufferedTime);
             updateSeekToolTip(ClientYTPlayer.videoTime);
 
-            progressBar.addEventListener('click', progressBarYTScrub);
-            // inFullScreen = false;
-
-            // const mouseDetector = document.getElementById('fullscreen-mouse-detector');
-            // const videoControls = document.getElementById('video_controls');
+            progressBar.addEventListener('click', progressBarScrub);
             const searchBar = document.getElementById('ytsearch');
 
             videoContainer.addEventListener('mousemove', function(event){
-                // console.log(new Date().toLocaleTimeString()+" mouse moved at: "+event.screenY);
                 if(!inFullScreen) return;
                 const screenHeight = window.screen.height;
-                // console.log(videoContainer.style.flexWrap);
                 if(event.screenY < screenHeight*0.85 &&
                     !controlsToggled){
                     videoContainer.style.flexWrap = "wrap";
@@ -1874,8 +1523,6 @@ $(function(){
                 }
             });
 
-            document.getElementById('join-room-modal').classList.add('active');
-            document.getElementById('join-room-modal-overlay').classList.add('active');
         }
     });
 
