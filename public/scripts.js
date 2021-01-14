@@ -23,7 +23,7 @@ $(function(){
     }
 
     const VideoSource = {
-        YOUTUBE: 1,
+        YOUTUBE: 0,
         VIMEO: 2,
         TWITTER: 3,
         OTHERONE: 4
@@ -42,6 +42,8 @@ $(function(){
     const volumeSlider = document.getElementById('volume-slider');
     let stayMuted = false;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
     let mobileMode = false;
+
+    let buddyPlayer = null;
 
     const playrateText = document.getElementById('playrate-text');
 
@@ -97,15 +99,6 @@ $(function(){
 
     console.log("ROOM ID: "+roomID);
 
-    const CustomStates = {
-        UNSTARTED : -1,
-        ENDED : 0,
-        PLAYING : 1,
-        PAUSED : 2,
-        BUFFERING : 3,
-        CUED : 5,
-        SEEKING : 6
-    };
     let changeTriggeredByControls = false;
     let progressBarInitialized = false;
     let playerInitialized = false;
@@ -739,42 +732,120 @@ $(function(){
         return url;
     }
 
+    function tryforVimeo(url){
+        if( url.indexOf('https') == 0 ||
+            url.indexOf('vimeo') == 0 ||
+            url.indexOf('player') == 0){
+                if(url.includes('player')){
+                    url = url.substring(url.indexOf('player')+23);
+                } else if(url.includes('vimeo')){
+                    url = url.substring(url.indexOf('vimeo')+10);
+                }
+                console.log(url);
+            videoSource = VideoSource.VIMEO;
+        } else {
+            return null;
+        }
+
+        return url;
+    }
+
     function extractID(url){
         let result = null;
         
         result = tryForYoutube(url);
 
-        if(!result) result = tryForOtherOne(url);
+        // if(!result) result = tryForOtherOne(url);
+        if(!result) result = tryforVimeo(url);
         //Keep checking if !result and trying for others.
-
         return result;
     }
+
+    const PlayerScripts = {
+        YOUTUBE_A: "https://apis.google.com/js/api.js",
+        YOUTUBE_B: "https://www.youtube.com/iframe_api",
+        VIMEO: "https://player.vimeo.com/api/player.js"
+    };
 
     $('#ytsearch').on('submit', function(event){
         event.preventDefault();           
         const inputText = youtubeInput.val();
         if(inputText == '') return;
-        const currURL = extractID(inputText);
+        const newID = extractID(inputText);
         // console.log("BEFORE NEW VIDEO SET. URL: "+currURL);
-        if(currURL){
-            switch(videoSource){
-                case VideoSource.YOUTUBE:
-                    if(currURL){
-                        ytCreatePlayer(currURL);
-                    } else{
-                        console.log("SEARCHING FOR! "+ inputText);
-                        ClientYTPlayer.videoSearch(inputText);
-                    }
-                    break;
-                case VideoSource.OTHERONE:
-                    otherOneCreatePlayer(currURL);
-                    break;
-            }//switch
+        if(newID){
+            startNewVideo(newID);
         } else {
-
+            //If we didn't extract a url, search youtube 
+            console.log("SEARCHING FOR! "+ inputText);
+            ClientYTPlayer.videoSearch(inputText);
         }
         searchResultsContainer.scrollTop = 0;
     });
+
+    function startNewVideo(videoID){
+        //* load scripts if needed
+        //* call function to start new video based on
+        //  what kind of video it is.        
+        // switch(videoSource){
+        //     case VideoSource.YOUTUBE:
+        //         ytCreatePlayer(videoID);
+        //         break;
+        //     case VideoSource.OTHERONE:
+        //         // otherOneCreatePlayer(currURL);
+        //         break;
+        //     case VideoSource.VIMEO:                
+        //         vimeoCreatePlayer(videoID);
+        //         break;
+        // }//switch
+        vimeoCreatePlayer(videoID);
+    }
+
+    function scriptExists(source){
+        //Check if the script already exists
+        return $(`script[src="${PlayerScripts[source]}"]`).length
+    }
+
+    function vimeoCreatePlayer(videoID){
+        //Add the video in
+        //Make sure it's initialized muted.
+        //Unmute it
+        //Play it. 
+        //set all relevant vars so all functions
+        //know what to do
+        
+        if(!scriptExists(PlayerScripts.VIMEO)){
+            loadPlayerScript(PlayerScripts.VIMEO, ()=>{
+                //Initialize a video.
+                loadBigScript('../vimeoPlayer.js', _=>{
+                    buddyPlayer = new VimeoViewer(videoID, 'player');
+                });
+            });            
+        } else {
+            buddyPlayer = new VimeoViewer(videoID, 'player');
+        }
+    }
+
+    function loadPlayerScript(scriptURL, callback) {
+        var script = document.createElement("script")
+        script.type = "text/javascript";
+
+        if (script.readyState) { //IE
+            script.onreadystatechange = function () {
+                if (script.readyState == "loaded" || script.readyState == "complete") {
+                    script.onreadystatechange = null;
+                    callback();
+                }
+            };
+        } else { //Others
+            script.onload = function () {
+                callback();
+            };
+        }
+
+        script.src = scriptURL;
+        document.getElementsByTagName("head")[0].appendChild(script);
+    }
 
     function otherOneCreatePlayer(currURL){
         if(previousSource == VideoSource.YOUTUBE){
@@ -790,28 +861,39 @@ $(function(){
         $('#player').html(iframeCode);
     }
 
-    function ytCreatePlayer(currURL){
-            if(currURL != ClientYTPlayer.clientURL){
-                console.log("Trying to start URL: "+currURL);
-                console.log("Client URL before change: "+ClientYTPlayer.clientURL);
-                ClientYTPlayer.clientURL = currURL;
-                console.log("Client URL after change: "+ClientYTPlayer.clientURL);
-                ClientYTPlayer.shouldSendState = true;
-                console.log("Client should send? "+ClientYTPlayer.shouldSendState);
-                ClientYTPlayer.videoTime = 0;
-                ClientYTPlayer.addNewVideo();
-                ClientYTPlayer.currentState = CustomStates.PLAYING;
-                socket.emit('startNew', {
-                    videoID: currURL,
-                    videoTime: 0,
-                    playRate: ClientYTPlayer.playbackRate,
-                    videoState: ClientYTPlayer.currentState,
-                    thumbnail: ClientYTPlayer.thumbnail,
-                    videoTitle: ClientYTPlayer.videoTitle
-                },
-                roomID)
-                console.log("End of search submit function");
-            }
+    function ytCreatePlayer(videoID){
+            if(!scriptExists(PlayerScripts.YOUTUBE_A)){
+                loadPlayerScript(PlayerScripts.YOUTUBE_A, ()=>{
+                    //must load script b after a.
+                    loadPlayerScript(PlayerScripts.YOUTUBE_B, ()=>{
+                        //Take the code from room.ejs and put it
+                        //here. Pass in all the data about how you
+                        //want the video initialized.                        
+                    });
+                });
+            } else {
+                if(videoID != ClientYTPlayer.clientURL){
+                    console.log("Trying to start URL: "+videoID);
+                    console.log("Client URL before change: "+ClientYTPlayer.clientURL);
+                    ClientYTPlayer.clientURL = videoID;
+                    console.log("Client URL after change: "+ClientYTPlayer.clientURL);
+                    ClientYTPlayer.shouldSendState = true;
+                    console.log("Client should send? "+ClientYTPlayer.shouldSendState);
+                    ClientYTPlayer.videoTime = 0;
+                    ClientYTPlayer.addNewVideo();
+                    ClientYTPlayer.currentState = CustomStates.PLAYING;
+                    socket.emit('startNew', {
+                        videoID: videoID,
+                        videoTime: 0,
+                        playRate: ClientYTPlayer.playbackRate,
+                        videoState: ClientYTPlayer.currentState,
+                        thumbnail: ClientYTPlayer.thumbnail,
+                        videoTitle: ClientYTPlayer.videoTitle
+                    },
+                    roomID)
+                    console.log("End of search submit function");
+                }
+            }//else
     }
     
     let inFullScreen = false;
@@ -889,11 +971,15 @@ $(function(){
     }
 
     function playVideo(){
-        ClientYTPlayer.currentState = CustomStates.PLAYING;
-        player.playVideo();
+        switch(videoSource){
+            case VideoSource.YOUTUBE:
+                break;
+        }
+    }
+
+    function togglePlayIcon(){
         document.getElementById('play-pause-icon').classList.remove("fa-play");
-        document.getElementById('play-pause-icon').classList.add("fa-pause");        
-        // socket.emit('play', {});
+        document.getElementById('play-pause-icon').classList.add("fa-pause");                
     }
 
     function startVideoOver(){
@@ -908,26 +994,70 @@ $(function(){
     });
 
     $('#play-pause-button').click(function(event){
-        switch(videoSource){
-            case VideoSource.YOUTUBE:
-                ytPlayPause(event);
-                break;
-            case VideoSource.OTHERONE:
-                otherOnePlayPause(event);
-                break;
-        }
+        // switch(videoSource){
+        //     case VideoSource.YOUTUBE:
+        //         ytPlayPause(event);
+        //         break;
+        //     case VideoSource.OTHERONE:
+        //         break;
+        //     case VideoSource.VIMEO:
+        //         vimeoPlayPause(event);
+        //         break;
+        // }
+        buddyPlayer.playPause();
     });
 
-    function otherOnePlayPause(event){
-        console.log('trying to play otherone');
-        let player =  $('#otherOne').contents()
-            .find('#player').css({"color": "red", "border": "50px solid red"});
-        // player.trigger('click');
+    function vimeoPlay(){
+        player.play();
+        ClientYTPlayer.previousState = ClientYTPlayer.currentState;
+        ClientYTPlayer.currentState = CustomStates.PLAYING;
+        bigscriptTest(`we're playing`);
+        togglePlayIcon();
+    }
+
+    function vimeoPause(){
+        player.pause();
+        ClientYTPlayer.previousState = ClientYTPlayer.currentState;
+        ClientYTPlayer.currentState = CustomStates.PAUSED;
+        togglePauseIcon();
+    }
+
+    function togglePauseIcon(){
+        document.getElementById('play-pause-icon').classList.remove("fa-pause");
+        document.getElementById('play-pause-icon').classList.add("fa-play");        
+    }
+
+    function vimeoPlayPause(event){        
+        if(!player){
+            console.log("VIMEO PLAY BUTTON FAILED");
+            return;  
+        }
+        if(ClientYTPlayer.currentState == CustomStates.PLAYING){
+            vimeoPause();
+            data.videoState = ClientYTPlayer.currentState;
+            // socket.emit('pause', data, roomID);
+        } else if(ClientYTPlayer.currentState == CustomStates.UNSTARTED ||
+                  ClientYTPlayer.currentState == CustomStates.PAUSED){            
+            
+            vimeoPlay();
+            const data = {
+                videoTime: ClientYTPlayer.videoTime,
+                videoID: ClientYTPlayer.clientURL,
+                thumbnail: ClientYTPlayer.thumbnail,
+                playRate: ClientYTPlayer.playbackRate,
+                videoLength: ClientYTPlayer.videoLength                
+            };
+            data.videoState = ClientYTPlayer.currentState;
+            // socket.emit('play', data, roomID);
+        } else if(ClientYTPlayer.currentState == CustomStates.ENDED){
+            // startVideoOver();
+            // socket.emit('startOver', roomID);
+        }
     }
 
     function ytPlayPause(event){
         if(!player){
-            console.log("PLAY BUTTON FAILED")
+            console.log("PLAY BUTTON FAILED");
             return;  
         }
         if(!progressBarInitialized){
@@ -937,8 +1067,7 @@ $(function(){
             initializeToolTip();
             player.setVolume(parseInt(volumeSlider.value));
         }
-        
-        
+                
         const data = {
             videoTime: ClientYTPlayer.videoTime,
             videoID: ClientYTPlayer.clientURL,
@@ -946,28 +1075,24 @@ $(function(){
             playRate: ClientYTPlayer.playbackRate,
             videoLength: ClientYTPlayer.videoLength                
         };
+        // if(inFullScreen){
+        //     videoContainer.style.flexWrap = "nowrap";
+        //     controlsToggled = true;
+        //     setTimeout(()=>{
+        //         controlsToggled = false;
+        //         videoContainer.style.flexWrap = "wrap";                    
+        //     }, 3000);
+        // }
 
         changeTriggeredByControls = true;
         if(ClientYTPlayer.currentState == CustomStates.PLAYING){
             pauseVideo();
             data.videoState = ClientYTPlayer.currentState;
             socket.emit('pause', data, roomID);
-            // if(inFullScreen){
-            //     videoContainer.style.flexWrap = "nowrap";
-            //     controlsToggled = true;
-            //     setTimeout(()=>{
-            //         controlsToggled = false;
-            //         videoContainer.style.flexWrap = "wrap";                    
-            //     }, 3000);
-            // }
-            // ClientYTPlayer.currentState = YT.PlayerState.PAUSED;
-            // player.pauseVideo();
-            // document.getElementById('play-pause-icon').classList.remove("fa-pause");
-            // document.getElementById('play-pause-icon').classList.add("fa-play");
-            // socket.emit('pause', {});
         } else if(ClientYTPlayer.currentState == CustomStates.UNSTARTED ||
-                ClientYTPlayer.currentState == CustomStates.PAUSED){
-            playVideo();
+                  ClientYTPlayer.currentState == CustomStates.PAUSED){            
+            player.playVideo();
+            togglePlayIcon();
             const data = {
                 videoTime: ClientYTPlayer.videoTime,
                 videoID: ClientYTPlayer.clientURL,
@@ -977,21 +1102,9 @@ $(function(){
             };
             data.videoState = ClientYTPlayer.currentState;
             socket.emit('play', data, roomID);
-            // ClientYTPlayer.currentState = YT.PlayerState.PLAYING;
-            // player.playVideo();
-            // document.getElementById('play-pause-icon').classList.remove("fa-play");
-            // document.getElementById('play-pause-icon').classList.add("fa-pause");        
-            // socket.emit('play', {});
         } else if(ClientYTPlayer.currentState == CustomStates.ENDED){
             startVideoOver();
             socket.emit('startOver', roomID);
-            // ClientYTPlayer.currentState = CustomStates.PLAYING;
-            // ClientYTPlayer.videoTime = 0;
-            // player.seekTo(ClientYTPlayer.videoTime);
-            // player.playVideo();
-            // document.getElementById('play-pause-icon').classList.remove("fa-play");
-            // document.getElementById('play-pause-icon').classList.add("fa-pause");
-            // socket.emit('play', {});
         }
     }
 
@@ -1080,7 +1193,7 @@ $(function(){
         progressBar.setAttribute('max', maxTime);        
         progressBarInitialized = true;
         bufferBar.setAttribute('max', maxTime);
-    }
+    }    
 
     function stopYTEvent(event){
         playerInitialized = true;
@@ -1223,6 +1336,32 @@ $(function(){
         // });      
         // serverListInitialized = true;
     }
+
+    // bigscriptTest('Yo dawg');
+    
+    function loadBigScript(scriptURL, callback) {
+        var script = document.createElement("script")
+        script.type = "text/javascript";
+
+        if (script.readyState) { //IE
+            script.onreadystatechange = function () {
+                if (script.readyState == "loaded" || script.readyState == "complete") {
+                    script.onreadystatechange = null;
+                    callback();
+                }
+            };
+        } else { //Others
+            script.onload = function () {
+                callback();
+            };
+        }
+
+        script.src = scriptURL;
+        document.getElementsByTagName("head")[0].appendChild(script);
+    }
+
+    
+
 
     // const initializeInterval = setInterval(initializeServerList, 300);
 

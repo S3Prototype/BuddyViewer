@@ -37,25 +37,25 @@ const fs = require('fs')
 const youtubedl = require('youtube-dl')
 
 // const video = youtubedl('past_url_here')
-const url = `https://twitter.com/bellingcat/status/1347253404012261377`;
+// const url = `https://vimeo.com/122957`;
 
-const options = [];
-try{
-    youtubedl.getInfo(url, options, function(err, info) {
-        if (err) throw err
-        console.log('id:', info.id)
-        console.log('title:', info.title)
-        console.log('url:', info.url)
-        console.log('thumbnail:', info.thumbnail)
-        console.log('description:', info.description)
-        console.log('filename:', info._filename)
-        console.log('format id:', info.format_id)
-    });
-} catch(err){
-    console.log('==============');
-    console.log("Couldn't get vid info: "+err);
-    console.log('==============');
-}
+// const options = [];
+// try{
+//     youtubedl.getInfo(url, options, function(err, info) {
+//         if (err) throw err
+//         console.log('id:', info.id)
+//         console.log('title:', info.title)
+//         console.log('url:', info.url)
+//         console.log('thumbnail:', info.thumbnail)
+//         console.log('description:', info.description)
+//         console.log('filename:', info._filename)
+//         console.log('format id:', info.format_id)
+//     });
+// } catch(err){
+//     console.log('==============');
+//     console.log("Couldn't get vid info: "+err);
+//     console.log('==============');
+// }
 // Will be called when the download starts.
 // video.on('info', function(info) {
 //   console.log('Download started');
@@ -602,7 +602,7 @@ app.post('/create-new-room', (req, res)=>{
     console.log("SECURITY SETTING: "+securitySetting+`(${securityResult})`);
     createEmptyRoom(securityResult, roomName, roomDescription, rawID)
     .then(({roomID})=>{
-        res.send(err);
+        res.redirect(`/room/${roomID}`);
     });
 });
 

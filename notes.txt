@@ -1,3 +1,9 @@
+(1/13/21)
+Option 1: Create a BuddyViewer global object. It has a player property, and methods that interact with that player based on whatever its videoSource property is.
+
+Make a BuddyViewer class, and make child classes for each of the types of players. Those child classes will implement their own methods. Our global BuddyViewer object will hold an instance of one of the child classes.
+
+
 (1/7/21)
 Layout for room list item:
 

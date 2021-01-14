@@ -1,7 +1,9 @@
 DOING:
 * Add playing from other sites
-    * Will probably have to write in custom code for some big non-youtube sites so it just works. Also search feature.
-    * For the rest, when the link is added, just gather all available mp4's and create search results from them and let the user choose. Just make it clear that the options are the "Videos found at this link." Put a length.
+    * Working on Vimeo.
+        * Right now if I use the loadPlayerScripts code to load in the vimeo code, everything works very well. So we're going to do that. Every time there's a new player added, load in that script code. We have to refactor at this point, because it's such a mess that I'm not even clear on which functions exist or don't already. But I have validated that vimeo works. At least on desktop.
+    * So I've started building out the OOP rendition of the code. It creates more work for infrastructure, but allows the code in the main script file to be way more concise. Also allows me to put all code that's relevant to each other together in their own files.
+        * Coming back to it tomorrow, I want to finish building the vimeo player class out. Once I've got that done, it's on to the youtube player. With those both done, I'll have a very nice basis for my code where I can build out to implementing the last few, and then I'll finally implement the code for extracting videos through youtubedl.
 
 *THOUGHTS:
 
@@ -11,6 +13,7 @@ DOING:
 * Give rooms logos. Would be cool.
 
 TODO:
+* Change from buttons to a tags so they don't do that weird press animation anymore.
 * Gotta implement a different session store from the default.
     ** https://github.com/expressjs/session#compatible-session-stores
 * Try to use ejs layouts.

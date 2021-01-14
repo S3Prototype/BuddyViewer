@@ -1,5 +1,10 @@
 FEATURE LIST:
 
+* Add ability to switch waht the default search is from youtube to other sites. Even allow them to type in the domain of the site they want searched.
+* Polls in the room. Like strawpoll. Don't need to store it in the server at all.
+    * Could have a poll pop up whenever the video is about to end saying "Next up: [video name and thumbnail] <Replay Current Video> <Skip to next video> <pause queue>
+* Look up that media player functionality mentioned in the syntax.fm podcast.
+* Pop out video player when user scrolls far enough down. Should just have one big playpause button.
 * Playlists. People should be able to add to a custom playlist in the actual room, and the history should also be able to be played like a playlist. Users can add to the playlist if the admin allows it, or remove videos from the playlist.
 * Add partials for the signup forms and room creation forms.
 * People can become "admins" of rooms. These users always have host rights, and can change it so only certain people are able to change the video, play/pause, etc.
