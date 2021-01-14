@@ -24,13 +24,6 @@ class VimeoViewer extends BuddyViewer{
     }
 
     setState(state){
-        // const paused = this.player.getPaused();
-        // const ended = this.player.getEnded();
-        // if(paused){
-        //     this.previousState = CustomStates.PAUSED;
-        // } else if (ended){
-        //     this.previousState = CustomStates.ENDED;
-        // }
         this.previousState = this.state;
         this.state = state;
     }
@@ -48,12 +41,11 @@ class VimeoViewer extends BuddyViewer{
     }
 
     isPaused(){
-        // this.player.getPaused().then(result=>{return result});
-        return this.state == 2;
+        return this.state == CustomStates.PAUSED;
     }
 
     isEnded(){
-        return this.state == 0;       
+        return this.state == CustomStates.ENDED;       
     }
 
     playPause(){
@@ -66,5 +58,15 @@ class VimeoViewer extends BuddyViewer{
 
     setVolume(vol){
         this.player.setVolume(vol);
+    }
+
+    progressBarScrub(event) {
+        const progressBar = $('#progress-bar');
+        const scrubTime = (event.offsetX / progressBar.offsetWidth) * this.player.getDuration();
+        player.setCurrentTime(scrubTime);
+        // ClientYTPlayer.currentState = CustomStates.SEEKING;
+        ClientYTPlayer.updateTimeUI(scrubTime);
+        socket.emit('seek', scrubTime, roomID);
+        // ClientYTPlayer.SendStateToServer({});
     }
 }

@@ -9,13 +9,13 @@ class BuddyViewer{
     }
 
     showPauseIcon(){
-        document.getElementById('play-pause-icon').classList.remove("fa-play");
-        document.getElementById('play-pause-icon').classList.add("fa-pause");                
+        $('#play-pause-icon').removeClass('fa-play');
+        $('#play-pause-icon').addClass('fa-pause');
     }
 
     showPlayIcon(){
-        document.getElementById('play-pause-icon').classList.remove("fa-pause");
-        document.getElementById('play-pause-icon').classList.add("fa-play");        
+        $('#play-pause-icon').removeClass('fa-pause');
+        $('#play-pause-icon').addClass('fa-play');
     }
 }
 const CustomStates = {
