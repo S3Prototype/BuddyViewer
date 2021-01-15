@@ -40,6 +40,10 @@ const roomSchema = new Schema({
         type: Array,
         required: false
     },
+    videoSource: {
+        type: Number,
+        required: false
+    },
     videoID: {
         type: String,
         required: false

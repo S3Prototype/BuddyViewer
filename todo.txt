@@ -1,9 +1,10 @@
 DOING:
 * Add playing from other sites
-    * Working on Vimeo.
+    * (1/12) Working on Vimeo.
         * Right now if I use the loadPlayerScripts code to load in the vimeo code, everything works very well. So we're going to do that. Every time there's a new player added, load in that script code. We have to refactor at this point, because it's such a mess that I'm not even clear on which functions exist or don't already. But I have validated that vimeo works. At least on desktop.
-    * So I've started building out the OOP rendition of the code. It creates more work for infrastructure, but allows the code in the main script file to be way more concise. Also allows me to put all code that's relevant to each other together in their own files.
+    * (1/13) So I've started building out the OOP rendition of the code. It creates more work for infrastructure, but allows the code in the main script file to be way more concise. Also allows me to put all code that's relevant to each other together in their own files.
         * Coming back to it tomorrow, I want to finish building the vimeo player class out. Once I've got that done, it's on to the youtube player. With those both done, I'll have a very nice basis for my code where I can build out to implementing the last few, and then I'll finally implement the code for extracting videos through youtubedl.
+    * (1/14) Finished fully reshaping how the underlying code works. Now I just need to reshape how data is sent over sockets, and finish implementing vimeo. Then it will be on to youtube, which will clean up SO MUCH code. From there I can implement the others before turning toward the youtubedl stuff. That will essentially put the most basic version of the site to rest, at which point I can finalize backend stuff and then do the UI.
 
 *THOUGHTS:
 
@@ -13,6 +14,7 @@ DOING:
 * Give rooms logos. Would be cool.
 
 TODO:
+* Add a search button to the searchbar. Also detach it from the videocontainer so it's its own thing.
 * Change from buttons to a tags so they don't do that weird press animation anymore.
 * Gotta implement a different session store from the default.
     ** https://github.com/expressjs/session#compatible-session-stores

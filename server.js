@@ -363,17 +363,18 @@ function findRoom(roomID){
 
 function updateRoomState(data, roomID, newState){
     // const currRoom = findRoom(roomID);
-    const {videoTitle, videoTime, videoID, playRate, thumbnail} = data;
+    const {videoLength, videoSource, videoTitle, videoTime, videoID, playRate, thumbnail} = data;
     RoomModel.findOne({roomID})
     .then(room=>{                
         room.videoTitle = videoTitle;
+        room.videoSource = videoSource;
         room.videoTime = videoTime;
         room.videoID = videoID;
         room.playRate = playRate;
         room.thumbnail = thumbnail;
         room.videoLength = 0;
-        if(data.videoLength){
-            room.videoLength = data.videoLength;
+        if(videoLength){
+            room.videoLength = videoLength;
         }
         let history = room.history;
         if(!history){
@@ -381,8 +382,10 @@ function updateRoomState(data, roomID, newState){
         }
 
         if(!history.some(item=>item.videoID == videoID)){
+            //if the history doesn't contain this new video,
+            //add it to the history.
             history.push({
-                videoTitle, videoTime, videoID, thumbnail
+                videoSource, videoTitle, videoTime, videoID, thumbnail
             });
         }
         console.log('======');
@@ -393,6 +396,7 @@ function updateRoomState(data, roomID, newState){
             {roomID}, //query for the room to update
             {$set: {
                 videoTime,
+                videoSource,
                 videoID,
                 playRate,
                 thumbnail,
@@ -540,6 +544,7 @@ io.on('connection', socket=>{
 
     socket.on('startNew', (data, roomID)=>{
         updateRoomState(data, roomID, CustomStates.PAUSED);
+        data.roomID = roomID;        
         socket.to(roomID).broadcast.emit('startNew', data);
     });
 
