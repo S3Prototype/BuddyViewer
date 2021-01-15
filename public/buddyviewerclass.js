@@ -1,5 +1,5 @@
 class BuddyViewer{
-    constructor(videoID, state, videoDuration, thumbnail="", playRate=1, time=0, roomID){
+    constructor(videoID, state, videoDuration, thumbnail="", time=0, playRate){
         this.videoID = videoID;
         this.state = state;
         this.thumbnail = thumbnail;

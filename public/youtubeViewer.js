@@ -1,7 +1,10 @@
-class VimeoViewer extends BuddyViewer{
+class YouTubeViewer extends BuddyViewer{
     constructor(data){
-        super(data.videoID, -1, data.videoState, data.videoDuration, data.videoTime, data.playRate);
-        this.source = VideoSource.VIMEO;       
+        super(data.videoID, CustomStates.UNSTARTED,
+            data.videoState, data.videoDuration,
+            data.videoTime, data.playRate);
+
+        this.source = VideoSource.YOUTUBE;       
         // this.playerTime = 0;
         this.buffered = 0;
         this.oldVolume = 0;
@@ -15,52 +18,48 @@ class VimeoViewer extends BuddyViewer{
             videoTime, playRate, videoState, thumbnail,
             roomID, videoDuration} = data;
         const options = {
-            controls: false,
-            autoplay: false,
-            muted: true,
-            playsinline: true,
-            byline: false,
-            portrait: false,
-            title: false,
-            speed: true,
-            url: `https://player.vimeo.com/video/${videoID}` //assuming videoID won't be stripped of the surrounding url
+            enablejsapi: 1,
+            autoplay: 0,
+            rel: 0,
+            controls: 0,
+            origin: 'anonymous',
+            disablekb: 1,
+            modestbranding: 1,
+            cc_load_policy: parseInt(
+                localStorage.getItem('cc_load_policy')) || 0,
+            cc_lang_pref: localStorage.getItem('cc_lang_pref')
+                || 'en',
+            mute: 1
         }
         $(`<div id="player"></div>`).insertBefore('iframe');
         $('iframe').remove();
-        this.player = new Vimeo.Player('player', options);
-        this.initListeners();
-        this.finalizeVideo(data);
+        this.player = new YT.Player('player', {
+            height: '100%',
+            width: '100%',
+            videoId: videoID,
+            events: {
+                'onReady': initNewPlayer,
+                "onStateChange": stopYTEvent,
+                "start": videoTime
+            },
+            playerVars: options
+        });
     }
 
-    initListeners(){
-        this.player.on('volumechange', data=>{
-            this.volume = data.volume;
-        });
-        this.player.on('timeupdate', update=>{
-            // console.log("Time update: "+update.seconds);
-            this.duration = update.duration;
-            this.playerTime = update.seconds;
-            if(!this.isInitialized()){
-                document.dispatchEvent(new Event('initialize'));
-            }
-            this.sendTimeEvent();
-        });
-        this.player.on('progress', progress=>{
-            console.log("Buffer updatE: "+update.seconds);
-            this.buffered = progress.percent * this.duration;
-        });
-        this.player.on('ended', _=>{
-            this.showPlayIcon();
-            this.setState(CustomStates.ENDED);
-            if(this.getLooping()){
-                this.startVideoOver();                
-            }
-        });
-        this.player.getTextTracks().then(tracks=>{
-            if(tracks){
-                this.hasCaptions = true;
-            }
-        });
+    initNewPlayer(){
+        console.log("initNewPlayer STARTED");
+        this.seek(videoTime);
+        this.getState() == CustomStates.PLAYING ?
+            this.play() : this.pause();
+
+        this.player.setPlayRate(this.playRate);
+
+        console.log(`Starting video with state: ${this.getState()}`);
+        console.log("===================");
+        
+        this.unMute();
+        this.player.setVolume(parseInt(this.volume ?? 50));
+        console.log("initNewPlayer ENDED");
     }
 
     startVideoOver(){
@@ -77,7 +76,8 @@ class VimeoViewer extends BuddyViewer{
     }
 
     getBuffered(){
-        return this.buffered;
+        return this.player.getVideoLoadedFraction()
+            * this.player.getDuration();
     }
 
     getPlayerTime(){
@@ -86,18 +86,13 @@ class VimeoViewer extends BuddyViewer{
 
     play(){
         this.setState(CustomStates.PLAYING);
-        this.player.play().then(_=>{
-            document.dispatchEvent(new Event('initialize'));          
-        });
+        this.player.play();
         this.showPauseIcon();
     }
 
     pause(){
         this.setState(CustomStates.PAUSED);        
-        this.player.pause()
-        .then(_=>{
-            document.dispatchEvent(new Event('initialize'));           
-        });
+        this.player.pause();
         this.showPlayIcon();
     }
 
@@ -123,35 +118,27 @@ class VimeoViewer extends BuddyViewer{
     }
 
     setVolume(vol){
-        this.muted = vol == 0;
-        this.player.setVolume(parseFloat(vol))
-        .then(volume=>{
-            this.volume = volume;
-        });
+        if(this.player.isMuted()) this.unMute();
+        this.player.setVolume(parseInt(vol));
     }
 
     seek(time){
-        this.player.setCurrentTime(time)
-        .then(done=>{
-            if(this.state == CustomStates.PAUSED ||
-               this.state == CustomStates.ENDED){
-                this.pause();
-            }
-            this.sendTimeEvent();
-        });
+        this.player.seekTo(time);
+        this.sendTimeEvent()        
     }
 
     mute(){
-        this.oldVolume = this.volume;
-        this.setVolume(0);
+        this.player.mute();
+        this.muted = true;
     }
 
     unMute(){
-        this.setVolume(this.oldVolume || 0.2);
+        this.player.unMute();
+        this.muted = false;
     }
     
     isMuted(){
-        return this.volume == 0;
+        return this.player.muted;
     }
 
     toggleCaptions(){

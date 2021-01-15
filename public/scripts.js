@@ -1,5 +1,14 @@
 $(function(){
     
+        //!Need code to set up the player controls separate from the player itself, checking certain vars like below.
+        //!Not sure individual video players should have individual cc settings. Like if one is set to cc active, all should start that way.
+    // if(parseInt(localStorage.getItem('cc_load_policy')) != 0){
+    //     document.getElementById('closed-captions-icon').className = "fas fa-closed-captioning";
+    // }
+    // if(localStorage.getItem('looping') == 'true'){
+    //     document.getElementById('loop-button').style.color = "white";
+    // }
+
     console.log(`Welcome to ${roomID}`);
     const storedRoomID = localStorage.getItem('roomID');
     console.log(`STORED ID IS ${storedRoomID}`);
@@ -174,14 +183,6 @@ $(function(){
             // document.getElementById('play-pause-icon').className = "fas fa-pause";
             player.setVolume(parseInt(volumeSlider.value));
             playerInitialized = true;
-
-            // while(!progressBarInitialized){
-            //     initializeYTProgressBar();
-            // }
-
-            // while(!tooltipInitialized){
-            //     initializeToolTip();
-            // }
             // if(ClientYTPlayer.timeShouldBeSaved){
             //     //if we're changing the closedcaptions, basically
             //     player.seekTo(ClientYTPlayer.videoTime);
@@ -209,18 +210,8 @@ $(function(){
             //     // ClientYTPlayer.timeShouldBeSaved = false;
             //     ClientYTPlayer.shouldSendState = true;
             // }
-
-            // if(ClientYTPlayer.currentState == CustomStates.PLAYING){
-            //     document.getElementById('play-pause-icon').classList.remove("fa-play");
-            //     document.getElementById('play-pause-icon').classList.add("fa-pause");
-            // } else if (ClientYTPlayer.currentState == CustomStates.PAUSED){
-            //     player.pauseVideo();
-            // }
-            // stayMuted || player.unMute();
             player.unMute();
-                //Where do we clear the ping interval first?
-            // ClientYTPlayer.pingInterval = setInterval(pingVideoSetting, 200);
-            // console.log("initNewPlayer ENDED");            
+            console.log("initNewPlayer ENDED");            
         }
         static extractID(url){
             // const startIndex = url.indexOf('v=') + 2;
@@ -606,20 +597,6 @@ $(function(){
     });
 
     function startNewVideo(videoID, source){
-        //* load scripts if needed
-        //* call function to start new video based on
-        //  what kind of video it is.        
-        // switch(videoSource){
-        //     case VideoSource.YOUTUBE:
-        //         ytCreatePlayer(videoID);
-        //         break;
-        //     case VideoSource.OTHERONE:
-        //         // otherOneCreatePlayer(currURL);
-        //         break;
-        //     case VideoSource.VIMEO:                
-        //         vimeoCreatePlayer(videoID);
-        //         break;
-        // }//switch
         const data = {
             videoID,
             videoSource: source, 
@@ -630,15 +607,15 @@ $(function(){
             thumbnail: "",
             roomID
         }
+        changeVolumeSettings(source);
+        data.volume = volumeSlider.value;
         createNewPlayer[source](data);
         socket.emit('startNew', data, roomID);
-        // vimeoCreatePlayer(videoID);
     }
-
 
     function scriptExists(source){
         //Check if the script already exists
-        return $(`script[src="${PlayerScripts[source]}"]`).length
+        return $(`script[src="${PlayerScripts[source]}"]`).length > 0;
     }
 
     createNewPlayer = [
@@ -647,10 +624,66 @@ $(function(){
         vimeoCreatePlayer
     ];
 
+    function changeVolumeSettings(source){
+        let step = 1;
+        let value = 50;
+        let max = 100;
+        switch(source){
+            case VideoSource.VIMEO:
+                step = 0.01;
+                value = 0.5;
+                max = 1;
+        }
+        volumeSlider.setAttribute('step', step);
+        volumeSlider.setAttribute('value', value);
+        volumeSlider.setAttribute('max', max);
+    }
+    
+    function ytCreatePlayer(data){
+        if(!scriptExists(PlayerScripts.YOUTUBE_A)){
+            document.addEventListener('ytReady', _=>{
+                loadPlayerScript('../youtubeViewer.js', _=>{
+                    buddyPlayer = new YouTubeViewer(data);
+                });
+            });
+            loadPlayerScript(PlayerScripts.YOUTUBE_A, ()=>{
+                //must load script b after a.
+                loadPlayerScript(PlayerScripts.YOUTUBE_B, ()=>{
+                    //Take the code from room.ejs and put it
+                    //here. Pass in all the data about how you
+                    //want the video initialized.                        
+                    //buddyPlayer = new VimeoViewer(data);
+                    //initializeProgressBar(buddyPlayer.getDuration());
+                    //initializeToolTip(buddyPlayer.getDuration());                    
+                });
+            });
+        } else {
+            if(videoID != ClientYTPlayer.clientURL){
+                console.log("Trying to start URL: "+videoID);
+                console.log("Client URL before change: "+ClientYTPlayer.clientURL);
+                ClientYTPlayer.clientURL = videoID;
+                console.log("Client URL after change: "+ClientYTPlayer.clientURL);
+                ClientYTPlayer.shouldSendState = true;
+                console.log("Client should send? "+ClientYTPlayer.shouldSendState);
+                ClientYTPlayer.videoTime = 0;
+                ClientYTPlayer.addNewVideo();
+                ClientYTPlayer.currentState = CustomStates.PLAYING;
+                socket.emit('startNew', {
+                    videoID: videoID,
+                    videoTime: 0,
+                    playRate: ClientYTPlayer.playbackRate,
+                    videoState: ClientYTPlayer.currentState,
+                    thumbnail: ClientYTPlayer.thumbnail,
+                    videoTitle: ClientYTPlayer.videoTitle
+                },
+                roomID)
+                console.log("End of search submit function");
+            }
+        }//else
+    }
+
     function vimeoCreatePlayer(data){
-        volumeSlider.setAttribute('step', 0.01);
-        volumeSlider.setAttribute('value', 0.5);
-        volumeSlider.setAttribute('max', 1);
+        changeVolumeSettings(data.videoSource);
         if(!scriptExists(PlayerScripts.VIMEO)){
             loadPlayerScript(PlayerScripts.VIMEO, ()=>{
                 //Initialize a video.
@@ -700,41 +733,6 @@ $(function(){
         // $('#player').append(newElement);
         console.log(iframeCode);        
         $('#player').html(iframeCode);
-    }
-
-    function ytCreatePlayer(videoID){
-            if(!scriptExists(PlayerScripts.YOUTUBE_A)){
-                loadPlayerScript(PlayerScripts.YOUTUBE_A, ()=>{
-                    //must load script b after a.
-                    loadPlayerScript(PlayerScripts.YOUTUBE_B, ()=>{
-                        //Take the code from room.ejs and put it
-                        //here. Pass in all the data about how you
-                        //want the video initialized.                        
-                    });
-                });
-            } else {
-                if(videoID != ClientYTPlayer.clientURL){
-                    console.log("Trying to start URL: "+videoID);
-                    console.log("Client URL before change: "+ClientYTPlayer.clientURL);
-                    ClientYTPlayer.clientURL = videoID;
-                    console.log("Client URL after change: "+ClientYTPlayer.clientURL);
-                    ClientYTPlayer.shouldSendState = true;
-                    console.log("Client should send? "+ClientYTPlayer.shouldSendState);
-                    ClientYTPlayer.videoTime = 0;
-                    ClientYTPlayer.addNewVideo();
-                    ClientYTPlayer.currentState = CustomStates.PLAYING;
-                    socket.emit('startNew', {
-                        videoID: videoID,
-                        videoTime: 0,
-                        playRate: ClientYTPlayer.playbackRate,
-                        videoState: ClientYTPlayer.currentState,
-                        thumbnail: ClientYTPlayer.thumbnail,
-                        videoTitle: ClientYTPlayer.videoTitle
-                    },
-                    roomID)
-                    console.log("End of search submit function");
-                }
-            }//else
     }
 
     function toggleFullScreenOn(){
