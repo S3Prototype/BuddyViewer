@@ -147,20 +147,20 @@ function getAllRooms(){
     return RoomModel.find();
 }
 
-function joinRoom(socket, userData, videoData, roomID){
+function joinRoom(socket, userData, roomID){
     findRoom(roomID)
     .then(currRoom=>{
+        socket.join(roomID);
         if(currRoom){
             console.log("Joining a pre-existing room.");
-            addToRoom(socket.id, userData, videoData, currRoom);
+            addToRoom(socket.id, userData, currRoom);
         } else {
             //THis code will basically never run,
             //because we call createEmptyRoom when people
             //take the route to even get here.
             console.log("Creating a new room.");            
-            createNewRoom(socket.id, userData, videoData, roomID);
+            createNewRoom(socket.id, userData, roomID);
         }
-        socket.join(roomID);
     })
     .catch(err=>logFailure('join room', err));
 }
@@ -169,16 +169,21 @@ function logFailure(goal, error){
     console.log(`Failed to ${goal} becuase: \n${error}`);
 }
 
-function addToRoom(socketID, userData, videoData, currRoom){    
+function addToRoom(socketID, userData, currRoom){    
     const { localName, nameOnServer, userID, pfp } = userData;
-    const { videoID, videoTime } = videoData;
     // findRoom(roomID)
     // .then(currRoom=>{
         let isHost = false;
         if(currRoom.users.length < 1 || !currRoom.hostSocketID){
-            //if this user is the only one in the room
+            //if this user is the only one in the room, make them host
             isHost = true;
             currRoom.hostSocketID = socketID;
+        } else {
+            // If we're not the host, request state from the host.
+            console.log(`Trying to get state from host (${
+                currRoom.hostSocketID})`);
+            io.to(currRoom.hostSocketID).emit('requestState',
+                socketID);
         }
         
         currRoom.users.push({
@@ -218,7 +223,9 @@ const defaultDescription = "A lovely room for watching videos! Join!";
 const defaultThumbnail = "https://i.ytimg.com/vi/l-7--PSbfbI/maxresdefault.jpg";
 const defaultSecuritySetting = RoomSecurity.OPEN;
 
-async function createEmptyRoom(securitySetting, roomName, roomDescription, roomID){
+async function createEmptyRoom(securitySetting, roomName,
+                                roomDescription, roomID
+    ){
     if(!roomName){
         roomName = randomWords();
     }
@@ -235,6 +242,8 @@ async function createEmptyRoom(securitySetting, roomName, roomDescription, roomI
         securitySetting,
         thumbnail: defaultThumbnail,
         users: [],
+        videoTitle: "",
+        videoSource: 4,
         videoID: "", //holds id most recently played video
         videoTime: 0, //most recent video time,
         videoState: CustomStates.UNSTARTED,//most recent state
@@ -250,9 +259,8 @@ async function createEmptyRoom(securitySetting, roomName, roomDescription, roomI
     // .catch(err=>logFailure(`creat empty room from ${roomID}`, err));
 }
 
-async function createNewRoom(socketID, userData, videoData, roomID){
+async function createNewRoom(socketID, userData, roomID){
     const { localName, nameOnServer, userID, pfp } = userData;
-    const { videoID, videoTime } = videoData;
     const randomName = randomWords();
     const thisRoom = await RoomModel.create({
         roomID: randomName+'-'+roomID,
@@ -266,9 +274,10 @@ async function createNewRoom(socketID, userData, videoData, roomID){
         users: [{
             socketID, localName, nameOnServer, userID, isHost: true, pfp
         }],
-        videoID, //holds id most recently played video
-        videoTime, //most recent video time,
+        videoID: "", //holds id most recently played video
+        videoTime: 0, //most recent video time,
         videoState: CustomStates.UNSTARTED,//most recent state
+        videoDuration: 0,
         playRate: 1,
         messages: [
                     {
@@ -363,25 +372,17 @@ function findRoom(roomID){
 
 function updateRoomState(data, roomID, newState){
     // const currRoom = findRoom(roomID);
-    const {videoLength, videoSource, videoTitle, videoTime, videoID, playRate, thumbnail} = data;
+    const {videoSource, videoTitle,
+           videoTime, videoID, playRate,
+           thumbnail, videoDuration} = data;
     RoomModel.findOne({roomID})
-    .then(room=>{                
-        room.videoTitle = videoTitle;
-        room.videoSource = videoSource;
-        room.videoTime = videoTime;
-        room.videoID = videoID;
-        room.playRate = playRate;
-        room.thumbnail = thumbnail;
-        room.videoLength = 0;
-        if(videoLength){
-            room.videoLength = videoLength;
-        }
+    .then(room=>{
         let history = room.history;
         if(!history){
             history = [];
         }
 
-        if(!history.some(item=>item.videoID == videoID)){
+        if(!history.some(item=>{return item.videoID == videoID})){
             //if the history doesn't contain this new video,
             //add it to the history.
             history.push({
@@ -389,6 +390,7 @@ function updateRoomState(data, roomID, newState){
             });
         }
         console.log('======');
+        console.log(`Room history is now:`);
         console.log(JSON.stringify(history, null, 2));
         console.log('======');
 
@@ -401,12 +403,11 @@ function updateRoomState(data, roomID, newState){
                 playRate,
                 thumbnail,
                 videoTitle,
-                videoLength: room.videoLength,
+                videoDuration: videoDuration ? videoDuration : 0,
                 history
             }} //value to update
         ).then(result=>{
-            console.log(`Room history is now:`);
-            console.log(JSON.stringify(result.history, null, 2));
+            //This returns the room prior to the update
         });
     })
     .catch((err)=>{
@@ -421,17 +422,18 @@ const listRoomID = "LISTROOM";
 
 io.on('connection', socket=>{
 
-    socket.on('joinRoom', (userData, videoData, roomID)=>{
-        joinRoom(socket, userData, videoData, roomID);
+    socket.on('joinRoom', (userData, roomID)=>{
+        joinRoom(socket, userData, roomID);
             //Now ask for the state from the host:
         // const hostSocketID = 
-        findRoom(roomID)
-        .then(({hostSocketID})=>{
-            if(hostSocketID != socket.id){
-                console.log(`Trying to get state from host (${hostSocketID})`);
-                io.to(hostSocketID).emit('requestState', socket.id);
-            }
-        })
+        // findRoom(roomID)
+        // .then((currRoom)=>{
+        //     const
+        //     if(hostSocketID != socket.id){
+        //         console.log(`Trying to get state from host (${hostSocketID})`);
+        //         io.to(hostSocketID).emit('requestState', socket.id);
+        //     }
+        // })
     });
 
     socket.on('joinListRoom', _=>{
@@ -450,11 +452,8 @@ io.on('connection', socket=>{
     });
 
     socket.on('sendState', (data)=>{
-        // data.senderSocketID = socket.id;
-        const {requesterSocketID} = data;
-        io.to(requesterSocketID).emit('initPlayer', data);
-        const requesterLocalName = data.localName;
-        console.log(`STATE SENT TO ${requesterLocalName}`);
+        io.to(data.requesterSocketID).emit('initPlayer', data);
+        console.log(`STATE SENT TO ${data.requesterSocketID}`);
     });                    
 
     // socket.on('queryState', (data, room)=>{
@@ -502,6 +501,21 @@ io.on('connection', socket=>{
             }
             socket.to(roomID).broadcast.emit('pause', {
                 state: CustomStates.PAUSED,
+                isHost,
+                videoTime: data.videoTime
+            });
+        });
+    });
+
+    socket.on('playPause', (data, roomID)=>{
+        findRoom(roomID)
+        .then(({hostSocketID})=>{
+            const isHost = hostSocketID == socket.id
+            if(isHost){
+                updateRoomState(data, roomID, data.videoState)
+            }
+            socket.to(roomID).broadcast.emit('playPause', {
+                videoState: data.videoState,
                 isHost,
                 videoTime: data.videoTime
             });

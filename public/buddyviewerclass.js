@@ -1,5 +1,5 @@
 class BuddyViewer{
-    constructor(videoID, state, thumbnail="", playRate=1, time=0, roomID){
+    constructor(videoID, state, videoDuration, thumbnail="", playRate=1, time=0, roomID){
         this.videoID = videoID;
         this.state = state;
         this.thumbnail = thumbnail;
@@ -16,6 +16,15 @@ class BuddyViewer{
         this.captionsEnabled = false;
         this.hasCaptions = false;
         this.looping = false;
+        this.duration = videoDuration;
+    }
+
+    sendTimeEvent(){
+        document.dispatchEvent(new Event('videotime'));
+    }
+
+    getDuration(){
+        return this.duration;
     }
 
     getLooping(){
@@ -61,12 +70,14 @@ class BuddyViewer{
             videoTime: this.getPlayerTime(),
             playRate: this.getPlayRate(),
             videoState: this.getState(),
-            thumbnail: this.getThumbnail()
+            thumbnail: this.getThumbnail(),
+            videoTitle: this.getTitle(),
+            videoDuration: this.getDuration()
         }
     }
 
     getTitle(){
-        return this.videoTitle();
+        return this.videoTitle;
     }
 
     getTime(){

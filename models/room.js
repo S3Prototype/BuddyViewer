@@ -64,7 +64,7 @@ const roomSchema = new Schema({
         type: Array,
         required: false
     },
-    videoLength: {
+    videoDuration: {
         type: Number,
         require: false
     }

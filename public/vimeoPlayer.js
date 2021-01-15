@@ -1,19 +1,19 @@
 class VimeoViewer extends BuddyViewer{
     constructor(data){
-        super(data.videoID, -1, data.thumbnail);
+        super(data.videoID, -1, data.videoState, data.videoDuration, data.videoTime, data.playRate);
         this.source = VideoSource.VIMEO;       
         // this.playerTime = 0;
         this.buffered = 0;
-        this.duration = 0;
         this.oldVolume = 0;
         this.volume = 0;
         this.muted = true;
         this.createPlayer(data);      
     }
 
-    createPlayer({videoSource, videoTitle, videoID,
-        videoTime, playRate, videoState, thumbnail,
-        roomID}){
+    createPlayer(data){
+        const {videoSource, videoTitle, videoID,
+            videoTime, playRate, videoState, thumbnail,
+            roomID, videoDuration} = data;
         const options = {
             controls: false,
             autoplay: false,
@@ -28,6 +28,11 @@ class VimeoViewer extends BuddyViewer{
         $(`<div id="player"></div>`).insertBefore('iframe');
         $('iframe').remove();
         this.player = new Vimeo.Player('player', options);
+        this.initListeners();
+        this.finalizeVideo(data);
+    }
+
+    initListeners(){
         this.player.on('volumechange', data=>{
             this.oldVolume = this.volume;
             this.volume = data.volume;
@@ -36,30 +41,34 @@ class VimeoViewer extends BuddyViewer{
             // console.log("Time update: "+update.seconds);
             this.duration = update.duration;
             this.playerTime = update.seconds;
+            if(!this.isInitialized()){
+                document.dispatchEvent(new Event('initialize'));
+            }
+            this.sendTimeEvent();
         });
         this.player.on('progress', progress=>{
             console.log("Buffer updatE: "+update.seconds);
             this.buffered = progress.percent * this.duration;
+        });
+        this.player.on('ended', _=>{
+            this.showPlayIcon();
+            this.setState(CustomStates.ENDED);
+            if(this.getLooping()){
+                this.startVideoOver();                
+            }
         });
         this.player.getTextTracks().then(tracks=>{
             if(tracks){
                 this.hasCaptions = true;
             }
         });
-        if(!videoTitle){
-            this.player.getVideoTitle()
-            .then(title=>{
-                this.videoTitle = title;
-                //insert code for showing title on page here.
-            });
-        }
-        // this.play();
-        this.player.setCurrentTime(videoTime);
-        this.setPlayRate(playRate);
-        this.setVolume(0.5);
-        if(videoState){
-            if(videoState == CustomStates.PLAYING) this.play();
-        }
+    }
+
+    startVideoOver(){
+        // this.setState(CustomStates.PLAYING);
+        this.seek(0);
+        this.play();
+        document.dispatchEvent(new Event('loop'));            
     }
 
     setPlayRate(newRate){
@@ -78,15 +87,18 @@ class VimeoViewer extends BuddyViewer{
 
     play(){
         this.setState(CustomStates.PLAYING);
-        this.player.play().then(function() {
-            document.dispatchEvent(new Event('initialize'));            
+        this.player.play().then(_=>{
+            document.dispatchEvent(new Event('initialize'));          
         });
         this.showPauseIcon();
     }
 
     pause(){
         this.setState(CustomStates.PAUSED);        
-        this.player.pause();
+        this.player.pause()
+        .then(_=>{
+            document.dispatchEvent(new Event('initialize'));           
+        });
         this.showPlayIcon();
     }
 
@@ -96,32 +108,24 @@ class VimeoViewer extends BuddyViewer{
         } else {
             this.pause();
         }
+        return !this.isPaused();
     }
 
-    playFromServer({videoTime, playRate, isHost}){
+    playPauseFromServer({videoTime, isHost, videoState}){
+        videoState == CustomStates.PAUSED ?
+            this.pause() : this.play();
         if(isHost){
             if(this.playerTime > videoTime + 5 ||
             this.playerTime < videoTime - 5
             ){
-                this.seek(videoTime)
-                .then(done=>{
-                    this.setPlayRate(playRate);
-                    this.play();
-                });
+                this.seek(videoTime);
             }
-        } else {                        
-            this.setPlayRate(playRate);
-            this.play();
         }
     }
 
     setVolume(vol){
         this.muted = false;
         this.player.setVolume(parseFloat(vol));
-    }
-
-    getDuration(){
-        return this.duration;
     }
 
     seek(time){
@@ -131,6 +135,7 @@ class VimeoViewer extends BuddyViewer{
                this.state == CustomStates.ENDED){
                 this.pause();
             }
+            this.sendTimeEvent();
         });
     }
 
@@ -160,6 +165,62 @@ class VimeoViewer extends BuddyViewer{
         }
         this.captionsEnabled = !this.captionsEnabled;
         return this.captionsEnabled;
+    }
+
+    finalizeVideo(data){
+        if(!data.videoTitle){
+            this.player.getVideoTitle()
+            .then(title=>{
+                this.videoTitle = title;
+                //insert code for showing title on page here.
+            });
+        } else {
+            this.videoTitle = data.videoTitle;
+        }
+        this.duration = data.videoDuration;
+        this.time = data.videoTime;
+        this.playerTime = data.videoTime;
+        this.seek(data.videoTime);
+        this.setPlayRate(data.playRate);
+        this.setVolume(this.volume ?? 0.5);
+        if(data.videoState && 
+            data.videoState == CustomStates.PLAYING){
+            this.play();
+        }
+    }
+
+    newVideo(data){        
+        this.player.loadVideo(data.videoID)
+        .then(_=>{         
+            this.time = data.videoTime;
+            this.playerTime = data.videoTime;   
+            this.initListeners();
+            this.finalizeVideo(data);
+            this.player.getDuration()
+            .then(duration=>{
+                this.duration = duration;
+                document.dispatchEvent(new Event('initialize'));
+            });
+        })
+        .catch(error=>{
+            switch (error.name) {
+                case 'TypeError':
+                    console.log("Vimeo id not sent as a number");
+                    break;
+          
+                case 'PasswordError':
+                    console.log("Vimeo video is password protected");
+                    break;
+          
+                case 'PrivacyError':
+                    console.log("This video is private");                    
+                    break;
+          
+                default:
+                    console.log("Error occurred" + error);
+                    break;
+            }
+        });
     }
 
 }

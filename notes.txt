@@ -1,3 +1,10 @@
+(1/15/21)
+looping is a localstorage thing. Also cc should be a local storage thing for vimeo. We have to get these things from localstorage whenever the player is loaded. Save it as vimeolooping, not looping.
+
+consider setting an interval whenever a player becomes host. Every 10 seconds, send everyone in the room your time. If they're behind by 5 seconds, jump them up to your time. Before sending this message out, check if you're still host. If not, don't do it, and delete the interval.
+
+consider putting the code for updating the ui in the buddyviewer class. That way all child classes can just call that from their video timeupdate code, and you don't have to have that in the scripts tag handling things. It'll all be custom to whatever player is playing.
+
 (1/13/21)
 Option 1: Create a BuddyViewer global object. It has a player property, and methods that interact with that player based on whatever its videoSource property is.
 

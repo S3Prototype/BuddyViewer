@@ -656,10 +656,14 @@ $(function(){
                 //Initialize a video.
                 loadBigScript('../vimeoPlayer.js', _=>{
                     buddyPlayer = new VimeoViewer(data);
+                    initializeProgressBar(buddyPlayer.getDuration());
+                    initializeToolTip(buddyPlayer.getDuration());
                 });
             });            
         } else {
             buddyPlayer = new VimeoViewer(data);
+            initializeProgressBar(buddyPlayer.getDuration());
+            initializeToolTip(buddyPlayer.getDuration());
         }
     }
 
@@ -796,18 +800,26 @@ $(function(){
         localStorage.setItem('cc_lang_pref', ClientYTPlayer.options.cc_lang_pref);
     });
 
+    function showVolumeIcon(){
+        document.getElementById('mute-icon').classList.remove("fa-volume-mute");
+        document.getElementById('mute-icon').classList.add("fa-volume-up");
+    }
+
+    function showMuteIcon(){
+        document.getElementById('mute-icon').classList.remove("fa-volume-up");
+        document.getElementById('mute-icon').classList.add("fa-volume-mute"); 
+    }
+
     $('#mute-button').click(function(event){
         if(buddyPlayer.isMuted()){
             // stayMuted = false;
             buddyPlayer.unMute();         
             volumeSlider.value = buddyPlayer.getVolume();
-            document.getElementById('mute-icon').classList.remove("fa-volume-mute");
-            document.getElementById('mute-icon').classList.add("fa-volume-up");
+            showVolumeIcon();
         } else {            
             // stayMuted = true;
             buddyPlayer.mute();  
-            document.getElementById('mute-icon').classList.remove("fa-volume-up");
-            document.getElementById('mute-icon').classList.add("fa-volume-mute"); 
+            showMuteIcon();
         }
     });
 
@@ -861,12 +873,11 @@ $(function(){
         //         vimeoPlayPause(event);
         //         break;
         // }
-        if(!buddyPlayer.isInitialized()){
-            initializeToolTip(buddyPlayer.getDuration());
-            initializeProgressBar(buddyPlayer.getDuration());
-        }
+        initializeToolTip(buddyPlayer.getDuration());
+        initializeProgressBar(buddyPlayer.getDuration());
+        console.log("DURATION AT TIME OF BUTTON PRESS "+buddyPlayer.getDuration());
         buddyPlayer.playPause();
-        socket.emit('play', buddyPlayer.generateData(), roomID);
+        socket.emit('playPause', buddyPlayer.generateData(), roomID);
     });
 
     function vimeoPlay(){
@@ -980,13 +991,17 @@ $(function(){
                 // }
                 return;
             }
+        if(!buddyPlayer.isInitialized()){
+            initializeToolTip(buddyPlayer.getDuration());
+            initializeProgressBar(buddyPlayer.getDuration());
+        }
         // const rawPlayerTime = buddyPlayer.getPlayerTime();
         const playerTime = Math.round(buddyPlayer.getPlayerTime());
         // console.log("PLAYER TIME IS: "+playerTime);
         if(playerTime != buddyPlayer.getSavedTime()){
             buddyPlayer.setSavedTime(playerTime);
-            updateTimeUI(playerTime);
         }
+        updateTimeUI(playerTime);
         // const bufferedTime = player.getVideoLoadedFraction() * player.getDuration();
         // const bufferedTime = buddyPlayer.getBuffered();
         updateBufferBar(buddyPlayer.getBuffered());
@@ -1027,9 +1042,14 @@ $(function(){
             buddyPlayer.getDuration()
         );
         changeTriggeredByControls = true;
-        buddyPlayer.seek(scrubTime);
-        updateTimeUI(scrubTime);
-        // socket.emit('seek', scrubTime, roomID);
+        seekAndSetUI(scrubTime);
+        // updateTimeUI(scrubTime);
+        socket.emit('seek', scrubTime, roomID);
+    }
+
+    function seekAndSetUI(time){
+        buddyPlayer.seek(time);
+        updateTimeUI(time);
     }
 
     function updateTimeUI(time){
@@ -1075,6 +1095,10 @@ $(function(){
             }           
         }
     }
+
+    document.addEventListener('loop', event=>{
+        socket.emit('startOver', roomID);
+    })
 
     messageInput.keypress(function(event){
         let code = (event.keyCode ? event.keyCode : event.which);
@@ -1369,49 +1393,66 @@ $(function(){
             pfp
         };
 
-        const videoData = {
-            videoID: ClientYTPlayer.clientURL,
-            videoTime: ClientYTPlayer.videoTime
-        };
-
         console.log(`Trying to join room ${roomID}`);
 
-        socket.emit('joinRoom', userData, videoData, roomID);
+        socket.emit('joinRoom', userData, roomID);
         
         socket.on('initPlayer', data=>{
             console.log("I'm trying to init my player.");
-            const {state, videoID, startTime, playRate} = data;
-            ClientYTPlayer.currentState = state;
-            ClientYTPlayer.playbackRate = playRate;
-            if(videoID != ClientYTPlayer.clientURL){
-                ClientYTPlayer.clientURL = videoID;
-                ClientYTPlayer.videoTime = startTime;
-                ClientYTPlayer.addNewVideo();
-            } else {        
-                if(startTime > 0){
-                    buddyPlayer.seek(startTime);
-                }
-                ClientYTPlayer.updateTimeUI(startTime);
-                if(state == CustomStates.PLAYING){
-                    playVideo();
-                    buddyPlayer.unMute();
+            const {videoState, videoSource, videoID, videoTime, playRate} = data;
+            initializeToolTip(data.videoDuration);
+            initializeProgressBar(data.videoDuration);
+            progressBar.value = Math.round(videoTime);
+            updateSeekToolTip(Math.round(videoTime));
+            if(!buddyPlayer || buddyPlayer.getSource() != videoSource){
+                //* If it's not the same player, then make a new player
+                createNewPlayer[videoSource](data);
+            } else {
+                //We have a buddy player and its the same source.
+                if(videoID != buddyPlayer.getID()){
+                    buddyPlayer.newVideo(data);
+                    updateTimeUI(videoTime);
+                } else {
+                    if(videoTime > 0){
+                        seekAndSetUI(startTime);
+                    }
                 }
             }
+
+            // ClientYTPlayer.currentState = videoState;
+            // ClientYTPlayer.playbackRate = playRate;
+            // if(videoID != ClientYTPlayer.clientURL){
+            //     ClientYTPlayer.clientURL = videoID;
+            //     ClientYTPlayer.videoTime = videoTime;
+            //     ClientYTPlayer.addNewVideo();
+            // } else {        
+            //     if(startTime > 0){
+            //         seekAndSetUI(startTime);
+            //     }
+            //     ClientYTPlayer.updateTimeUI(startTime);
+            //     if(state == CustomStates.PLAYING){
+            //         playVideo();
+            //         buddyPlayer.unMute();
+            //     }
+            // }
             // initializeToolTip();
             // initializeYTProgressBar();
         });
     
         socket.on('requestState', requesterSocketID=>{
             console.log("someone requested my state");
-            socket.emit('sendState', {
-                state: ClientYTPlayer.currentState,
-                videoID: ClientYTPlayer.clientURL,
-                startTime: ClientYTPlayer.videoTime,
-                requesterSocketID,
-                playRate: ClientYTPlayer.playbackRate,            
-                localName,
-                roomID
-            });        
+            const sendData = buddyPlayer.generateData();
+            console.log('Im sending a duration of: '+sendData.videoDuration);
+            sendData.requesterSocketID = requesterSocketID;
+            socket.emit('sendState', sendData);
+            // socket.emit('sendState', {
+            //     state: ClientYTPlayer.currentState,
+            //     videoID: ClientYTPlayer.clientURL,
+            //     startTime: ClientYTPlayer.videoTime,
+            //     requesterSocketID,
+            //     playRate: ClientYTPlayer.playbackRate,            
+            //     localName,
+            // });        
         });
     
         socket.on('playrateChange', playRate=>{
@@ -1420,6 +1461,10 @@ $(function(){
                 changePlayRate(ClientYTPlayer.playbackRate);
                 // document.getElementById('playrate-text').innerHTML = playRate +"x";
             }
+        });
+
+        socket.on('playPause', data=>{
+            buddyPlayer.playPauseFromServer(data);
         });
     
         socket.on('play', data=>{
@@ -1438,19 +1483,19 @@ $(function(){
     
         const maxGap = 5;
         socket.on('pause', data=>{
-            if(data.isHost){
-                if(ClientYTPlayer.videoTime > data.videoTime + maxGap ||
-                   ClientYTPlayer.videoTime < data.videoTime - maxGap){
-                    player.seekTo(data.videoTime);
-                    ClientYTPlayer.updateTimeUI(data.videoTime);
-                }
-            }
-            pauseVideo();
+            // if(data.isHost){
+            //     if(ClientYTPlayer.videoTime > data.videoTime + maxGap ||
+            //        ClientYTPlayer.videoTime < data.videoTime - maxGap){
+            //         player.seekTo(data.videoTime);
+            //         ClientYTPlayer.updateTimeUI(data.videoTime);
+            //     }
+            // }
+            // pauseVideo();
+            buddyPlayer.pauseFromServer(data);
         });
     
         socket.on('seek', videoTime=>{
-            player.seekTo(videoTime);
-            ClientYTPlayer.updateTimeUI(videoTime);
+            seekAndSetUI(videoTime);
         });
     
         socket.on('startNew', (data)=>{
@@ -1493,9 +1538,8 @@ $(function(){
         });
     
         socket.on('startOver', _=>{
-            player.seekTo(0);
-            ClientYTPlayer.updateTimeUI(0);
-            playVideo();
+            seekAndSetUI(0);
+            buddyPlayer.play();
         });
     
         socket.on('chatJoined', data=>{
@@ -1511,11 +1555,13 @@ $(function(){
 
         // When window loaded ( external resources are loaded too- `css`,`src`, etc...) 
         if(event.target.readyState === "complete"){
-            setInterval(updateVideoTime, 250);
+            document.addEventListener('videotime', updateVideoTime);
+            // setInterval(updateVideoTime, 250);
             document.addEventListener('initialize', (event)=>{
-                console.log("Initializing toolbars");
-                initializeProgressBar(buddyPlayer.getDuration());
-                initializeToolTip(buddyPlayer.getDuration());
+                console.log("Initializing toolbars at duration"+buddyPlayer.getDuration());
+                updateVideoTime();
+                // initializeProgressBar(buddyPlayer.getDuration());
+                // initializeToolTip(buddyPlayer.getDuration());
             }, false);
                                   
             validateUserID();        
