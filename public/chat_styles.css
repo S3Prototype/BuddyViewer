@@ -89,7 +89,7 @@ body {
 }
 
 #input-form {
-    display: flexbox;
+    display: flex;
 }
 
 #message-input {
@@ -97,7 +97,7 @@ body {
     font-family: inherit;
     height: 5em;
     width: 80%;
-    word-wrap: default;
+    word-wrap: normal;
     resize: none;
     background-color: rgba(179, 217, 243, 0.05);
     color: white;

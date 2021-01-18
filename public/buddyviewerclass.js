@@ -1,5 +1,6 @@
 class BuddyViewer{
-    constructor(videoID, state, videoDuration, thumbnail="", time=0, playRate){
+    constructor(videoID, state, videoDuration, thumbnail="", time=0, playRate, roomID){
+        this.roomID = roomID;
         this.videoID = videoID;
         this.state = state;
         this.thumbnail = thumbnail;
@@ -41,6 +42,33 @@ class BuddyViewer{
 
     isEnded(){
         return this.state == CustomStates.ENDED;       
+    }
+
+    playPause(){
+        if(this.isPaused()){
+            this.play();
+        } else {
+            this.pause();
+        }
+        return this.isPaused();
+    }
+
+    getPlayerTime(){
+        return this.playerTime;
+    }
+
+    playPauseFromServer({videoTime, isHost, videoState}){
+        videoState == CustomStates.PAUSED ?
+            this.pause() : this.play();
+            //Next, if the person sending the data is host,
+            //align ourselves to their time.
+        if(isHost){
+            if(this.playerTime > videoTime + 5 ||
+            this.playerTime < videoTime - 5
+            ){
+                this.seek(videoTime);
+            }
+        }
     }
     
     getVolume(){
@@ -107,6 +135,22 @@ class BuddyViewer{
 
     getThumbnail(){
         return this.thumbnail;
+    }
+
+    startVideoOver(){
+        this.seek(0);
+        this.play();
+        document.dispatchEvent(new Event('loop'));            
+    }
+
+    enableCaptionsIcon(){
+        $('#closed-captions-icon').removeClass("far");
+        $('#closed-captions-icon').addClass("fas");
+    }
+
+    disableCaptionsIcon(){
+        $('#closed-captions-icon').removeClass("fas");
+        $('#closed-captions-icon').addClass("far");
     }
 
     showPauseIcon(){

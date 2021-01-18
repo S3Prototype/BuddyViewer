@@ -1,15 +1,33 @@
 class YouTubeViewer extends BuddyViewer{
+
+    static currentPlayer;
+    static timeInterval;
+    static options = {
+        enablejsapi: 1,
+        autoplay: 0,
+        rel: 0,
+        controls: 0,
+        origin: 'anonymous',
+        disablekb: 1,
+        modestbranding: 1,
+        cc_load_policy: parseInt(
+                localStorage.getItem('cc_load_policy')) || 0,
+        cc_lang_pref: localStorage.getItem('cc_lang_pref')
+            || 'en',
+        mute: 1
+    };
+
     constructor(data){
         super(data.videoID, CustomStates.UNSTARTED,
             data.videoState, data.videoDuration,
-            data.videoTime, data.playRate);
+            data.videoTime, data.playRate, data.roomID);
 
         this.source = VideoSource.YOUTUBE;       
         // this.playerTime = 0;
         this.buffered = 0;
         this.oldVolume = 0;
         this.volume = data.volume;
-        this.muted = true;
+        this.muted = true;        
         this.createPlayer(data);      
     }
 
@@ -17,56 +35,63 @@ class YouTubeViewer extends BuddyViewer{
         const {videoSource, videoTitle, videoID,
             videoTime, playRate, videoState, thumbnail,
             roomID, videoDuration} = data;
-        const options = {
-            enablejsapi: 1,
-            autoplay: 0,
-            rel: 0,
-            controls: 0,
-            origin: 'anonymous',
-            disablekb: 1,
-            modestbranding: 1,
-            cc_load_policy: parseInt(
-                localStorage.getItem('cc_load_policy')) || 0,
-            cc_lang_pref: localStorage.getItem('cc_lang_pref')
-                || 'en',
-            mute: 1
-        }
         $(`<div id="player"></div>`).insertBefore('iframe');
         $('iframe').remove();
+        this.setState(CustomStates.PLAYING);
         this.player = new YT.Player('player', {
             height: '100%',
             width: '100%',
             videoId: videoID,
             events: {
-                'onReady': initNewPlayer,
-                "onStateChange": stopYTEvent,
+                'onReady': YouTubeViewer.initNewPlayer,
+                "onStateChange": this.stopYTEvent,
                 "start": videoTime
             },
-            playerVars: options
+            playerVars: YouTubeViewer.options
         });
+
+        YouTubeViewer.currentPlayer = this;
     }
 
-    initNewPlayer(){
+    static initNewPlayer(){
+        const thisBuddyPlayer = YouTubeViewer.currentPlayer;
         console.log("initNewPlayer STARTED");
-        this.seek(videoTime);
-        this.getState() == CustomStates.PLAYING ?
-            this.play() : this.pause();
+        thisBuddyPlayer.duration = thisBuddyPlayer.player.getDuration();
+        thisBuddyPlayer.seek(thisBuddyPlayer.playerTime);
+        thisBuddyPlayer.getState() == CustomStates.PLAYING ?
+            thisBuddyPlayer.play() : thisBuddyPlayer.pause();
 
-        this.player.setPlayRate(this.playRate);
+        thisBuddyPlayer.setPlayRate(thisBuddyPlayer.playRate);
 
-        console.log(`Starting video with state: ${this.getState()}`);
+        console.log(`Starting video with state: ${thisBuddyPlayer.getState()}`);
         console.log("===================");
         
-        this.unMute();
-        this.player.setVolume(parseInt(this.volume ?? 50));
+        thisBuddyPlayer.setVolume(parseInt(thisBuddyPlayer.volume ?? 50));
+        thisBuddyPlayer.initialized = true;
+        thisBuddyPlayer.captionsEnabled = YouTubeViewer.options.cc_load_policy == 1;
+        // initializeProgressBar(thisBuddyPlayer.getDuration());
+        // initializeToolTip(thisBuddyPlayer.getDuration());
         console.log("initNewPlayer ENDED");
     }
 
-    startVideoOver(){
-        // this.setState(CustomStates.PLAYING);
-        this.seek(0);
-        this.play();
-        document.dispatchEvent(new Event('loop'));            
+    getPlayerTime(){
+        if(!this.player.getCurrentTime){
+            this.playerTime = 0;
+        } else {
+            this.playerTime = this.player.getCurrentTime();
+        }
+        return this.playerTime;
+    }
+
+    stopYTEvent(event){
+        if(event.data == CustomStates.ENDED){
+            this.showPlayIcon();                        
+            this.setState(CustomStates.ENDED);
+            if(this.getLooping()){
+                this.startVideoOver();
+                socket.emit('startOver', this.roomID);
+            }           
+        }
     }
 
     setPlayRate(newRate){
@@ -76,45 +101,26 @@ class YouTubeViewer extends BuddyViewer{
     }
 
     getBuffered(){
-        return this.player.getVideoLoadedFraction()
-            * this.player.getDuration();
-    }
+        let buffered = 0;
+        
+        if(this.player.getVideoLoadedFraction){
+            buffered = this.player.getVideoLoadedFraction()
+            * this.player.getDuration()
+        }
 
-    getPlayerTime(){
-        return this.playerTime;
+        return buffered;
     }
 
     play(){
         this.setState(CustomStates.PLAYING);
-        this.player.play();
+        this.player.playVideo();
         this.showPauseIcon();
     }
 
     pause(){
         this.setState(CustomStates.PAUSED);        
-        this.player.pause();
+        this.player.pauseVideo();
         this.showPlayIcon();
-    }
-
-    playPause(){
-        if(this.isPaused()){
-            this.play();
-        } else {
-            this.pause();
-        }
-        return !this.isPaused();
-    }
-
-    playPauseFromServer({videoTime, isHost, videoState}){
-        videoState == CustomStates.PAUSED ?
-            this.pause() : this.play();
-        if(isHost){
-            if(this.playerTime > videoTime + 5 ||
-            this.playerTime < videoTime - 5
-            ){
-                this.seek(videoTime);
-            }
-        }
     }
 
     setVolume(vol){
@@ -124,7 +130,7 @@ class YouTubeViewer extends BuddyViewer{
 
     seek(time){
         this.player.seekTo(time);
-        this.sendTimeEvent()        
+        this.sendTimeEvent();        
     }
 
     mute(){
@@ -138,17 +144,25 @@ class YouTubeViewer extends BuddyViewer{
     }
     
     isMuted(){
-        return this.player.muted;
+        return this.muted;
     }
 
     toggleCaptions(){
-        if(this.captionsEnabled){
-            this.player.disableTextTrack();
-            localStorage.removeItem('vimeo_cc_lang');
+        if(!this.captionsEnabled){
+            YouTubeViewer.options.cc_load_policy = 1;
+            this.enableCaptionsIcon();
+            localStorage.setItem('cc_lang_pref', YouTubeViewer.options.cc_lang_pref);
+            localStorage.setItem('cc_load_policy', YouTubeViewer.options.cc_load_policy);
         } else {
-            this.player.enableTextTrack('en', 'captions');
-            localStorage.setItem('vimeo_cc_lang', 'en');            
+            localStorage.removeItem('cc_load_policy');
+            localStorage.removeItem('cc_lang_pref');
+            YouTubeViewer.options.cc_load_policy = 0;
+            this.disableCaptionsIcon();
         }
+        const data = this.generateData();
+        data.videoTime = 0;
+        this.newVideo(data);
+
         this.captionsEnabled = !this.captionsEnabled;
         return this.captionsEnabled;
     }
@@ -175,38 +189,27 @@ class YouTubeViewer extends BuddyViewer{
         }
     }
 
-    newVideo(data){        
-        this.player.loadVideo(data.videoID)
-        .then(_=>{         
-            this.time = data.videoTime;
-            this.playerTime = data.videoTime;   
-            this.initListeners();
-            this.finalizeVideo(data);
-            this.player.getDuration()
-            .then(duration=>{
-                this.duration = duration;
-                document.dispatchEvent(new Event('initialize'));
-            });
-        })
-        .catch(error=>{
-            switch (error.name) {
-                case 'TypeError':
-                    console.log("Vimeo id not sent as a number");
-                    break;
-          
-                case 'PasswordError':
-                    console.log("Vimeo video is password protected");
-                    break;
-          
-                case 'PrivacyError':
-                    console.log("This video is private");                    
-                    break;
-          
-                default:
-                    console.log("Error occurred" + error);
-                    break;
-            }
+    newVideo(data){ 
+        const {videoSource, videoTitle, videoID,
+            videoTime, playRate, videoState, thumbnail,
+            roomID, videoDuration} = data;
+        this.player.destroy();
+        $(`<div id="player"></div>`).insertBefore('iframe');
+        $('iframe').remove();
+        this.setState(CustomStates.PLAYING);
+        this.initialized = false;
+        this.player = new YT.Player('player', {
+            height: '100%',
+            width: '100%',
+            videoId: videoID,
+            events: {
+                'onReady': YouTubeViewer.initNewPlayer,
+                "onStateChange": this.stopYTEvent,
+                "start": videoTime
+            },
+            playerVars: YouTubeViewer.options
         });
+        YouTubeViewer.currentPlayer = this;
     }
 
 }

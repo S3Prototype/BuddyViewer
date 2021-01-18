@@ -1,5 +1,7 @@
 DOING:
+* Starts new videos fine. Does not start them with a time of 0, first of all. Second of all, does not re-initialize the progress bar and tooltips.
 * Implementing entire youtube class. Lots of work to do, but initnewplayer should be fairly good. Other methods are looking good. We'll be done soon enough.
+* Don't forget to remove the youtube script tags from room.ejs
 * Add playing from other sites
     * (1/12) Working on Vimeo.
         * Right now if I use the loadPlayerScripts code to load in the vimeo code, everything works very well. So we're going to do that. Every time there's a new player added, load in that script code. We have to refactor at this point, because it's such a mess that I'm not even clear on which functions exist or don't already. But I have validated that vimeo works. At least on desktop.

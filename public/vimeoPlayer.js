@@ -63,13 +63,6 @@ class VimeoViewer extends BuddyViewer{
         });
     }
 
-    startVideoOver(){
-        // this.setState(CustomStates.PLAYING);
-        this.seek(0);
-        this.play();
-        document.dispatchEvent(new Event('loop'));            
-    }
-
     setPlayRate(newRate){
         if(newRate == this.playRate) return;
         this.playRate = newRate;
@@ -78,10 +71,6 @@ class VimeoViewer extends BuddyViewer{
 
     getBuffered(){
         return this.buffered;
-    }
-
-    getPlayerTime(){
-        return this.playerTime;
     }
 
     play(){
@@ -99,27 +88,6 @@ class VimeoViewer extends BuddyViewer{
             document.dispatchEvent(new Event('initialize'));           
         });
         this.showPlayIcon();
-    }
-
-    playPause(){
-        if(this.isPaused()){
-            this.play();
-        } else {
-            this.pause();
-        }
-        return !this.isPaused();
-    }
-
-    playPauseFromServer({videoTime, isHost, videoState}){
-        videoState == CustomStates.PAUSED ?
-            this.pause() : this.play();
-        if(isHost){
-            if(this.playerTime > videoTime + 5 ||
-            this.playerTime < videoTime - 5
-            ){
-                this.seek(videoTime);
-            }
-        }
     }
 
     setVolume(vol){
