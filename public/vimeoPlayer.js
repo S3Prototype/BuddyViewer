@@ -112,10 +112,12 @@ class VimeoViewer extends BuddyViewer{
     mute(){
         this.oldVolume = this.volume;
         this.setVolume(0);
+        this.showMuteIcon();
     }
 
     unMute(){
         this.setVolume(this.oldVolume || 0.2);
+        this.showVolumeIcon();
     }
     
     isMuted(){
@@ -126,9 +128,11 @@ class VimeoViewer extends BuddyViewer{
         if(this.captionsEnabled){
             this.player.disableTextTrack();
             localStorage.removeItem('vimeo_cc_lang');
+            this.disableCaptionsIcon();
         } else {
             this.player.enableTextTrack('en', 'captions');
             localStorage.setItem('vimeo_cc_lang', 'en');            
+            this.enableCaptionsIcon();
         }
         this.captionsEnabled = !this.captionsEnabled;
         return this.captionsEnabled;

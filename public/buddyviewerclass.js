@@ -162,6 +162,26 @@ class BuddyViewer{
         $('#play-pause-icon').removeClass('fa-pause');
         $('#play-pause-icon').addClass('fa-play');
     }
+
+    showVolumeIcon(){
+        $('#mute-icon').removeClass("fa-volume-mute");
+        $('#mute-icon').addClass("fa-volume-up");
+    }
+
+    showMuteIcon(){
+        $('#mute-icon').removeClass("fa-volume-up");
+        $('#mute-icon').addClass("fa-volume-mute");
+    }
+
+    showContractIcon(){
+        $('fullscreen-icon').removeClass("fa-expand");
+        $('fullscreen-icon').addClass("fa-compress");                
+    }
+
+    showExpandIcon(){
+        $('fullscreen-icon').removeClass("fa-compress");   
+        $('fullscreen-icon').addClass("fa-expand");
+    }
 }
 
 const VideoSource = {

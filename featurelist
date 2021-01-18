@@ -1,5 +1,6 @@
 FEATURE LIST:
 
+* Make it so when a player loads into an empty room that already has a video, that video loads up with its current state.
 * Add ability to switch waht the default search is from youtube to other sites. Even allow them to type in the domain of the site they want searched.
 * Polls in the room. Like strawpoll. Don't need to store it in the server at all.
     * Could have a poll pop up whenever the video is about to end saying "Next up: [video name and thumbnail] <Replay Current Video> <Skip to next video> <pause queue>

@@ -388,6 +388,9 @@ function updateRoomState(data, roomID, newState){
             history.push({
                 videoSource, videoTitle, videoTime, videoID, thumbnail
             });
+        } else {
+            history.find(item=>{return item.videoID == videoID})
+            .videoTime = videoTime;
         }
         console.log('======');
         console.log(`Room history is now:`);
@@ -424,17 +427,11 @@ io.on('connection', socket=>{
 
     socket.on('joinRoom', (userData, roomID)=>{
         joinRoom(socket, userData, roomID);
-            //Now ask for the state from the host:
-        // const hostSocketID = 
-        // findRoom(roomID)
-        // .then((currRoom)=>{
-        //     const
-        //     if(hostSocketID != socket.id){
-        //         console.log(`Trying to get state from host (${hostSocketID})`);
-        //         io.to(hostSocketID).emit('requestState', socket.id);
-        //     }
-        // })
     });
+
+    socket.on('setLooping', (loopValue, roomID)=>{
+        socket.to(roomID).broadcast.emit('setLooping', loopValue);
+    })
 
     socket.on('joinListRoom', _=>{
         socket.join(listRoomID);
@@ -454,26 +451,12 @@ io.on('connection', socket=>{
     socket.on('sendState', (data)=>{
         io.to(data.requesterSocketID).emit('initPlayer', data);
         console.log(`STATE SENT TO ${data.requesterSocketID}`);
-    });                    
-
-    // socket.on('queryState', (data, room)=>{
-    //     if(socketCount > 1){        
-    //         allStatesAligned = false;
-    //         socket.to(room).broadcast.emit('getState', socket.id);
-    //     }
-    // });
+    });
 
     socket.on('playrateChange', (playRate, roomID)=>{
             //No need to update DB every time the playrate changes.
             //Just wait until the host presses play/pause.    
-        socket.to(roomID).broadcast.emit('playrateChange', playRate)
-        // RoomModel.updateOne(
-        //     {roomID: roomID}, //query for the room to update
-        //     {$set: {playRate}} //value to update
-        // )
-        // .then(result=>{
-        //     socket.to(roomID).broadcast.emit('playrateChange', playRate)
-        // });
+        socket.to(roomID).broadcast.emit('playrateChange', playRate);
     });
 
     socket.on('play', (data, roomID)=>{
@@ -481,9 +464,9 @@ io.on('connection', socket=>{
         findRoom(roomID)
         .then(({hostSocketID})=>{
             const isHost = hostSocketID == socket.id
-            if(isHost){
+            // if(isHost){
                 updateRoomState(data, roomID, CustomStates.PLAYING)
-            }
+            // }
             socket.to(roomID).broadcast.emit('play', {
                 state: CustomStates.PLAYING,
                 isHost,
@@ -496,9 +479,9 @@ io.on('connection', socket=>{
         findRoom(roomID)
         .then(({hostSocketID})=>{
             const isHost = hostSocketID == socket.id
-            if(isHost){
+            // if(isHost){
                 updateRoomState(data, roomID, CustomStates.PAUSED)
-            }
+            // }
             socket.to(roomID).broadcast.emit('pause', {
                 state: CustomStates.PAUSED,
                 isHost,
@@ -537,15 +520,7 @@ io.on('connection', socket=>{
             }
             io.to(roomID).emit('initPlayer', data);
 
-        })
-        // const currRoom = findRoom(roomID);
-        // const data = {
-        //     state: currRoom.videoState,
-        //     videoID: currRoom.videoID,
-        //     startTime: currRoom.videoTime,
-        //     playRate: currRoom.playRate
-        // }
-        // io.to(roomID).emit('initPlayer', data);
+        });
     });
 
     socket.on('message', (letterArray, roomID)=>{

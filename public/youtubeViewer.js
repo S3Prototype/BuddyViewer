@@ -2,6 +2,7 @@ class YouTubeViewer extends BuddyViewer{
 
     static currentPlayer;
     static timeInterval;
+    static startTime;
     static options = {
         enablejsapi: 1,
         autoplay: 0,
@@ -17,13 +18,19 @@ class YouTubeViewer extends BuddyViewer{
         mute: 1
     };
 
-    constructor(data){
-        super(data.videoID, CustomStates.UNSTARTED,
-            data.videoState, data.videoDuration,
-            data.videoTime, data.playRate, data.roomID);
+    constructor(data){        
+        super(data.videoID, data.videoState, data.videoDuration,
+            data.videoTime, data.playRate, data.thumbnail,
+            data.roomID);
 
-        this.source = VideoSource.YOUTUBE;       
-        // this.playerTime = 0;
+        YouTubeViewer.startTime = data.videoTime;
+
+        this.source = VideoSource.YOUTUBE;
+        console.log("Duration when video created: "+data.videoDuration);
+        this.duration = data.videoDuration;
+        console.log("Time when video created: "+data.videoTime);
+        this.time = data.videoTime;
+        this.playerTime = data.videoTime;
         this.buffered = 0;
         this.oldVolume = 0;
         this.volume = data.volume;
@@ -37,7 +44,7 @@ class YouTubeViewer extends BuddyViewer{
             roomID, videoDuration} = data;
         $(`<div id="player"></div>`).insertBefore('iframe');
         $('iframe').remove();
-        this.setState(CustomStates.PLAYING);
+        this.setState(videoState);
         this.player = new YT.Player('player', {
             height: '100%',
             width: '100%',
@@ -56,8 +63,13 @@ class YouTubeViewer extends BuddyViewer{
     static initNewPlayer(){
         const thisBuddyPlayer = YouTubeViewer.currentPlayer;
         console.log("initNewPlayer STARTED");
-        thisBuddyPlayer.duration = thisBuddyPlayer.player.getDuration();
-        thisBuddyPlayer.seek(thisBuddyPlayer.playerTime);
+        if(!thisBuddyPlayer.duration){
+            thisBuddyPlayer.duration = thisBuddyPlayer.player.getDuration();
+        }
+
+        thisBuddyPlayer.seek(YouTubeViewer.startTime);
+        thisBuddyPlayer.sendTimeEvent();  
+
         thisBuddyPlayer.getState() == CustomStates.PLAYING ?
             thisBuddyPlayer.play() : thisBuddyPlayer.pause();
 
@@ -69,8 +81,6 @@ class YouTubeViewer extends BuddyViewer{
         thisBuddyPlayer.setVolume(parseInt(thisBuddyPlayer.volume ?? 50));
         thisBuddyPlayer.initialized = true;
         thisBuddyPlayer.captionsEnabled = YouTubeViewer.options.cc_load_policy == 1;
-        // initializeProgressBar(thisBuddyPlayer.getDuration());
-        // initializeToolTip(thisBuddyPlayer.getDuration());
         console.log("initNewPlayer ENDED");
     }
 
@@ -84,11 +94,12 @@ class YouTubeViewer extends BuddyViewer{
     }
 
     stopYTEvent(event){
+        const thisBuddyPlayer = YouTubeViewer.currentPlayer;
         if(event.data == CustomStates.ENDED){
-            this.showPlayIcon();                        
-            this.setState(CustomStates.ENDED);
-            if(this.getLooping()){
-                this.startVideoOver();
+            thisBuddyPlayer.showPlayIcon();                        
+            thisBuddyPlayer.setState(CustomStates.ENDED);
+            if(thisBuddyPlayer.getLooping()){
+                thisBuddyPlayer.startVideoOver();
                 socket.emit('startOver', this.roomID);
             }           
         }
@@ -130,17 +141,18 @@ class YouTubeViewer extends BuddyViewer{
 
     seek(time){
         this.player.seekTo(time);
-        this.sendTimeEvent();        
     }
 
     mute(){
         this.player.mute();
         this.muted = true;
+        this.showMuteIcon();
     }
-
+    
     unMute(){
         this.player.unMute();
         this.muted = false;
+        this.showVolumeIcon();
     }
     
     isMuted(){
