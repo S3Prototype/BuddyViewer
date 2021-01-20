@@ -5,7 +5,7 @@ class BuddyViewer{
         this.state = data.videoState ?? CustomStates.PLAYING;
         
         this.thumbnail = data.thumbnail;
-        this.playRate = data.playRate;
+        this.playRate = data.playRate ?? 1;
         this.previousState = CustomStates.UNSTARTED;
         this.player;
         this.initialized = false;
@@ -13,14 +13,14 @@ class BuddyViewer{
         this.playerTime = data.videoTime ?? 0;
         this.time = this.playerTime;
         
-        this.volume = data.volume ?? 0.5;
+        this.volume = data.volume ?? 0.2;
 
         this.buffered = 0;
         this.source = VideoSource.OTHERONE;
         this.videoTitle = data.videoTitle;
         this.captionsEnabled = false;
         this.hasCaptions = false;
-        this.looping = false;
+        this.looping = data.looping ?? false;
         this.duration = data.videoDuration;
     }
 
@@ -48,10 +48,18 @@ class BuddyViewer{
         return this.state == CustomStates.ENDED;       
     }
 
+    toggleCaptions(){
+        //This is just filler for child classes who don't
+        //use captions.
+        this.captionsEnabled = !this.captionsEnabled;
+    }
+
     playPause(){
         if(this.isPaused()){
             this.play();
             this.showPauseIcon();
+        } else if(this.isEnded()){
+            this.startVideoOver();
         } else {
             this.pause();
             this.showPlayIcon();

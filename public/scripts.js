@@ -123,21 +123,20 @@ $(function(){
         });
     }
 
-    function videoSearch(query){
+    function youtubeSearch(query){
         $.ajax({
             url: '/search',
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify({user_id: userID, query: query}, null, 2),
             success: function (results){
-            console.log(`${new Date().toLocaleTimeString()} Executed search. Preliminary results are: ${JSON.stringify(results, null, 2)}`);
-                // if(!results || results.length < 1){
-                //     ClientYTPlayer.keepCheckingForResults();                        
-                // } else {
-                    console.log(results[0]);
-                    ClientYTPlayer.addSearchResults(results);
-                    ClientYTPlayer.searchCount = 0;
-                // }
+                // console.log(`${new Date().toLocaleTimeString()} Executed search. Preliminary results are: ${JSON.stringify(results, null, 2)}`);
+                    // if(!results || results.length < 1){
+                    //     ClientYTPlayer.keepCheckingForResults();                        
+                    // } else {
+                console.log(results[0]);
+                addSearchResults(results);
+                    // }
             }
         });
     }
@@ -154,32 +153,40 @@ $(function(){
             resultDiv.append(thumbDiv);
 
             function addFromResult(){
-                ClientYTPlayer.shouldSendState = true;
-                ClientYTPlayer.videoTime = 0;
-                ClientYTPlayer.thumbnail = result.thumbnail;
-                ClientYTPlayer.clientURL = result.videoID;
-                ClientYTPlayer.currentState = CustomStates.PLAYING;
-                ClientYTPlayer.videoTitle = result.title;
-                ClientYTPlayer.addNewVideo();  
-                // ClientYTPlayer.videoLength = player.getDuration();
-                socket.emit('startNew', {
+                data = {       
                     videoTime: 0,
-                    videoSource: buddyPlayer.getSource(),
+                    thumbnail: result.thumbnail,                    
                     videoID: result.videoID,
-                    playRate: buddyPlayer.getPlayRate(),
-                    videoState: buddyPlayer.getState(),
-                    thumbnail: buddyPlayer.getThumbnail(),
-                    videoTitle: buddyPlayer.getTitle()
-                },
-                roomID);
+                    videoState: CustomStates.PLAYING,
+                    videoTitle: result.title,
+                    videoSource: VideoSource.YOUTUBE
+                }
+                
+                if(!buddyPlayer ||
+                    buddyPlayer.getSource() != VideoSource.YOUTUBE)
+                {
+                    console.log('instantiating new object!');
+                    console.log(data);
+                    createNewPlayer[VideoSource.YOUTUBE](data);
+                } else {
+                    console.log('newvideo!');
+                    console.log(data);
+                    buddyPlayer.newVideo(data);
+                }
+                socket.emit('startNew', data, roomID);
             }
+
+            resultDiv.addEventListener('click', function(event){
+                addFromResult();
+                console.log("Clickety!");
+            });
 
             const thumbnail = document.createElement('img');
             thumbnail.setAttribute('class', 'result-thumbnail');
             thumbnail.setAttribute('src', result.thumbnail);
-            thumbnail.addEventListener('click', function(event){
-                addFromResult();
-            });
+            // thumbnail.addEventListener('click', function(event){
+            //     addFromResult();
+            // });
             thumbDiv.append(thumbnail)
 
 
@@ -286,16 +293,16 @@ $(function(){
     }
 
     function disableLoopingIcon(){
-        loopButton.style.color = "white";
+        loopButton.style.color = "gray";
     }
 
     const loopButton = document.getElementById('loop-button');
     loopButton.addEventListener('click', function(event){
         const alreadyLooping = buddyPlayer.getLooping();
         if(alreadyLooping){
-            enableLoopingIcon();
-        } else {
             disableLoopingIcon();
+        } else {
+            enableLoopingIcon();
         }
         buddyPlayer.setLooping(!alreadyLooping);
         socket.emit('setLooping', buddyPlayer.getLooping(), roomID);
@@ -346,7 +353,16 @@ $(function(){
             contentType: 'application/json',
             data: JSON.stringify({query}, null, 2),
             success: result=>{
-                createNewPlayer[VideoSource.OTHERONE](result);
+                    //search youtube if there's a title to use.
+                if(result.title) youtubeSearch(result.title);
+                result.volume = volumeSlider.value;
+                result.videoID = result.url;
+                    //Since we're starting a new video, set it
+                    //to playing.
+                result.videoState = CustomStates.PLAYING;
+                result.videoSource = VideoSource.OTHERONE;
+                socket.emit('startNew', result, roomID);
+                createNewPlayer[result.videoSource](result);
                 searchResultsContainer.scrollTop = 0;
             },
             error: (xhr, status, error)=>{
@@ -413,18 +429,11 @@ $(function(){
         } else {
             console.log("Trying for other one with query: "+inputText);
             if(!searchForOtherOne(inputText)){
-                //If we fail to find a video of type other,
-                //then do a youtube search.
+                youtubeSearch(inputText);
             }
+            // searchForOtherOne(inputText);
         }
-        //? Do we really need the search here?
-        //? It should be in the ajax call code
-        //? For when we try to use youtubedl
-        // else {
-        //     //If we didn't extract a url, search youtube 
-        //     console.log("SEARCHING FOR! "+ inputText);
-        //     // ClientYTPlayer.videoSearch(inputText);
-        // }
+        // youtubeSearch(inputText);
     });
 
     function startNewVideo(videoID, source){
@@ -438,6 +447,7 @@ $(function(){
             thumbnail: "",
             roomID
         }
+        console.log(`Sending new of: ${data}`);
         changeVolumeSettings(source);
         data.volume = volumeSlider.value;
         createNewPlayer[source](data);
@@ -451,12 +461,12 @@ $(function(){
 
     function changeVolumeSettings(source){
         let step = 0.01;
-        let value = 0.5;
+        let value = 0.2;
         let max = 1;
         switch(source){
             case VideoSource.YOUTUBE:
                 step = 1;
-                value = 50;
+                value = 20;
                 max = 100;
             break;
         }
@@ -491,7 +501,7 @@ $(function(){
             //Scripts already exist.
             if(data.videoID != buddyPlayer.getID()){
                 console.log("Trying to start URL: "+data.videoID);
-                console.log("Client URL before change: "+buddyPlayer.getID());                
+                console.log("URL before change: "+buddyPlayer.getID());               
                 buddyPlayer.newVideo(data);
                 console.log("End of search submit function");
             }
@@ -543,9 +553,8 @@ $(function(){
             //Scripts already exist.
             if(data.videoID != buddyPlayer.getID()){
                 console.log("Trying to start URL: "+data.videoID);
-                console.log("Client URL before change: "+buddyPlayer.getID());                
+                console.log("URL before change: "+buddyPlayer.getID());                
                 buddyPlayer.newVideo(data);
-                console.log("End of search submit function");
             }
         }//else
         timeInterval = setInterval(updateVideoTime, 250);
@@ -596,11 +605,12 @@ $(function(){
         otherData.volume = volumeSlider.value;
         if(buddyPlayer) buddyPlayer.destroy();
         buddyPlayer = new OtherPlayer(otherData);
-        // document.getElementById('otherone').play();
-        buddyPlayer.play();
-        buddyPlayer.showPauseIcon();
-        buddyPlayer.setVolume(volumeSlider.value);
-        socket.emit('startNew', buddyPlayer.generateData(), roomID);
+        buddyPlayer.getState() == CustomStates.PLAYING ?
+            buddyPlayer.play() : buddyPlayer.pause();
+        buddyPlayer.seek(otherData.videoTime ?? 0);
+        buddyPlayer.setPlayRate(buddyPlayer.getPlayRate());
+        // buddyPlayer.showPauseIcon();
+        buddyPlayer.initVolume();
     }
     
     let inFullScreen = false;
@@ -646,20 +656,23 @@ $(function(){
     });
 
     $('#play-pause-button').click(function(event){
+        event.preventDefault();
         buddyPlayer.playPause();
         socket.emit('playPause', buddyPlayer.generateData(), roomID);
     });
 
     function updateVideoTime(){
         if(!buddyPlayer ||
+            isNaN(buddyPlayer.getDuration()) ||
             buddyPlayer.getState() != CustomStates.PLAYING ||
             !buddyPlayer.player){
                 return;
             }
         if(!buddyPlayer.isInitialized()){
-            initializeToolTip(buddyPlayer.getDuration());
-            initializeProgressBar(buddyPlayer.getDuration());
-            buddyPlayer.initialized = true;
+            const duration = buddyPlayer.getDuration();
+            initializeToolTip(duration);
+            initializeProgressBar(duration);
+            if(duration) buddyPlayer.initialized = true;            
         }
         const playerTime = Math.round(buddyPlayer.getPlayerTime());
         if(playerTime != buddyPlayer.getSavedTime()){
@@ -667,6 +680,12 @@ $(function(){
         }
         updateTimeUI(playerTime);
         updateBufferBar(buddyPlayer.getBuffered());
+        if(!buddyPlayer.getLooping()){
+            if(playerTime >= Math.round(buddyPlayer.getDuration())){
+                buddyPlayer.setState(CustomStates.ENDED);
+                buddyPlayer.showPlayIcon();
+            }
+        }
     }
 
     function updateBufferBar(buffVal){
@@ -739,6 +758,7 @@ $(function(){
 
     document.addEventListener('loop', event=>{
         socket.emit('startOver', roomID);
+        buddyPlayer.showPauseIcon();
     })
 
     messageInput.keypress(function(event){
@@ -1020,20 +1040,22 @@ $(function(){
             if(data.videoTime === undefined) return;
             console.log("I'm trying to init my player.");
             console.log(`Data is: ${JSON.stringify(data, null, 2)}`);
-            const {videoState, videoSource, videoID, videoTime, playRate} = data;
+            const {videoSource, videoID, videoTime} = data;
             initializeToolTip(data.videoDuration);
             initializeProgressBar(data.videoDuration);
             progressBar.value = Math.round(videoTime);
             updateSeekToolTip(Math.round(videoTime));
+            data.volume = volumeSlider.value;
             if(!buddyPlayer || buddyPlayer.getSource() != videoSource){
                 //* If it's not the same player, then make a new player
                 createNewPlayer[videoSource](data);
             } else {
                 //We have a buddy player and its the same source.
                 if(videoID != buddyPlayer.getID()){
+                    //If we're loading a new video, start over
                     data.videoTime = 0;
                     buddyPlayer.newVideo(data);
-                    updateTimeUI(videoTime);
+                    updateTimeUI(data.videoTime);
                 } else {
                     if(videoTime > 0){
                         seekAndSetUI(videoTime);
@@ -1057,6 +1079,7 @@ $(function(){
     
         socket.on('playrateChange', playRate=>{
             buddyPlayer.setPlayRate(playRate);
+            changePlayRate(playRate);
         });
 
         socket.on('playPause', data=>{
@@ -1077,16 +1100,18 @@ $(function(){
         });
     
         socket.on('startNew', (data)=>{
+            console.log(`Start new with: ${JSON.stringify(data)}`);
             const {videoSource, videoTitle,
                 videoID, videoTime, playRate,
                 videoState, thumbnail, roomID} = data;
+                data.volume = volumeSlider.value;
             if(!buddyPlayer || buddyPlayer.getSource() != videoSource){
                 //* If it's not the same player, then make a new player
                 createNewPlayer[videoSource](data);                                              
             } else {
                 //if It's the same player, make sure it's a different ID
                 if(videoID != buddyPlayer.getID()){
-                    console.log("source is set for some reason.");
+                    console.log("same source, diff ID");
                     buddyPlayer.newVideo(data);
                 } else {
                     buddyPlayer.seek(videoTime);

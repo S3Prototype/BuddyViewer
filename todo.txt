@@ -1,22 +1,20 @@
 DOING:
-* Done with most of playing mp4's from the internet.
-    * Next we have to set <video> tag to pointer-events: none.
-    * Then set up all the other functions:
-        ** playbackrate
-        ** cc
-        ** looping
-    * Then test it with the sockets.
-    * Then test hotjoining
-    * Then test switching from random mp4 to youtube to vimeo and all permutations.
-
+* Add your own recommended videos overlay when video is paused.
+    * Set it so after you create a video, as soon as we're able to get that video's info such as title or anything, we do a youtubeSearch() for it. The results will be used in our recommended videos. Don't forget that you're doing a search on your otherone videos as well when the ajax call ends. That's a source of recommendeds for those too.
+        * Show recommended:
+            * When paused
+            * When ended
 *THOUGHTS:
 
 **MOST IMPORTANT TODO**
-* Add your own recommended videos overlay when video is paused.
 * Fix up the chat.
 * Give rooms logos. Would be cool.
 
 TODO:
+* Still have to save room state after everyone leaves. Or if that's happening, load from roomstate.
+* Change history so it does store repeats. No reason not to store a video just because it's been watched already.
+* Make a route for '/room/'. Redirect it to index.
+* Set the video controls to fixed position and a higher z-index when in fullscreen. That way you can make them appear/disappear.
 * Probably need some code for aligning videos if they're opened late.
     * One thought is, whenever we're send or we send a timestamp, we save that as a value like intendedTime. Then we catch events from the player, and if a play event happens, we check if it's within +-5 seconds of intendedTime. If not, skip to that time. By updating this value every time we press play/pause/seek as well as when we receive a play/pause/seek event from someone else, we ensure that the intended time is actually the intended time. This should make it so whenever a user loads a video from a cold browser
         * This is limited because if I cold-start say 10 seconds after a video was started, I'll start at 0, because intendedtime is 0. No one has pressed anything yet.
@@ -24,13 +22,12 @@ TODO:
         * This allows for dealing with cold starts, but does add a layer of complexity, as every time I play/pause/seek I'm gonna have to set a "triggeredbycontrols" var to true. That could be very finicky.
 * Add a search button to the searchbar. Also detach it from the videocontainer so it's its own thing.
 * Change from buttons to a tags so they don't do that weird press animation anymore.
+* Definitely gonna have to change it back to some form of saving rooms in local storage like redis or something until it's time to save it to mongodb.
 * Gotta implement a different session store from the default.
     ** https://github.com/expressjs/session#compatible-session-stores
 * Try to use ejs layouts.
-* When people put non-youtube links, try to get the video with youtubedl. If it's not a link and just some text, youtube search it.
 * Add an overlay over the room that says "PLEASE REFRESH THE PAGE, but disappears if you press join room. This way, the join room modal always happens. No idea why tf it's not always popping up now.
 * Why does it say someone tried to join a room that didn't exist when you get '/'?
-* Consider deleted the rooms array and having all code interface directly with the DB, nothing saved in local storage.
 * When host leaves a room and it becomes empty, it reverts to a default state. Shouldn't do that.
 * Swap out most buttons for divs. Divs don't give that weird shifting animation buttons automatically do.
 * Make room passwords work. Require new entrants to enter the password if they want to actually execute the joinRoom code. Perhaps have a password prompt replace the joinButton interface.
@@ -78,6 +75,7 @@ REFACTORING:
 THOUGHTS:
 
 * Use web-scraping to get better search results than the youtube search API might give you. That way you'll do better than watch2gether's search.
+* Activate settings sync in vs code and any other sync for plugins etc.
 * Default video should be a 1-minute explanation of what the site is and how it works.
 * When done with this whole list, refactor the code before proceeding with the next phase of development.
 * This will ultimately be a watch2gether clone. I think it's possible to do by having the client catch when the user changes the time on the embeded video, then send that new set time to the server, then send that to the other viewers' clients.
@@ -96,6 +94,22 @@ THOUGHTS:
 DONE
 ===========
 ~~~~~~~~~~~
+
+1/19/21
+
+* Change it so the youtube search is done if searchforother is successful by searching with the title you get back, or if it's unseccessful by searching with the inputtext
+* Make youtube search work again.
+* Next we have to set <video> tag to pointer-events: none.
+* Then set up all the other functions:
+    ** playbackrate
+    ** cc (no need for that)
+    ** looping
+    * Then test it with the sockets.
+    * Then test hotjoining
+* Done with most of playing mp4's from the internet.
+    * Then test switching from random mp4 to youtube to vimeo and all permutations.
+
+=====
 
 1/18/21
 

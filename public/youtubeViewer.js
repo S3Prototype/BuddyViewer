@@ -65,6 +65,7 @@ class YouTubeViewer extends BuddyViewer{
         }
 
         thisBuddyPlayer.seek(YouTubeViewer.startTime);
+        document.dispatchEvent(new Event('initialize'));
         thisBuddyPlayer.sendTimeEvent();  
 
         thisBuddyPlayer.getState() == CustomStates.PLAYING ?
@@ -76,7 +77,7 @@ class YouTubeViewer extends BuddyViewer{
         console.log("===================");
         
         thisBuddyPlayer.setVolume(parseInt(thisBuddyPlayer.volume ?? 50));
-        thisBuddyPlayer.initialized = true;
+        // thisBuddyPlayer.initialized = true;
         thisBuddyPlayer.captionsEnabled = YouTubeViewer.options.cc_load_policy == 1;
         console.log("initNewPlayer ENDED");
     }
@@ -176,10 +177,10 @@ class YouTubeViewer extends BuddyViewer{
         const {videoSource, videoTitle, videoID,
             videoTime, playRate, videoState, thumbnail,
             roomID, videoDuration} = data;
-        this.player.destroy();
-        $(`<div id="player"></div>`).insertBefore('iframe');
-        $('iframe').remove();
-        this.setState(CustomStates.PLAYING);
+        this.playerTime = videoTime;
+        this.time = videoTime;
+        this.destroy();
+        this.setState(videoState);
         this.initialized = false;
         this.player = new YT.Player('player', {
             height: '100%',
@@ -197,8 +198,8 @@ class YouTubeViewer extends BuddyViewer{
 
     destroy(){
         this.player.destroy();
-        $(`<div id="player"></div>`).insertBefore('iframe');
-        $('iframe').remove();        
+        // $(`<div id="player"></div>`).insertBefore('iframe');
+        // $('iframe').remove();        
     }
 
 }
