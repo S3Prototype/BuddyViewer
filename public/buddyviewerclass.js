@@ -1,23 +1,27 @@
 class BuddyViewer{
-    constructor(videoID, state, videoDuration, thumbnail="", time=0, playRate, roomID){
-        this.roomID = roomID;
-        this.videoID = videoID;
-        this.state = state;
-        this.thumbnail = thumbnail;
-        this.playRate = playRate;
+    constructor(data){
+        this.roomID = data.roomID;
+        this.videoID = data.videoID;
+        this.state = data.videoState ?? CustomStates.PLAYING;
+        
+        this.thumbnail = data.thumbnail;
+        this.playRate = data.playRate;
         this.previousState = CustomStates.UNSTARTED;
         this.player;
         this.initialized = false;
-        this.playerTime = time;
-        this.time = time;
+        
+        this.playerTime = data.videoTime ?? 0;
+        this.time = this.playerTime;
+        
+        this.volume = data.volume ?? 0.5;
+
         this.buffered = 0;
         this.source = VideoSource.OTHERONE;
-        this.roomID = roomID;
-        this.videoTitle = "";
+        this.videoTitle = data.videoTitle;
         this.captionsEnabled = false;
         this.hasCaptions = false;
         this.looping = false;
-        this.duration = videoDuration;
+        this.duration = data.videoDuration;
     }
 
     sendTimeEvent(){
@@ -47,8 +51,10 @@ class BuddyViewer{
     playPause(){
         if(this.isPaused()){
             this.play();
+            this.showPauseIcon();
         } else {
             this.pause();
+            this.showPlayIcon();
         }
         return this.isPaused();
     }
@@ -89,6 +95,10 @@ class BuddyViewer{
 
     getPlayRate(){
         return this.playRate;
+    }
+    
+    isMuted(){
+        return this.muted;
     }
 
     generateData(){
@@ -187,7 +197,7 @@ class BuddyViewer{
 const VideoSource = {
     YOUTUBE: 0,
     VIMEO: 2,
-    TWITTER: 3,
+    SPOTIFY: 3,
     OTHERONE: 4
 }
 

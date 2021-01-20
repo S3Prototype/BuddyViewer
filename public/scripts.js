@@ -332,20 +332,29 @@ $(function(){
         return url;
     }
 
-    function tryForOtherOne(url){
-        
-        let viewKeyIndex = url.indexOf('viewkey=');
-        if(viewKeyIndex > -1){
-            url = url.substring(viewKeyIndex+8);
-            // let viewKeyVal = url.substring(viewKeyIndex, viewKeyIndex+8);
-            // url = url.substring(0, url.indexOf('view_video'));
-            // url = url + 'embed/'+viewKeyVal;
-            videoSource = VideoSource.OTHERONE;
-        } else {
-            return null;
-        }
+    function searchForOtherOne(query){
 
-        return url;
+        //send an ajax request to the server. Try to find the video
+        //on youtubedl. If you get nothing, execute a search.
+        if(query.indexOf('http') != 0){
+            return false;
+        }
+        console.log('query is '+query);
+        $.ajax({
+            url: '/otherone',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({query}, null, 2),
+            success: result=>{
+                createNewPlayer[VideoSource.OTHERONE](result);
+                searchResultsContainer.scrollTop = 0;
+            },
+            error: (xhr, status, error)=>{
+                console.log('Failed to get otherone.');
+                console.log(error);
+            }
+        });
+        return true;
     }
 
     function tryforVimeo(url){
@@ -356,9 +365,11 @@ $(function(){
                     url = url.substring(url.indexOf('player')+23);
                 } else if(url.includes('vimeo')){
                     url = url.substring(url.indexOf('vimeo')+10);
+                } else {
+                    return null;
                 }
                 console.log(url);
-            videoSource = VideoSource.VIMEO;
+                videoSource = VideoSource.VIMEO;
         } else {
             return null;
         }
@@ -388,6 +399,7 @@ $(function(){
         VIMEO: "https://player.vimeo.com/api/player.js",
         SPOTIFY: "https://sdk.scdn.co/spotify-player.js",
         OTHERONE: "",
+        TWITCH: "https://player.twitch.tv/js/embed/v1.js"
     };
 
     $('#ytsearch').on('submit', function(event){
@@ -399,11 +411,20 @@ $(function(){
         if(newID){
             startNewVideo(newID, source);
         } else {
-            //If we didn't extract a url, search youtube 
-            console.log("SEARCHING FOR! "+ inputText);
-            // ClientYTPlayer.videoSearch(inputText);
+            console.log("Trying for other one with query: "+inputText);
+            if(!searchForOtherOne(inputText)){
+                //If we fail to find a video of type other,
+                //then do a youtube search.
+            }
         }
-        searchResultsContainer.scrollTop = 0;
+        //? Do we really need the search here?
+        //? It should be in the ajax call code
+        //? For when we try to use youtubedl
+        // else {
+        //     //If we didn't extract a url, search youtube 
+        //     console.log("SEARCHING FOR! "+ inputText);
+        //     // ClientYTPlayer.videoSearch(inputText);
+        // }
     });
 
     function startNewVideo(videoID, source){
@@ -428,28 +449,82 @@ $(function(){
         return $(`script[src="${source}"]`).length > 0;
     }
 
-    createNewPlayer = [
-        ytCreatePlayer,
-        ytCreatePlayer,
-        vimeoCreatePlayer
-    ];
-
     function changeVolumeSettings(source){
-        let step = 1;
-        let value = 50;
-        let max = 100;
+        let step = 0.01;
+        let value = 0.5;
+        let max = 1;
         switch(source){
-            case VideoSource.VIMEO:
-                step = 0.01;
-                value = 0.5;
-                max = 1;
+            case VideoSource.YOUTUBE:
+                step = 1;
+                value = 50;
+                max = 100;
+            break;
         }
         volumeSlider.setAttribute('step', step);
         volumeSlider.setAttribute('value', value);
         volumeSlider.setAttribute('max', max);
     }
+
+    //Maybe make this an import. Make a JS file that exports
+    //these functions in an array. Have createNewPlayer = it.
+    //Then you're good.
+    createNewPlayer = [
+        ytCreatePlayer,
+        ytCreatePlayer,
+        vimeoCreatePlayer,
+        spotifyCreatePlayer,
+        otherOneCreatePlayer,
+        twitchCreatePlayer
+    ];
+
+    function twitchCreatePlayer(data){
+        if(buddyPlayer) buddyPlayer.destroy();
+        if(!scriptExists(PlayerScripts.TWITCH)){
+            loadPlayerScript(PlayerScripts.TWITCH, ()=>{
+                loadPlayerScript('../twitchPlayer.js', _=>{
+                    buddyPlayer = new TwitchPlayer(data);
+                    initializeProgressBar(data.videoDuration);
+                    initializeToolTip(data.videoDuration);
+                });                            
+            });
+        } else {
+            //Scripts already exist.
+            if(data.videoID != buddyPlayer.getID()){
+                console.log("Trying to start URL: "+data.videoID);
+                console.log("Client URL before change: "+buddyPlayer.getID());                
+                buddyPlayer.newVideo(data);
+                console.log("End of search submit function");
+            }
+        }//else 
+
+    }
+
+    function spotifyCreatePlayer(data){
+        // if(buddyPlayer) buddyPlayer.destroy();
+        // if(!scriptExists(PlayerScripts.SPOTIFY)){
+        //     document.addEventListener('spotifyReady', _=>{
+        //         loadPlayerScript('../spotifyListener.js', _=>{
+        //             console.log("Loading up new spotify, line 457");
+        //             buddyPlayer = new SpotifyListener(data);
+        //         });
+        //     });
+        //     loadPlayerScript(PlayerScripts.SPOTIFY, ()=>{
+        //         console.log("Spotify loaded!");                
+        //     });
+        // } else {
+        //     //Scripts already exist.
+        //     if(data.videoID != buddyPlayer.getID()){
+        //         console.log("Trying to start URL: "+data.videoID);
+        //         console.log("Client URL before change: "+buddyPlayer.getID());                
+        //         buddyPlayer.newVideo(data);
+        //         console.log("End of search submit function");
+        //     }
+        // }//else 
+        console.log("Spotify not implemented yet.");
+    }
     
     function ytCreatePlayer(data){
+        if(buddyPlayer) buddyPlayer.destroy();
         if(!scriptExists(PlayerScripts.YOUTUBE_A)){
             document.addEventListener('ytReady', _=>{
                 loadPlayerScript('../youtubeViewer.js', _=>{
@@ -478,6 +553,7 @@ $(function(){
 
     function vimeoCreatePlayer(data){
         changeVolumeSettings(data.videoSource);
+        if(buddyPlayer) buddyPlayer.destroy();
         if(!scriptExists(PlayerScripts.VIMEO)){
             loadPlayerScript(PlayerScripts.VIMEO, ()=>{
                 //Initialize a video.
@@ -494,7 +570,7 @@ $(function(){
         }
     }
 
-    function loadPlayerScript(scriptURL, callback) {
+    function loadPlayerScript(scriptURL, callback) {                
         var script = document.createElement("script")
         script.type = "text/javascript";
 
@@ -515,18 +591,16 @@ $(function(){
         document.getElementsByTagName("head")[0].appendChild(script);
     }
 
-    function otherOneCreatePlayer(currURL){
-        if(previousSource == VideoSource.YOUTUBE){
-            // if(player) player.destroy();
-        }
-        const iframeCode = `<iframe 
-                src="https://www.pornhub.com/embed/${currURL}"
-                frameborder="0" width="100%" id="otherOne"
-                height="100%" scrolling="no"
-                allowfullscreen></iframe>`;
-        // $('#player').append(newElement);
-        console.log(iframeCode);        
-        $('#player').html(iframeCode);
+    function otherOneCreatePlayer(otherData){
+        changeVolumeSettings(VideoSource.OTHERONE);
+        otherData.volume = volumeSlider.value;
+        if(buddyPlayer) buddyPlayer.destroy();
+        buddyPlayer = new OtherPlayer(otherData);
+        // document.getElementById('otherone').play();
+        buddyPlayer.play();
+        buddyPlayer.showPauseIcon();
+        buddyPlayer.setVolume(volumeSlider.value);
+        socket.emit('startNew', buddyPlayer.generateData(), roomID);
     }
     
     let inFullScreen = false;
@@ -583,9 +657,9 @@ $(function(){
                 return;
             }
         if(!buddyPlayer.isInitialized()){
-            console.log("player not initialized trigger");
             initializeToolTip(buddyPlayer.getDuration());
             initializeProgressBar(buddyPlayer.getDuration());
+            buddyPlayer.initialized = true;
         }
         const playerTime = Math.round(buddyPlayer.getPlayerTime());
         if(playerTime != buddyPlayer.getSavedTime()){
@@ -802,9 +876,7 @@ $(function(){
     function changeVolume(event){
         if(!buddyPlayer) return;
         if(buddyPlayer.isMuted()){
-            buddyPlayer.unMute();
-            document.getElementById('mute-icon').classList.remove("fa-volume-mute");
-            document.getElementById('mute-icon').classList.add("fa-volume-up");
+            buddyPlayer.unMute();            
         }
         buddyPlayer.setVolume(volumeSlider.value);
     }
@@ -1054,7 +1126,7 @@ $(function(){
                                   
             validateUserID();        
             volumeSlider.addEventListener("change", changeVolume);
-            volumeSlider.addEventListener("input", changeVolume)
+            volumeSlider.addEventListener("input", changeVolume);
             // player.addEventListener("onStateChange", stopYTEvent);
             // ClientYTPlayer.currentState = YT.PlayerState.UNSTARTED;
             // updateSeekToolTip(ClientYTPlayer.videoTime);

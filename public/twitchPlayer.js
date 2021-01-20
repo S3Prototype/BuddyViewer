@@ -1,0 +1,3 @@
+class TwitchPlayer extends BuddyViewer{
+    
+}

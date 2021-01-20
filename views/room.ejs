@@ -103,19 +103,13 @@
         </div>
         <div id="join-room-modal-overlay" class="join-room-modal-overlay"></div>
     <script>
-      // 2. This code loads the IFrame Player API code asynchronously.
-    //   var tag = document.createElement('script');
-
-    //   tag.src = "https://www.youtube.com/iframe_api";
-    //   var firstScriptTag = document.getElementsByTagName('script')[0];
-    //   firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-      // 3. This function creates an <iframe> (and YouTube player)
-      //    after the API code downloads.
-      var player = {};
-      function onYouTubeIframeAPIReady() {
-          document.dispatchEvent(new Event('ytReady'));
-      }
+        var player = {};
+        function onYouTubeIframeAPIReady() {
+            document.dispatchEvent(new Event('ytReady'));
+        }
+        window.onSpotifyWebPlaybackSDKReady = () => {
+            document.dispatchEvent(new Event('spotifyReady'));
+        };
     </script>
     </body>
     <script src="/socket.io/socket.io.js"></script>
@@ -124,6 +118,7 @@
     <script src="https://www.youtube.com/iframe_api"></script> -->
     <script src="../jquery-3.5.1.js"></script>
     <script src="../buddyviewerclass.js"></script>
+    <script src="../otherPlayer.js"></script>
     <script src="../scripts.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/js-cookie@rc/dist/js.cookie.min.js"></script>
     <!-- <script defer src="../bigscripts.js"></script> -->

@@ -1,6 +1,6 @@
 class VimeoViewer extends BuddyViewer{
     constructor(data){
-        super(data.videoID, -1, data.videoState, data.videoDuration, data.videoTime, data.playRate);
+        super(data);
         this.source = VideoSource.VIMEO;       
         // this.playerTime = 0;
         this.buffered = 0;
@@ -25,8 +25,8 @@ class VimeoViewer extends BuddyViewer{
             speed: true,
             url: `https://player.vimeo.com/video/${videoID}` //assuming videoID won't be stripped of the surrounding url
         }
-        $(`<div id="player"></div>`).insertBefore('iframe');
-        $('iframe').remove();
+        // $(`<div id="player"></div>`).insertBefore('iframe');
+        // $('iframe').remove();
         this.player = new Vimeo.Player('player', options);
         this.initListeners();
         this.finalizeVideo(data);
@@ -192,6 +192,12 @@ class VimeoViewer extends BuddyViewer{
                     break;
             }
         });
+    }
+
+    destroy(){
+        this.player.destroy();
+        $(`<div id="player"></div>`).insertBefore('iframe');
+        $('iframe').remove();
     }
 
 }

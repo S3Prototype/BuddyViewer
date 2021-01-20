@@ -1,5 +1,13 @@
 DOING:
-* Add spotify playback.
+* Done with most of playing mp4's from the internet.
+    * Next we have to set <video> tag to pointer-events: none.
+    * Then set up all the other functions:
+        ** playbackrate
+        ** cc
+        ** looping
+    * Then test it with the sockets.
+    * Then test hotjoining
+    * Then test switching from random mp4 to youtube to vimeo and all permutations.
 
 *THOUGHTS:
 
@@ -9,11 +17,17 @@ DOING:
 * Give rooms logos. Would be cool.
 
 TODO:
+* Probably need some code for aligning videos if they're opened late.
+    * One thought is, whenever we're send or we send a timestamp, we save that as a value like intendedTime. Then we catch events from the player, and if a play event happens, we check if it's within +-5 seconds of intendedTime. If not, skip to that time. By updating this value every time we press play/pause/seek as well as when we receive a play/pause/seek event from someone else, we ensure that the intended time is actually the intended time. This should make it so whenever a user loads a video from a cold browser
+        * This is limited because if I cold-start say 10 seconds after a video was started, I'll start at 0, because intendedtime is 0. No one has pressed anything yet.
+    * Alternatively, whenever an event is triggered separately from the user's controls, seek out the time the host is at. If that time is +-5, skip to it.
+        * This allows for dealing with cold starts, but does add a layer of complexity, as every time I play/pause/seek I'm gonna have to set a "triggeredbycontrols" var to true. That could be very finicky.
 * Add a search button to the searchbar. Also detach it from the videocontainer so it's its own thing.
 * Change from buttons to a tags so they don't do that weird press animation anymore.
 * Gotta implement a different session store from the default.
     ** https://github.com/expressjs/session#compatible-session-stores
 * Try to use ejs layouts.
+* When people put non-youtube links, try to get the video with youtubedl. If it's not a link and just some text, youtube search it.
 * Add an overlay over the room that says "PLEASE REFRESH THE PAGE, but disappears if you press join room. This way, the join room modal always happens. No idea why tf it's not always popping up now.
 * Why does it say someone tried to join a room that didn't exist when you get '/'?
 * Consider deleted the rooms array and having all code interface directly with the DB, nothing saved in local storage.

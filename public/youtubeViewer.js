@@ -19,10 +19,7 @@ class YouTubeViewer extends BuddyViewer{
     };
 
     constructor(data){        
-        super(data.videoID, data.videoState, data.videoDuration,
-            data.videoTime, data.playRate, data.thumbnail,
-            data.roomID);
-
+        super(data);
         YouTubeViewer.startTime = data.videoTime;
 
         this.source = VideoSource.YOUTUBE;
@@ -42,8 +39,8 @@ class YouTubeViewer extends BuddyViewer{
         const {videoSource, videoTitle, videoID,
             videoTime, playRate, videoState, thumbnail,
             roomID, videoDuration} = data;
-        $(`<div id="player"></div>`).insertBefore('iframe');
-        $('iframe').remove();
+        // $(`<div id="player"></div>`).insertBefore('iframe');
+        // $('iframe').remove();
         this.setState(videoState);
         this.player = new YT.Player('player', {
             height: '100%',
@@ -154,10 +151,6 @@ class YouTubeViewer extends BuddyViewer{
         this.muted = false;
         this.showVolumeIcon();
     }
-    
-    isMuted(){
-        return this.muted;
-    }
 
     toggleCaptions(){
         if(!this.captionsEnabled){
@@ -177,28 +170,6 @@ class YouTubeViewer extends BuddyViewer{
 
         this.captionsEnabled = !this.captionsEnabled;
         return this.captionsEnabled;
-    }
-
-    finalizeVideo(data){
-        if(!data.videoTitle){
-            this.player.getVideoTitle()
-            .then(title=>{
-                this.videoTitle = title;
-                //insert code for showing title on page here.
-            });
-        } else {
-            this.videoTitle = data.videoTitle;
-        }
-        this.duration = data.videoDuration;
-        this.time = data.videoTime;
-        this.playerTime = data.videoTime;
-        this.seek(data.videoTime);
-        this.setPlayRate(data.playRate);
-        this.setVolume(this.volume ?? 0.5);
-        if(data.videoState && 
-            data.videoState == CustomStates.PLAYING){
-            this.play();
-        }
     }
 
     newVideo(data){ 
@@ -222,6 +193,12 @@ class YouTubeViewer extends BuddyViewer{
             playerVars: YouTubeViewer.options
         });
         YouTubeViewer.currentPlayer = this;
+    }
+
+    destroy(){
+        this.player.destroy();
+        $(`<div id="player"></div>`).insertBefore('iframe');
+        $('iframe').remove();        
     }
 
 }

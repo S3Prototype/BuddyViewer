@@ -33,8 +33,8 @@ const { title } = require('process');
 //     console.log("PYTHON ERROR: "+error);
 // }
 
-const fs = require('fs')
-const youtubedl = require('youtube-dl')
+// const fs = require('fs');
+const youtubedl = require('youtube-dl');
 
 // const video = youtubedl('past_url_here')
 // const url = `https://vimeo.com/122957`;
@@ -623,6 +623,31 @@ app.post('/get-rooms-list', (req, res)=>{
     .catch(error=>{
         logFailure()
         res.render('error', {error});//Show error page
+    });
+});
+
+app.post('/otherone', (req, res)=>{
+    const options = req.body.options ? req.body.options : [];
+    let resultData;
+    youtubedl.getInfo(req.body.query, options, (error, info)=>{
+        if (error){
+            console.log('==============');
+            console.log(`Error looking for video ${req.query}.`);
+            console.log(`${error}`);
+            console.log('==============');
+            res.send({error});
+        } else {
+            res.send(info);
+        }
+        // {
+        //     id: info.id,
+        //     title: info.title,
+        //     url: info.url,
+        //     thumbnail: info.thumbnail,
+        //     description: info.description,
+        //     filename: info._filename,
+        //     format_id: info.format_id
+        // }
     });
 });
 
