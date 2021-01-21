@@ -24,14 +24,32 @@ class OtherPlayer extends BuddyViewer{
     createPlayer(data){
         this.createVideoElement(data);
         OtherPlayer.currentPlayer = this.player;
-        this.setState(data.videoState);
+    this.setState(data.videoState);
         // this.seek(data.videoTime);
        this.addListeners();
+    }
+
+    static sendSyncEvent(){
+        document.dispatchEvent(new Event('trytosync'));
     }
 
     addListeners(){
         this.player.addEventListener('timeupdate', function(){                       
             document.dispatchEvent(new Event('videotime'));
+        });
+
+        function catchEvent(event){
+            BuddyViewer.hideRecommendedCard();
+            SyncManager.syncIfNecessary();
+        }
+
+        this.player.addEventListener('play', catchEvent);
+        this.player.addEventListener('playing', catchEvent);
+        this.player.addEventListener('pause', ()=>{
+            BuddyViewer.showRecommendedCard();
+        })
+        this.player.addEventListener('ended', ()=>{
+            BuddyViewer.showRecommendedCard();
         });
     }
 
@@ -70,11 +88,12 @@ class OtherPlayer extends BuddyViewer{
         // this.player = new OtherPlayer(data).player;
         this.createVideoElement(data);
         this.setState(videoState);
+        OtherPlayer.currentPlayer = this.player;
 
         this.getState() == CustomStates.PLAYING ?
             this.play() : this.pause();
 
-        this.title = videoTitle;
+        this.videoTitle = videoTitle;
         this.thumbnail = thumbnail;
         this.url = videoID
         this.videoID = videoID;
@@ -106,8 +125,8 @@ class OtherPlayer extends BuddyViewer{
         console.log("Volume should be "+vol);
         this.unMute();
         const newvol = parseFloat(vol); 
-        this.volume = newvol;
-        this.player.volume = newvol;
+        this.volume = parseFloat(vol);
+        this.player.volume = parseFloat(vol);
     }
 
     seek(newTime){
@@ -115,6 +134,7 @@ class OtherPlayer extends BuddyViewer{
     }
 
     play(){
+        SyncManager.triggeredByControls = true;
         this.setState(CustomStates.PLAYING);
         this.showPauseIcon();
         this.player.play();

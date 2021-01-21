@@ -11,6 +11,8 @@ $(function(){
         socket.emit('setLooping', true, roomID);
     }
 
+    const maxRecommended = 10;
+
     console.log(`Welcome to ${roomID}`);
     const storedRoomID = localStorage.getItem('roomID');
     console.log(`STORED ID IS ${storedRoomID}`);
@@ -27,7 +29,10 @@ $(function(){
     let nameOnServer = null;//anonName;
     let pfp = null;
 
-    const volumeSlider = document.getElementById('volume-slider');                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+    const volumeSlider = document.getElementById('volume-slider');
+    
+    const recommendedContainer = document.getElementById('rec-container');
+    
     let mobileMode = false;
 
     let buddyPlayer = null;
@@ -87,58 +92,73 @@ $(function(){
     let searchInterval;
     let searchCount = 0;
 
-    function keepCheckingForResults(){
-        setTimeout(
-            _=>ClientYTPlayer.getSearchResults(),
-            100); 
-    }
-    function getSearchResults(){
-        $.ajax({
-            url: '/get-search-results',
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({user_id: userID}, null, 2),
-            success: function (results){
-                console.log(`${new Date().toLocaleTimeString()} Results are: ${results}`);
-                // ClientYTPlayer.currentlySendingData = false;
-                if(results){
-                    // clearInterval(ClientYTPlayer.searchInterval);
-                    console.log(results[0]);
-                    ClientYTPlayer.addSearchResults(results);
-                    ClientYTPlayer.searchCount = 0;
-                } else {
-                    ClientYTPlayer.searchCount++;
-                    if(ClientYTPlayer.searchCount >= 10){
-                        ClientYTPlayer.searchCount = 0;
-                        // clearInterval(ClientYTPlayer.searchInterval);
-                        //code has failed
-                    } else {
-                        ClientYTPlayer.keepCheckingForResults();
-                    }
-                }
-                // console.log("("+ new Date().toLocaleTimeString()+") Sendstate from this client done.");
-                // initializeYTProgressBar();
-                // ClientYTPlayer.clientState = player.getPlayerState();
-            }
-        });
-    }
-
     function youtubeSearch(query){
         $.ajax({
             url: '/search',
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify({user_id: userID, query: query}, null, 2),
-            success: function (results){
-                // console.log(`${new Date().toLocaleTimeString()} Executed search. Preliminary results are: ${JSON.stringify(results, null, 2)}`);
-                    // if(!results || results.length < 1){
-                    //     ClientYTPlayer.keepCheckingForResults();                        
-                    // } else {
-                console.log(results[0]);
-                addSearchResults(results);
-                    // }
+            success: function (results){                
+                addRecommendedVideos(results);
+                if(buddyPlayer &&
+                    buddyPlayer.getSource() == VideoSource.YOUTUBE)
+                {
+                        addSearchResults(results);
+                }
             }
         });
+    }
+
+    function addRecommendedVideos(results){
+        recommendedContainer.innerHTML = "";
+        for(let i = 0; i < maxRecommended && i < results.length; i++){
+            const recDiv = document.createElement('div');
+            recDiv.setAttribute('class', 'rec-div');
+
+            const title = document.createElement('span');
+            title.setAttribute('class', 'rec-title');
+            const titleText = document.createTextNode(results[i].title);
+            title.appendChild(titleText);
+            recDiv.append(title);
+
+            const thumbDiv = document.createElement('div');
+            thumbDiv.setAttribute('class', 'rec-thumbnail-div');
+
+            const thumbnail = document.createElement('img');
+            thumbnail.setAttribute('class', 'rec-thumbnail');
+            thumbnail.setAttribute('src', results[i].thumbnail);
+            thumbDiv.append(thumbnail)            
+            
+            recDiv.append(thumbDiv);
+
+            recDiv.addEventListener('click', (event)=>{
+                data = {       
+                    videoTime: 0,
+                    thumbnail: results[i].thumbnail,                    
+                    videoID: results[i].videoID,
+                    videoState: CustomStates.PLAYING,
+                    videoTitle: results[i].title,
+                    videoSource: VideoSource.YOUTUBE
+                }
+                
+                if(!buddyPlayer ||
+                    buddyPlayer.getSource() != VideoSource.YOUTUBE)
+                {
+                    console.log('instantiating new video from recommended!');
+                    console.log(data);
+                    createNewPlayer[VideoSource.YOUTUBE](data);
+                } else {
+                    console.log('playing recommended video!');
+                    console.log(data);
+                    buddyPlayer.newVideo(data);
+                    youtubeSearch(data.videoTitle);
+                }
+                socket.emit('startNew', data, roomID);
+
+            });
+
+            recommendedContainer.append(recDiv);
+        }
     }
 
     function addSearchResults(results){
@@ -426,6 +446,7 @@ $(function(){
         // console.log("BEFORE NEW VIDEO SET. URL: "+currURL);
         if(newID){
             startNewVideo(newID, source);
+            youtubeSearch(newID);
         } else {
             console.log("Trying for other one with query: "+inputText);
             if(!searchForOtherOne(inputText)){
@@ -473,6 +494,7 @@ $(function(){
         volumeSlider.setAttribute('step', step);
         volumeSlider.setAttribute('value', value);
         volumeSlider.setAttribute('max', max);
+        console.log(`Step: ${step} | Value: ${value} | Max: ${max}`);
     }
 
     //Maybe make this an import. Make a JS file that exports
@@ -554,14 +576,14 @@ $(function(){
             if(data.videoID != buddyPlayer.getID()){
                 console.log("Trying to start URL: "+data.videoID);
                 console.log("URL before change: "+buddyPlayer.getID());                
-                buddyPlayer.newVideo(data);
+                buddyPlayer = new YouTubeViewer(data);
             }
         }//else
         timeInterval = setInterval(updateVideoTime, 250);
     }
 
     function vimeoCreatePlayer(data){
-        changeVolumeSettings(data.videoSource);
+        changeVolumeSettings(VideoSource.VIMEO);
         if(buddyPlayer) buddyPlayer.destroy();
         if(!scriptExists(PlayerScripts.VIMEO)){
             loadPlayerScript(PlayerScripts.VIMEO, ()=>{
@@ -691,10 +713,6 @@ $(function(){
     function updateBufferBar(buffVal){
         bufferBar.value = buffVal;
     }
-    
-    function updateYTProgressBar(updateTime){
-        progressBar.value = updateTime;
-    }
 
     function updateSeekToolTip(seekTime){
         let minutes = parseInt(seekTime / 60);
@@ -764,91 +782,30 @@ $(function(){
     messageInput.keypress(function(event){
         let code = (event.keyCode ? event.keyCode : event.which);
         if (code == 13 && !event.shiftKey){
-            $('#input-form').submit();
+            $('#chat-input').submit();
         }
     });
 
-    function addMessageToChat(response){
-        const chatMessage = response.message;
-        let localTimeStamp = new Date().toLocaleTimeString();
-        
-        if(!chatMessage) return;
+    function addMessageToChat(message){
+        const messageDiv = document.createElement('div');
+        messageDiv.setAttribute('class', 'message');
 
-        // console.log("THE MESSAGE IS "+chatMessage.message_data);
+        const formattedMessage = `${message.name} (${userID})[${message.timestamp}]: ${message.text}`;
 
-        if(chatMessage.name == localName){
-            //If we were allowed to keep the name we sent,
-            nameOnServer = chatMessage.name;
-            $('#name-input').attr('placeholder', 'Enter Your Name Here');
-            //And we no longer have a name to remove.
-            nameToRemove = null;
-            messageInput.val(''); //clear the input field
-        } else {      
-            if(chatMessage.fromAnotherUser){                                
-                //If message is from another user
-                //Check if it's @-ing anyone.
-                const atIndex = chatMessage.message_data.indexOf('@');
-                if(atIndex !== -1){
-                    let endOfAtIndex = chatMessage.message_data.indexOf(' ', atIndex);
-                    if(endOfAtIndex === -1){
-                        //If there is no space after @ is called, then
-                        endOfAtIndex = chatMessage.message_data.length;
-                        //The name that's being @-ed must be the end of the message.
-                    }
+        const messageText = document.createTextNode(formattedMessage);
+        messageDiv.appendChild(messageText)
 
-                    const attedUser = chatMessage.message_data.substring(atIndex+1, endOfAtIndex);
-                    // let thisUserHasBeenAtted = false;
-                    console.log()
-                    if(attedUser == nameOnServer){
-                        console.log("USER HAS BEEN ATTED! "+attedUser);
-                        //Now we check if we have permission to
-                        //send the @ Notification.
-                        if(Notification.permission !== "granted"){
-                            //If we haven't been granted permission,
-                            // Notification.requestPermission()
-                        }                        
-                        //Now we try to send the @ Notification
-                        const atNotification = new Notification("New Message from Watch2Gether Clone!",{
-                            body : chatMessage.message_data
-                        });
-
-                        window.document.title = "ATTED!";
-                    }
-                }
-            } else {                
-                //if we weren't allowed the name, clear it.
-                $('#name-input').val('');
-                $('#name-input').attr('placeholder', 'Sorry! Try another name!');
-            }
-        }//else
-  
-
-        //Now we insert the data into the table.
-        //console.log("YOU KNOW WHO IT IS");
-        let chatHTML = '\
-                <tr class="chat-row"><td class="chatter-timestamp">['+
-                localTimeStamp +']</td>\
-                <td class="chatter-name">' + chatMessage.name +
-                ': </td><td class="chatter-message">' +
-                chatMessage.message_data + '</td></tr>';
-             
-        chatTbody.append(chatHTML.toString());
-        // chatTable.scrollTop(chatTable.height() * chatMessage.message_id);                        
-        chatTable.scrollTop(chatTable.height() * seenArray.length);                        
-        let messageID = parseInt(chatMessage.message_id);
-        console.log("Above message's ID: "+messageID);
-        seenArray[messageID] = true;                 
+        const chatMessages = document.getElementById('chat-messages');
+        chatMessages.append(messageDiv);               
     }
 
     function clientSideChatError(errorCode){        
         let errorMessage = {
-            "message" : {
-                "name": "Error",
-                "message_id": -1,
-                "timestamp": timeStamp,
-                "message_data": errorCode,
-                "user_id" : userID
-            }
+            name: "Error",
+            id: -1,
+            timestamp: "00:00",
+            text: errorCode,
+            userID
         };
         addMessageToChat(errorMessage);
     }
@@ -903,18 +860,11 @@ $(function(){
 
     $('#name-form').on('submit', function(event){
         event.preventDefault();
-        //setName();
+        document.activeElement.blur();
     });
 
-    //PUT/UPDATE
-    //message input
-    $('#input-form').on('submit', function(event){
-        // console.log(messageInput.val());
+    $('#text-form').on('submit', function(event){
         event.preventDefault();
-        timeStamp = new Date().toLocaleTimeString();
-        // messageInput = $('#message-input');
-        chatTbody = $('#chatbox-tbody');
-        chatTable = $('#chat-table');
 
         setName();
     
@@ -925,36 +875,19 @@ $(function(){
             return;
         }
 
-        let tempMessage =
-        {
-                "message" :
-                    {
-                        "name" : localName,
-                        "message_id" : 0,
-                        "timestamp" : timeStamp,
-                        "message_data" : messageInput.val(),
-                        "user_id": userID
-                    },
-                "name" : nameToRemove
-                            
-        };//tempMessage
-
-            // $.ajax({
-            //     url: '/messages',
-            //     method: 'POST',
-            //     contentType: 'application/json',
-            //     data: JSON.stringify(tempMessage, null, 2),
-            //     success: addMessageToChat
-            // });       
-    });
-
-    window.onbeforeunload = function(event){
-        /*doesn't work on IE*/
-        let nameToRelease = {
-            "name" : nameOnServer,
-            "id" : userID
+        const message = {
+            name : localName,
+            messageID : 0,
+            timestamp : new Date().toLocaleTimeString(),
+            text : $('#chat-input').val(),
+            userID       
         };
-    }
+
+        $('#chat-input').val('');
+        addMessageToChat(message);
+        $('#chat-messages').scrollTop($('#chat-messages').height());
+        socket.emit('sendMessage', message, roomID); 
+    });
 
     const bigIcon = 'fa-3x';
     const smallIcon = 'fa-lg';
@@ -1031,6 +964,11 @@ $(function(){
 
         socket.emit('joinRoom', userData, roomID);
 
+        socket.on('getMessage', messageData=>{
+            messageData.timeStamp = new Date().toLocaleTimeString();
+            addMessageToChat(messageData);
+        })
+
         socket.on('setLooping', loopValue=>{
             loopValue ? enableLoopingIcon() : disableLoopingIcon();
             buddyPlayer.setLooping(loopValue);
@@ -1076,7 +1014,22 @@ $(function(){
             sendData.requesterSocketID = requesterSocketID;
             socket.emit('sendState', sendData);        
         });
-    
+        
+        socket.on('syncFromOther', videoTime=>{   
+            if(videoTime > buddyPlayer.getPlayerTime() + 5 ||
+                videoTime < buddyPlayer.getPlayerTime() - 5
+            ){
+                seekAndSetUI(videoTime);
+                buddyPlayer.play();
+            }
+        });
+
+        socket.on('sendUpTime', requesterSocketID=>{
+            socket.emit('syncFromMe', 
+                    buddyPlayer.getPlayerTime(),
+                    requesterSocketID);
+        });
+
         socket.on('playrateChange', playRate=>{
             buddyPlayer.setPlayRate(playRate);
             changePlayRate(playRate);
@@ -1107,6 +1060,7 @@ $(function(){
                 data.volume = volumeSlider.value;
             if(!buddyPlayer || buddyPlayer.getSource() != videoSource){
                 //* If it's not the same player, then make a new player
+                changeVolumeSettings(videoSource);
                 createNewPlayer[videoSource](data);                                              
             } else {
                 //if It's the same player, make sure it's a different ID
@@ -1118,6 +1072,7 @@ $(function(){
                     updateTimeUI(videoTime);
                 }
             }
+            youtubeSearch(data.title || videoTitle || videoID);
         });
     
         socket.on('startOver', _=>{
@@ -1145,9 +1100,27 @@ $(function(){
             document.addEventListener('initialize', (event)=>{
                 console.log("Initializing toolbars at duration"+buddyPlayer.getDuration());
                 updateVideoTime();
-                // initializeProgressBar(buddyPlayer.getDuration());
-                // initializeToolTip(buddyPlayer.getDuration());
             }, false);
+            document.addEventListener('trytosync', ()=>{                
+                socket.emit('requestSync', roomID);
+            });
+            document.addEventListener('hideRecommended', ()=>{
+                const recCard = document.getElementById('rec-card');
+                recCard.style.display = 'none';
+            });
+            document.addEventListener('showRecommended', ()=>{
+                console.log("Recommededs:");
+                console.log(recommendedContainer.innerHTML);
+                if(!recommendedContainer.innerHTML){
+                    console.log("Recommendeds empty. Trying to fill.");
+                    youtubeSearch(buddyPlayer.getTitle() || "Benjamin August");                    
+                }
+                const recCard = document.getElementById('rec-card');
+                const cardTitle = document.getElementById('card-title');
+                
+                cardTitle.innerHTML = buddyPlayer.getTitle() ?? "Buddy Viewer";
+                recCard.style.display = 'flex';
+            });
                                   
             validateUserID();        
             volumeSlider.addEventListener("change", changeVolume);

@@ -42,6 +42,7 @@ class YouTubeViewer extends BuddyViewer{
         // $(`<div id="player"></div>`).insertBefore('iframe');
         // $('iframe').remove();
         this.setState(videoState);
+        this.videoTitle = videoTitle;
         this.player = new YT.Player('player', {
             height: '100%',
             width: '100%',
@@ -91,6 +92,10 @@ class YouTubeViewer extends BuddyViewer{
         return this.playerTime;
     }
 
+    static sendSyncEvent(){
+        document.dispatchEvent(new Event('trytosync'));
+    }
+
     stopYTEvent(event){
         const thisBuddyPlayer = YouTubeViewer.currentPlayer;
         if(event.data == CustomStates.ENDED){
@@ -99,7 +104,20 @@ class YouTubeViewer extends BuddyViewer{
             if(thisBuddyPlayer.getLooping()){
                 thisBuddyPlayer.startVideoOver();
                 socket.emit('startOver', this.roomID);
-            }           
+            } else {
+                //Show the recommended overlay
+            }
+        } else if (event.data == CustomStates.PLAYING){
+            SyncManager.syncIfNecessary();
+        }
+
+        if(event.data == CustomStates.ENDED ||
+           event.data == CustomStates.PAUSED ||
+           event.data == CustomStates.BUFFERING)
+        {
+            BuddyViewer.showRecommendedCard();
+        } else {
+            BuddyViewer.hideRecommendedCard();
         }
     }
 
@@ -121,12 +139,13 @@ class YouTubeViewer extends BuddyViewer{
     }
 
     play(){
+        SyncManager.triggeredByControls = true;
         this.setState(CustomStates.PLAYING);
         this.player.playVideo();
         this.showPauseIcon();
     }
 
-    pause(){
+    pause(){      
         this.setState(CustomStates.PAUSED);        
         this.player.pauseVideo();
         this.showPlayIcon();
@@ -137,7 +156,7 @@ class YouTubeViewer extends BuddyViewer{
         this.player.setVolume(parseInt(vol));
     }
 
-    seek(time){
+    seek(time){ 
         this.player.seekTo(time);
     }
 
@@ -177,11 +196,13 @@ class YouTubeViewer extends BuddyViewer{
         const {videoSource, videoTitle, videoID,
             videoTime, playRate, videoState, thumbnail,
             roomID, videoDuration} = data;
+        this.destroy();
         this.playerTime = videoTime;
         this.time = videoTime;
-        this.destroy();
+        this.videoTitle = videoTitle;
         this.setState(videoState);
         this.initialized = false;
+        this.videoID = videoID;
         this.player = new YT.Player('player', {
             height: '100%',
             width: '100%',
@@ -197,7 +218,7 @@ class YouTubeViewer extends BuddyViewer{
     }
 
     destroy(){
-        this.player.destroy();
+        if(this.player) this.player.destroy();
         // $(`<div id="player"></div>`).insertBefore('iframe');
         // $('iframe').remove();        
     }

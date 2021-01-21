@@ -14,6 +14,8 @@ const request = require('request');
 require('dotenv').config();
 const { google } = require('googleapis');
 const { title } = require('process');
+const { youtube } = require("googleapis/build/src/apis/youtube");
+const { youtubeAnalytics } = require("googleapis/build/src/apis/youtubeAnalytics");
 
 //!Testing running python code
 // const {spawn} = require('child_process');
@@ -281,12 +283,12 @@ async function createNewRoom(socketID, userData, roomID){
         playRate: 1,
         messages: [
                     {
-                        mID: 0,
-                        mContent: "Welcome to the room!",
-                        mUserID: "SERVER",
-                        mlocalName: "SERVER",
-                        mlocalTimeStamp: "",
-                        mUniversalTimeStamp: ""
+                        messageID: 0,
+                        text: "Welcome to the room!",
+                        userID: "SERVER",
+                        name: "SERVER",
+                        timestamp: "",
+                        universalTimeStamp: ""
                     }
                 ]
         })
@@ -429,6 +431,29 @@ io.on('connection', socket=>{
         joinRoom(socket, userData, roomID);
     });
 
+    socket.on('sendMessage', (messageData, roomID)=>{
+        // console.log(JSON.stringify(messageData));        
+        socket.to(roomID).broadcast.emit('getMessage', messageData);
+        findRoom(roomID)
+        .then(room=>{
+            if(!room.messages){
+                room.messages = [messageData]
+            } else {
+                room.messages.push(messageData);
+            }
+            console.log("======");
+            console.log("Now the messages are:")
+            console.log(room.messages);
+            console.log("======");
+            RoomModel.updateOne(
+                {roomID}, //query for the room to update
+                {$set: {
+                    messages: room.messages
+                }} //value to update
+            )
+        });
+    });
+
     socket.on('setLooping', (loopValue, roomID)=>{
         socket.to(roomID).broadcast.emit('setLooping', loopValue);
     })
@@ -439,7 +464,6 @@ io.on('connection', socket=>{
 
     socket.on('refreshRequest', _=>{
         const data = {
-            rooms
         };
         io.to(socket.id).emit('refreshResponse', data);
     });
@@ -451,6 +475,19 @@ io.on('connection', socket=>{
     socket.on('sendState', (data)=>{
         io.to(data.requesterSocketID).emit('initPlayer', data);
         console.log(`STATE SENT TO ${data.requesterSocketID}`);
+    });
+
+    socket.on('requestSync', roomID=>{
+        findRoom(roomID)
+        .then(({hostSocketID})=>{
+            if(hostSocketID && hostSocketID != socket.id){
+                io.to(hostSocketID).emit('sendUpTime', socket.id);
+            }
+        });
+    });
+
+    socket.on('syncFromMe', (videoTime, requesterSocketID)=>{
+        io.to(requesterSocketID).emit('syncFromOther', videoTime);
     });
 
     socket.on('playrateChange', (playRate, roomID)=>{
@@ -549,6 +586,10 @@ app.post('/check-saved-roomID', (req, res)=>{
     console.log("GET FIRED");
     const shouldRedirect = isUuid(req.body.currRoomID) && findRoom(req.body.storedRoomID);
     res.send(shouldRedirect);
+});
+
+app.get('/room/', (req, res)=>{
+    res.redirect('/');
 });
 
 app.get('/room/:roomID', (req, res)=>{

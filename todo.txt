@@ -1,25 +1,24 @@
 DOING:
-* Add your own recommended videos overlay when video is paused.
-    * Set it so after you create a video, as soon as we're able to get that video's info such as title or anything, we do a youtubeSearch() for it. The results will be used in our recommended videos. Don't forget that you're doing a search on your otherone videos as well when the ajax call ends. That's a source of recommendeds for those too.
-        * Show recommended:
-            * When paused
-            * When ended
+
 *THOUGHTS:
 
 **MOST IMPORTANT TODO**
-* Fix up the chat.
 * Give rooms logos. Would be cool.
 
+** Sequence to follow:
+* Tweak the features of the core site to completion.
+* Set up the EJS layouts
+* Make the site look good
+* Implement Redis
+* Refactor and add comments to everything
+* You're done!
+
 TODO:
+* Delete interval when we destroy a youtube video
 * Still have to save room state after everyone leaves. Or if that's happening, load from roomstate.
 * Change history so it does store repeats. No reason not to store a video just because it's been watched already.
 * Make a route for '/room/'. Redirect it to index.
 * Set the video controls to fixed position and a higher z-index when in fullscreen. That way you can make them appear/disappear.
-* Probably need some code for aligning videos if they're opened late.
-    * One thought is, whenever we're send or we send a timestamp, we save that as a value like intendedTime. Then we catch events from the player, and if a play event happens, we check if it's within +-5 seconds of intendedTime. If not, skip to that time. By updating this value every time we press play/pause/seek as well as when we receive a play/pause/seek event from someone else, we ensure that the intended time is actually the intended time. This should make it so whenever a user loads a video from a cold browser
-        * This is limited because if I cold-start say 10 seconds after a video was started, I'll start at 0, because intendedtime is 0. No one has pressed anything yet.
-    * Alternatively, whenever an event is triggered separately from the user's controls, seek out the time the host is at. If that time is +-5, skip to it.
-        * This allows for dealing with cold starts, but does add a layer of complexity, as every time I play/pause/seek I'm gonna have to set a "triggeredbycontrols" var to true. That could be very finicky.
 * Add a search button to the searchbar. Also detach it from the videocontainer so it's its own thing.
 * Change from buttons to a tags so they don't do that weird press animation anymore.
 * Definitely gonna have to change it back to some form of saving rooms in local storage like redis or something until it's time to save it to mongodb.
@@ -95,7 +94,25 @@ DONE
 ===========
 ~~~~~~~~~~~
 
-1/19/21
+
+=====
+
+1/21/21
+
+* Fix up the chat.
+* Add your own recommended videos overlay when video is paused.
+    * Set it so after you create a video, as soon as we're able to get that video's info such as title or anything, we do a youtubeSearch() for it. The results will be used in our recommended videos. Don't forget that you're doing a search on your otherone videos as well when the ajax call ends. That's a source of recommendeds for those too.
+        * Show recommended:
+            * When paused
+            * When ended
+* Probably need some code for aligning videos if they're opened late.
+    * One thought is, whenever we're send or we send a timestamp, we save that as a value like intendedTime. Then we catch events from the player, and if a play event happens, we check if it's within +-5 seconds of intendedTime. If not, skip to that time. By updating this value every time we press play/pause/seek as well as when we receive a play/pause/seek event from someone else, we ensure that the intended time is actually the intended time. This should make it so whenever a user loads a video from a cold browser
+        * This is limited because if I cold-start say 10 seconds after a video was started, I'll start at 0, because intendedtime is 0. No one has pressed anything yet.
+    * Alternatively, whenever an event is triggered separately from the user's controls, seek out the time the host is at. If that time is +-5, skip to it.
+        * This allows for dealing with cold starts, but does add a layer of complexity, as every time I play/pause/seek I'm gonna have to set a "triggeredbycontrols" var to true. That could be very finicky.
+        
+===
+1/20/21
 
 * Change it so the youtube search is done if searchforother is successful by searching with the title you get back, or if it's unseccessful by searching with the inputtext
 * Make youtube search work again.

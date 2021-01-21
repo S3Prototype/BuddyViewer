@@ -1,3 +1,4 @@
+
 class VimeoViewer extends BuddyViewer{
     constructor(data){
         super(data);
@@ -5,7 +6,6 @@ class VimeoViewer extends BuddyViewer{
         // this.playerTime = 0;
         this.buffered = 0;
         this.oldVolume = 0;
-        this.volume = data.volume;
         this.muted = true;
         this.createPlayer(data);      
     }
@@ -50,11 +50,19 @@ class VimeoViewer extends BuddyViewer{
             this.buffered = progress.percent * this.duration;
         });
         this.player.on('ended', _=>{
+            BuddyViewer.showRecommendedCard();
             this.showPlayIcon();
             this.setState(CustomStates.ENDED);
             if(this.getLooping()){
                 this.startVideoOver();                
             }
+        });
+        this.player.on('pause', _=>{
+            BuddyViewer.showRecommendedCard();
+        });
+        this.player.on('play', _=>{
+            BuddyViewer.hideRecommendedCard();
+            SyncManager.syncIfNecessary();
         });
         this.player.getTextTracks().then(tracks=>{
             if(tracks){
@@ -74,6 +82,7 @@ class VimeoViewer extends BuddyViewer{
     }
 
     play(){
+        SyncManager.triggeredByControls = true;
         this.setState(CustomStates.PLAYING);
         this.player.play().then(_=>{
             document.dispatchEvent(new Event('initialize'));          
@@ -164,7 +173,8 @@ class VimeoViewer extends BuddyViewer{
         this.player.loadVideo(data.videoID)
         .then(_=>{         
             this.time = data.videoTime;
-            this.playerTime = data.videoTime;   
+            this.playerTime = data.videoTime;  
+            this.videoTitle = data.videoTitle; 
             this.initListeners();
             this.finalizeVideo(data);
             this.player.getDuration()

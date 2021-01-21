@@ -1,4 +1,13 @@
 class BuddyViewer{
+
+    static showRecommendedCard(){
+        document.dispatchEvent(new Event('showRecommended'));
+    }
+
+    static hideRecommendedCard(){
+        document.dispatchEvent(new Event('hideRecommended'));
+    }
+
     constructor(data){
         this.roomID = data.roomID;
         this.videoID = data.videoID;
@@ -22,6 +31,8 @@ class BuddyViewer{
         this.hasCaptions = false;
         this.looping = data.looping ?? false;
         this.duration = data.videoDuration;
+
+        this.controlsTriggered = false;
     }
 
     sendTimeEvent(){
@@ -218,3 +229,17 @@ const CustomStates = {
     CUED : 5,
     SEEKING : 6
 };
+
+const SyncManager = {
+    sendSyncEvent: function(){
+            document.dispatchEvent(new Event('trytosync'));
+        },
+    triggeredByControls: false,
+    syncIfNecessary: function(){
+            if(this.triggeredByControls){
+                this.sendSyncEvent();
+                console.log("SyncManager is trying to sync ...");
+            }
+            this.triggeredByControls = false;
+        }
+}

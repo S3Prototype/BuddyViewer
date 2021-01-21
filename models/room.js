@@ -62,7 +62,7 @@ const roomSchema = new Schema({
     },
     messages: {
         type: Array,
-        required: false
+        required: true
     },
     videoDuration: {
         type: Number,
