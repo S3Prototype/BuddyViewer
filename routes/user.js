@@ -8,7 +8,9 @@ const passport = require('passport');
 const {ensureAuthenticated} = require('../config/auth');
 
 router.get('/login', (req, res)=>{
-    res.render('login');
+    const formErrors = res.locals.error;
+    const successMessage = res.locals.successMessage;
+    res.render('login', {formErrors, successMessage});
 });
 
 router.get('/dashboard', ensureAuthenticated, (req, res)=>{
@@ -17,12 +19,13 @@ router.get('/dashboard', ensureAuthenticated, (req, res)=>{
 
 router.get('/logout', (req, res)=>{
     req.logout();
-    req.flash('success_msg', "You are logged out!");
+    req.flash('successMessage', "You are logged out!");
     res.redirect('/user/login');
 });
 
 router.get('/signup', (req, res)=>{
-    res.render('signup');
+    const errorMessages = res.locals.errorMessage;
+    res.render('signup', {errorMessages});
 });
 
 router.post('/signup', (req, res)=>{
@@ -36,9 +39,12 @@ router.post('/signup', (req, res)=>{
                         } = req.body;
 
     let errors = [];
-        function addError(message){
-            errors.push({msg: message});
-        }
+
+    function addError(message){
+        req.flash('errorMessage', message);
+        errors.push({msg: message});
+    }
+
     if(!userName ||!firstName || !email || !password || !password2){
         addError('Please fill in all the fields.');
     }
@@ -93,7 +99,7 @@ router.post('/signup', (req, res)=>{
                                 .then(savedUser=>{
                                     console.log(savedUser);
                                     // res.send(savedUser);
-                                    req.flash('success_msg', "You're now registered!");
+                                    req.flash('successMessage', "You're now registered! Please log in.");
                                     res.redirect('/user/login');
                                 });
                             }

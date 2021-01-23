@@ -6,10 +6,14 @@
     <title>Sign Up</title>
     <link rel="stylesheet" href="https://bootswatch.com/4/journal/bootstrap.min.css">
     <script src="https://kit.fontawesome.com/ab8bbc25ce.js" crossorigin="anonymous"></script>
-    
 </head>
 <body>
     <form action="/user/signup" method="POST">
+        <% if(typeof errors !== undefined){ %>
+            <% for(var i=0; i<errors.length; i++) {%>
+                <li class="form-error"><%= errors[i].msg %></li>
+             <% } %>
+        <% } %>
             <input
                 type="userName"
                 name="userName"
@@ -51,7 +55,7 @@
                 id="password"
                 placeholder="Password"
                 class="form-control"
-                value="<%= typeof password != 'undefined' ? email : '' %>"
+                value=""
                 required    
             >
             <input
@@ -60,7 +64,7 @@
                 id="password2"
                 placeholder="Confirm Password"
                 class="form-control"
-                value="<%= typeof password2 != 'undefined' ? email : '' %>"
+                value=""
                 required    
             >
         <button class="bt btn-primary btn-block">Sign Up</button>

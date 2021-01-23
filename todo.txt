@@ -7,13 +7,17 @@ DOING:
 
 ** Sequence to follow:
 * Tweak the features of the core site to completion.
-* Set up the EJS layouts
 * Make the site look good
 * Implement Redis
 * Refactor and add comments to everything
 * You're done!
 
 TODO:
+* Just make the login stuff take you back to the homepage.
+    * Probably have to set up a dashboard or something, but even then logging you in should not take you there; it should take you to the homepage.
+    * Figure out how to render their profile pic etc if they're signed up and signed in.
+* Make it so nsfw rooms only have the NSFW thumbnail.
+* Set any room to NSFW while it has a youtube-dl video in it. Do so as soon as the youtube-dl request is made.
 * Delete interval when we destroy a youtube video
 * Still have to save room state after everyone leaves. Or if that's happening, load from roomstate.
 * Change history so it does store repeats. No reason not to store a video just because it's been watched already.
@@ -94,6 +98,11 @@ DONE
 ===========
 ~~~~~~~~~~~
 
+======
+
+1/22/21
+
+* Set up the EJS layouts
 
 =====
 

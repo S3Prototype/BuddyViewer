@@ -8,6 +8,11 @@
     <script src="https://kit.fontawesome.com/ab8bbc25ce.js" crossorigin="anonymous"></script>    
 </head>
 <body>
+    <% if(typeof formErrors !== undefined){ %>
+        <% for(var i=0; i<formErrors.length; i++) {%>
+            <li class="form-error"><%= formErrors[i] %></li>
+         <% } %>
+    <% } %>
     <form action="/user/login" method="post">
         <input
             type="userNameOrEmail"

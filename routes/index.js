@@ -6,9 +6,8 @@ router.get('/', (req, res, next)=>{
     // console.log("TEST");
     getAllRooms()
     .then(allRooms=>{
-        // console.log(`ROOMS: ${allRooms}`);
         if(allRooms){
-            res.render('homepage');
+            res.render('homepage', {allRooms});
         } else {
             res.send("FAILED TO GET INDEX");
         }

@@ -38,42 +38,6 @@ const { youtubeAnalytics } = require("googleapis/build/src/apis/youtubeAnalytics
 // const fs = require('fs');
 const youtubedl = require('youtube-dl');
 
-// const video = youtubedl('past_url_here')
-// const url = `https://vimeo.com/122957`;
-
-// const options = [];
-// try{
-//     youtubedl.getInfo(url, options, function(err, info) {
-//         if (err) throw err
-//         console.log('id:', info.id)
-//         console.log('title:', info.title)
-//         console.log('url:', info.url)
-//         console.log('thumbnail:', info.thumbnail)
-//         console.log('description:', info.description)
-//         console.log('filename:', info._filename)
-//         console.log('format id:', info.format_id)
-//     });
-// } catch(err){
-//     console.log('==============');
-//     console.log("Couldn't get vid info: "+err);
-//     console.log('==============');
-// }
-// Will be called when the download starts.
-// video.on('info', function(info) {
-//   console.log('Download started');
-//   console.log('filename: ' + info._filename);
-//   console.log('size: ' + info.size);
-// })
-// video.pipe(fs.createWriteStream('myvideo.mp4'));
-// // Will be called if download was already completed and there is nothing more to download.
-// video.on('complete', function complete(info) {
-//     'use strict';
-//     console.log('filename: ' + info._filename + ' already downloaded.');
-// });
-// video.on('end', function() {
-//     console.log('finished downloading!')
-// });
-
 const expressLayouts = require('express-ejs-layouts');
 
 const RoomModel = require('./models/room');
@@ -130,8 +94,9 @@ app.use(passport.session());
 app.use(flash());
 
 app.use((req, res, next)=>{
-    res.locals.success_msg = req.flash('success_msg');
-    res.locals.error_msg = req.flash('error_msg');
+    res.locals.successMessage = req.flash('successMessage');
+    res.locals.errorMessage = req.flash('errorMessage');
+    res.locals.error = req.flash('error');
     next();
 });
 
@@ -601,7 +566,7 @@ app.get('/room/:roomID', (req, res)=>{
             res.render('room', {roomID: room.roomID});
         } else {
             console.log("Someone tried to enter a room that didn't exist.");
-            res.render('homepage');
+            res.redirect('/');
         }
     })
     .catch(err=>{

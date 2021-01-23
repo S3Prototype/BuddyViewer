@@ -5,14 +5,14 @@ $(function(){
         roomListContainer.innerHTML = "";
         const url = "/room";
         roomsList.map((room)=>{
-            console.log(`HISTORY FOR ${room.roomName}:`);
-            console.log('-------------------');
+            // console.log(`HISTORY FOR ${room.roomName}:`);
+            // console.log('-------------------');
             if(room.history){
-                console.log(JSON.stringify(room.history, null, 2));
+                // console.log(JSON.stringify(room.history, null, 2));
             } else {
-                console.log('NONE');                
+                // console.log('NONE');                
             }
-            console.log('-------------------');
+            // console.log('-------------------');
             if(room.securitySetting != 2){
                     //Create the div that holds everything.
                 const resultDiv = document.createElement('div');
@@ -113,7 +113,9 @@ $(function(){
         });
     }
 
-    checkServerForRooms();
+    createRoomsList(daRooms);
+
+    // checkServerForRooms();
 
     // createRoomsList(rooms);
 
