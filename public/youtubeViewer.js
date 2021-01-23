@@ -18,6 +18,8 @@ class YouTubeViewer extends BuddyViewer{
         mute: 1
     };
 
+    static timeInterval;
+
     constructor(data){        
         super(data);
         YouTubeViewer.startTime = data.videoTime;
@@ -58,12 +60,11 @@ class YouTubeViewer extends BuddyViewer{
         YouTubeViewer.currentPlayer = this;
     }
 
-    static initNewPlayer(){
+    static initNewPlayer(event){
         const thisBuddyPlayer = YouTubeViewer.currentPlayer;
         console.log("initNewPlayer STARTED");
-        if(!thisBuddyPlayer.duration){
-            thisBuddyPlayer.duration = thisBuddyPlayer.player.getDuration();
-        }
+        
+        thisBuddyPlayer.duration = event.target.getDuration();
 
         thisBuddyPlayer.seek(YouTubeViewer.startTime);
         document.dispatchEvent(new Event('initialize'));
@@ -73,14 +74,10 @@ class YouTubeViewer extends BuddyViewer{
             thisBuddyPlayer.play() : thisBuddyPlayer.pause();
 
         thisBuddyPlayer.setPlayRate(thisBuddyPlayer.playRate);
-
-        console.log(`Starting video with state: ${thisBuddyPlayer.getState()}`);
-        console.log("===================");
         
         thisBuddyPlayer.setVolume(parseInt(thisBuddyPlayer.volume ?? 50));
         // thisBuddyPlayer.initialized = true;
         thisBuddyPlayer.captionsEnabled = YouTubeViewer.options.cc_load_policy == 1;
-        console.log("initNewPlayer ENDED");
     }
 
     getPlayerTime(){
@@ -127,6 +124,10 @@ class YouTubeViewer extends BuddyViewer{
         this.player.setPlaybackRate(newRate);
     }
 
+    getDuration(){
+        return this.player.getDuration();
+    }
+
     getBuffered(){
         let buffered = 0;
         
@@ -158,6 +159,9 @@ class YouTubeViewer extends BuddyViewer{
 
     seek(time){ 
         this.player.seekTo(time);
+        if(this.getState() == CustomStates.ENDED){
+            this.pause();
+        }
     }
 
     mute(){
@@ -196,6 +200,9 @@ class YouTubeViewer extends BuddyViewer{
         const {videoSource, videoTitle, videoID,
             videoTime, playRate, videoState, thumbnail,
             roomID, videoDuration} = data;
+        console.log('**************');
+        console.log("NEW VIDEO CALLED");
+        console.log('**************');
         this.destroy();
         this.playerTime = videoTime;
         this.time = videoTime;
@@ -218,6 +225,7 @@ class YouTubeViewer extends BuddyViewer{
     }
 
     destroy(){
+        clearInterval(YouTubeViewer.timeInterval);
         if(this.player) this.player.destroy();
         // $(`<div id="player"></div>`).insertBefore('iframe');
         // $('iframe').remove();        

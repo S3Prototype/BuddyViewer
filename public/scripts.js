@@ -1,5 +1,6 @@
 $(function(){
-    
+
+    let ytInterval;
         //!Need code to set up the player controls separate from the player itself, checking certain vars like below.
         //!Not sure individual video players should have individual cc settings. Like if one is set to cc active, all should start that way.
     if(parseInt(localStorage.getItem('cc_load_policy')) != 0){
@@ -146,6 +147,7 @@ $(function(){
                 {
                     console.log('instantiating new video from recommended!');
                     console.log(data);
+                    disableLoopingIcon();
                     createNewPlayer[VideoSource.YOUTUBE](data);
                 } else {
                     console.log('playing recommended video!');
@@ -187,6 +189,7 @@ $(function(){
                 {
                     console.log('instantiating new object!');
                     console.log(data);
+                    disableLoopingIcon();
                     createNewPlayer[VideoSource.YOUTUBE](data);
                 } else {
                     console.log('newvideo!');
@@ -371,17 +374,13 @@ $(function(){
             url: '/otherone',
             method: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify({query}, null, 2),
+            data: JSON.stringify({query, roomID}, null, 2),
             success: result=>{
                     //search youtube if there's a title to use.
                 if(result.title) youtubeSearch(result.title);
                 result.volume = volumeSlider.value;
-                result.videoID = result.url;
-                    //Since we're starting a new video, set it
-                    //to playing.
-                result.videoState = CustomStates.PLAYING;
-                result.videoSource = VideoSource.OTHERONE;
                 socket.emit('startNew', result, roomID);
+                disableLoopingIcon();
                 createNewPlayer[result.videoSource](result);
                 searchResultsContainer.scrollTop = 0;
             },
@@ -443,18 +442,16 @@ $(function(){
         const inputText = youtubeInput.val();
         if(inputText == '') return;
         const {newID, source} = getIDandSource(inputText);
-        // console.log("BEFORE NEW VIDEO SET. URL: "+currURL);
         if(newID){
             startNewVideo(newID, source);
             youtubeSearch(newID);
         } else {
-            console.log("Trying for other one with query: "+inputText);
+            console.log("Searching for other one with query: "+inputText);
             if(!searchForOtherOne(inputText)){
+                console.log("Got nothing. Executing youtube search");
                 youtubeSearch(inputText);
             }
-            // searchForOtherOne(inputText);
         }
-        // youtubeSearch(inputText);
     });
 
     function startNewVideo(videoID, source){
@@ -468,6 +465,8 @@ $(function(){
             thumbnail: "",
             roomID
         }
+
+        disableLoopingIcon();
         console.log(`Sending new of: ${data}`);
         changeVolumeSettings(source);
         data.volume = volumeSlider.value;
@@ -510,7 +509,10 @@ $(function(){
     ];
 
     function twitchCreatePlayer(data){
-        if(buddyPlayer) buddyPlayer.destroy();
+        if(buddyPlayer){
+            buddyPlayer.destroy();
+            clearInterval(ytInterval);
+        }
         if(!scriptExists(PlayerScripts.TWITCH)){
             loadPlayerScript(PlayerScripts.TWITCH, ()=>{
                 loadPlayerScript('../twitchPlayer.js', _=>{
@@ -556,7 +558,10 @@ $(function(){
     }
     
     function ytCreatePlayer(data){
-        if(buddyPlayer) buddyPlayer.destroy();
+        if(buddyPlayer){
+            buddyPlayer.destroy();
+            clearInterval(ytInterval);
+        }
         if(!scriptExists(PlayerScripts.YOUTUBE_A)){
             document.addEventListener('ytReady', _=>{
                 loadPlayerScript('../youtubeViewer.js', _=>{
@@ -579,12 +584,15 @@ $(function(){
                 buddyPlayer = new YouTubeViewer(data);
             }
         }//else
-        timeInterval = setInterval(updateVideoTime, 250);
+        ytInterval = setInterval(updateVideoTime, 250);
     }
 
     function vimeoCreatePlayer(data){
         changeVolumeSettings(VideoSource.VIMEO);
-        if(buddyPlayer) buddyPlayer.destroy();
+        if(buddyPlayer){
+            buddyPlayer.destroy();
+            clearInterval(ytInterval);
+        }
         if(!scriptExists(PlayerScripts.VIMEO)){
             loadPlayerScript(PlayerScripts.VIMEO, ()=>{
                 //Initialize a video.
@@ -625,7 +633,10 @@ $(function(){
     function otherOneCreatePlayer(otherData){
         changeVolumeSettings(VideoSource.OTHERONE);
         otherData.volume = volumeSlider.value;
-        if(buddyPlayer) buddyPlayer.destroy();
+        if(buddyPlayer){
+            buddyPlayer.destroy();
+            clearInterval(ytInterval);
+        }
         buddyPlayer = new OtherPlayer(otherData);
         buddyPlayer.getState() == CustomStates.PLAYING ?
             buddyPlayer.play() : buddyPlayer.pause();
@@ -702,12 +713,6 @@ $(function(){
         }
         updateTimeUI(playerTime);
         updateBufferBar(buddyPlayer.getBuffered());
-        if(!buddyPlayer.getLooping()){
-            if(playerTime >= Math.round(buddyPlayer.getDuration())){
-                buddyPlayer.setState(CustomStates.ENDED);
-                buddyPlayer.showPlayIcon();
-            }
-        }
     }
 
     function updateBufferBar(buffVal){
@@ -986,6 +991,7 @@ $(function(){
             data.volume = volumeSlider.value;
             if(!buddyPlayer || buddyPlayer.getSource() != videoSource){
                 //* If it's not the same player, then make a new player
+                disableLoopingIcon();
                 createNewPlayer[videoSource](data);
             } else {
                 //We have a buddy player and its the same source.
@@ -1061,6 +1067,7 @@ $(function(){
             if(!buddyPlayer || buddyPlayer.getSource() != videoSource){
                 //* If it's not the same player, then make a new player
                 changeVolumeSettings(videoSource);
+                disableLoopingIcon();
                 createNewPlayer[videoSource](data);                                              
             } else {
                 //if It's the same player, make sure it's a different ID

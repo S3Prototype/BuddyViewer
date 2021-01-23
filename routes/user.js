@@ -20,7 +20,7 @@ router.get('/dashboard', ensureAuthenticated, (req, res)=>{
 router.get('/logout', (req, res)=>{
     req.logout();
     req.flash('successMessage', "You are logged out!");
-    res.redirect('/user/login');
+    res.redirect('/');
 });
 
 router.get('/signup', (req, res)=>{
@@ -113,7 +113,7 @@ router.post('/signup', (req, res)=>{
 //Login handle
 router.post('/login', (req, res, next)=>{
     passport.authenticate('local',{
-        successRedirect: '/user/dashboard',
+        successRedirect: '/',
         failureRedirect: '/user/login',
         failureFlash: true
     })(req, res, next);

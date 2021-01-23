@@ -4,22 +4,16 @@ const {getAllRooms} = require('../utils/roomQueries');
 
 router.get('/', (req, res, next)=>{
     // console.log("TEST");
+    const successMessage = res.locals.successMessage;
     getAllRooms()
     .then(allRooms=>{
-        if(allRooms){
-            res.render('homepage', {allRooms});
-        } else {
-            res.send("FAILED TO GET INDEX");
-        }
+        const pageErrors = res.locals.errorMessage;
+        res.render('homepage', {allRooms, successMessage, pageErrors});
     })
     .catch(error=>{
         console.log(error);
-        res.send('error', {error});//Show error page
+        res.render('errorPage', {error});//Show error page
     })
-    .finally(_=>{
-        // res.render('homepage');
-    });
-    // res.render('homepage');
 });
 
 module.exports = router;

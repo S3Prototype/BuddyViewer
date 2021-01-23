@@ -83,6 +83,10 @@ class VimeoViewer extends BuddyViewer{
 
     play(){
         SyncManager.triggeredByControls = true;
+        if(this.getState() == CustomStates.ENDED){
+            this.startVideoOver();
+            return;
+        }
         this.setState(CustomStates.PLAYING);
         this.player.play().then(_=>{
             document.dispatchEvent(new Event('initialize'));          
@@ -104,6 +108,14 @@ class VimeoViewer extends BuddyViewer{
         this.player.setVolume(parseFloat(vol))
         .then(volume=>{
             this.volume = volume;
+        });
+    }
+
+    startVideoOver(){
+        this.player.setCurrentTime(0)
+        .then(done=>{
+            this.play();
+            this.sendTimeEvent();
         });
     }
 

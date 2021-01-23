@@ -101,10 +101,16 @@ app.use((req, res, next)=>{
 });
 
 app.use('/', require('./routes/index'));
+app.use('/images', require('./routes/images'));
 app.use('/user', require('./routes/user'));
 app.use(router);
 // app.use(bodyparser.json());
 // app.use(bodyparser.urlencoded({extended: true}));
+
+const NSFW_THUMBNAIL = 'http://localhost:8092/images/thumbs/nsfw_thumb.jpg';
+const PRIVATE_THUMBNAIL = 'http://localhost:8092/images/thumbs/private_thumb.jpg';
+const LOCKED_DEFAULT_THUMBNAIL = 'http://localhost:8092/images/thumbs/lock_thumb.jpg';
+const DEFAULT_THUMBNAIL = 'http://localhost:8092/images/thumbs/default_thumb.jpg';
 
 const io = socketio(server);
 
@@ -187,7 +193,6 @@ class RoomSecurity{
 }
 
 const defaultDescription = "A lovely room for watching videos! Join!";
-const defaultThumbnail = "https://i.ytimg.com/vi/l-7--PSbfbI/maxresdefault.jpg";
 const defaultSecuritySetting = RoomSecurity.OPEN;
 
 async function createEmptyRoom(securitySetting, roomName,
@@ -199,6 +204,15 @@ async function createEmptyRoom(securitySetting, roomName,
     if(!roomDescription){
         roomDescription = defaultDescription;
     }
+    let firstThumbnail = DEFAULT_THUMBNAIL;
+    switch(securitySetting){
+        case RoomSecurity.PRIVATE:
+            firstThumbnail = PRIVATE_THUMBNAIL;
+            break;
+        case RoomSecurity.LOCKED:
+            firstThumbnail = LOCKED_DEFAULT_THUMBNAIL;
+            break;
+    }
     const newRoom = await RoomModel.create({
         roomID: roomName+'-'+roomID,
         hostSocketID: "",
@@ -207,7 +221,7 @@ async function createEmptyRoom(securitySetting, roomName,
         history: [],
         nsfw: false,
         securitySetting,
-        thumbnail: defaultThumbnail,
+        thumbnail: firstThumbnail,
         users: [],
         videoTitle: "",
         videoSource: 4,
@@ -236,7 +250,7 @@ async function createNewRoom(socketID, userData, roomID){
         history: [],
         nsfw: false,
         securitySetting: defaultSecuritySetting,
-        thumbnail: defaultThumbnail,
+        thumbnail: LOCKED_THUMBNAIL,
         hostSocketID: socketID,
         users: [{
             socketID, localName, nameOnServer, userID, isHost: true, pfp
@@ -328,20 +342,15 @@ function checkIfHost(roomID, socketID){
 }
 
 function findRoom(roomID){
-    return RoomModel.findOne({roomID});
-    // .then((result)=>{
-    //     return result;
-    // }).catch((err=>{
-    //     return undefined;
-    // }));
-    // return rooms.find(room=>{return room.roomID == roomID});    
+    return RoomModel.findOne({roomID});   
 }
 
 function updateRoomState(data, roomID, newState){
     // const currRoom = findRoom(roomID);
     const {videoSource, videoTitle,
            videoTime, videoID, playRate,
-           thumbnail, videoDuration} = data;
+           videoDuration} = data;
+    let thumbnail = data;
     RoomModel.findOne({roomID})
     .then(room=>{
         let history = room.history;
@@ -349,20 +358,38 @@ function updateRoomState(data, roomID, newState){
             history = [];
         }
 
-        if(!history.some(item=>{return item.videoID == videoID})){
-            //if the history doesn't contain this new video,
-            //add it to the history.
-            history.push({
-                videoSource, videoTitle, videoTime, videoID, thumbnail
-            });
+        const newHistoryDetails = {
+            videoSource,
+            videoTitle,
+            videoTime,
+            videoID,
+            thumbnail
+        };
+
+            //If this item already exists, we just update it.
+        if(history.length > 0 &&
+            history[history.length -1].videoID == videoID){
+                history[history.length -1] = newHistoryDetails;
         } else {
-            history.find(item=>{return item.videoID == videoID})
-            .videoTime = videoTime;
+            //Otherwise, add it to the list.
+            history.push(newHistoryDetails);
         }
+
         console.log('======');
         console.log(`Room history is now:`);
         console.log(JSON.stringify(history, null, 2));
         console.log('======');
+
+
+        if(room.securitySetting == RoomSecurity.PRIVATE){
+            thumbnail = PRIVATE_THUMBNAIL;
+        } else if(videoSource == VideoSource.OTHERONE){
+            thumbnail = NSFW_THUMBNAIL;
+        }
+
+        if(!thumbnail){
+            thumbnail = DEFAULT_THUMBNAIL;
+        }
 
         RoomModel.updateOne(
             {roomID}, //query for the room to update
@@ -373,7 +400,7 @@ function updateRoomState(data, roomID, newState){
                 playRate,
                 thumbnail,
                 videoTitle,
-                videoDuration: videoDuration ? videoDuration : 0,
+                videoDuration: videoDuration ?? 0,
                 history
             }} //value to update
         ).then(result=>{
@@ -467,7 +494,7 @@ io.on('connection', socket=>{
         .then(({hostSocketID})=>{
             const isHost = hostSocketID == socket.id
             // if(isHost){
-                updateRoomState(data, roomID, CustomStates.PLAYING)
+                updateRoomState(data, roomID)
             // }
             socket.to(roomID).broadcast.emit('play', {
                 state: CustomStates.PLAYING,
@@ -482,7 +509,7 @@ io.on('connection', socket=>{
         .then(({hostSocketID})=>{
             const isHost = hostSocketID == socket.id
             // if(isHost){
-                updateRoomState(data, roomID, CustomStates.PAUSED)
+                updateRoomState(data, roomID);
             // }
             socket.to(roomID).broadcast.emit('pause', {
                 state: CustomStates.PAUSED,
@@ -497,7 +524,7 @@ io.on('connection', socket=>{
         .then(({hostSocketID})=>{
             const isHost = hostSocketID == socket.id
             if(isHost){
-                updateRoomState(data, roomID, data.videoState)
+                updateRoomState(data, roomID)
             }
             socket.to(roomID).broadcast.emit('playPause', {
                 videoState: data.videoState,
@@ -617,6 +644,14 @@ class CustomStates{
     static SEEKING = 6;
 }
 
+
+class VideoSource{
+    static YOUTUBE = 0;
+    static VIMEO = 2;
+    static SPOTIFY = 3;
+    static OTHERONE = 4;
+}
+
 class YouTubeSearchManager{
     static searchResults = [];
 }
@@ -636,14 +671,25 @@ app.post('/otherone', (req, res)=>{
     const options = req.body.options ? req.body.options : [];
     let resultData;
     youtubedl.getInfo(req.body.query, options, (error, info)=>{
-        if (error){
+        if (error || !info){
             console.log('==============');
             console.log(`Error looking for video ${req.query}.`);
             console.log(`${error}`);
             console.log('==============');
             res.send({error});
         } else {
-            res.send(info);
+            const resultData = {
+                videoSource: VideoSource.OTHERONE, 
+                videoState: CustomStates.PLAYING,
+                videoTitle: info.title || 'Internet Video',
+                videoTime: 0, 
+                videoID: info.url,
+                playRate: 1,
+                thumbnail: NSFW_THUMBNAIL,
+                videoDuration: undefined
+            };
+            updateRoomState(resultData, roomID);
+            res.send(resultData);
         }
         // {
         //     id: info.id,

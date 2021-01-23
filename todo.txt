@@ -13,22 +13,15 @@ DOING:
 * You're done!
 
 TODO:
-* Just make the login stuff take you back to the homepage.
-    * Probably have to set up a dashboard or something, but even then logging you in should not take you there; it should take you to the homepage.
-    * Figure out how to render their profile pic etc if they're signed up and signed in.
+* Have to learn more about passport. req.isAuthenticated() checks if user is logged in, I think? From there, you have to show each page with the user profile pic or not.
 * Make it so nsfw rooms only have the NSFW thumbnail.
-* Set any room to NSFW while it has a youtube-dl video in it. Do so as soon as the youtube-dl request is made.
-* Delete interval when we destroy a youtube video
 * Still have to save room state after everyone leaves. Or if that's happening, load from roomstate.
-* Change history so it does store repeats. No reason not to store a video just because it's been watched already.
-* Make a route for '/room/'. Redirect it to index.
 * Set the video controls to fixed position and a higher z-index when in fullscreen. That way you can make them appear/disappear.
 * Add a search button to the searchbar. Also detach it from the videocontainer so it's its own thing.
 * Change from buttons to a tags so they don't do that weird press animation anymore.
 * Definitely gonna have to change it back to some form of saving rooms in local storage like redis or something until it's time to save it to mongodb.
 * Gotta implement a different session store from the default.
     ** https://github.com/expressjs/session#compatible-session-stores
-* Try to use ejs layouts.
 * Add an overlay over the room that says "PLEASE REFRESH THE PAGE, but disappears if you press join room. This way, the join room modal always happens. No idea why tf it's not always popping up now.
 * Why does it say someone tried to join a room that didn't exist when you get '/'?
 * When host leaves a room and it becomes empty, it reverts to a default state. Shouldn't do that.
@@ -90,7 +83,7 @@ THOUGHTS:
 * Big scary thing is how much the youtube API is still checking for me. Like after it seeks, even though it was just playing, it might pause locally. That would not trigger an event on the server. Theoretically, if I seek while playing, the server remembers we were just playing, and when I'm done seeking, it sets me back to playing no matter what. But if I'm still buffering and the server tries to make me play, youtube API might reject the playVideo() call and leave me buffering. What then? I'm left to my fate, because my clientYTPlayer.currentState is still == PLAYING, but I'm not playing.
 
 * SCRAPPED:
-* Load player from JS--not on the index.html page. Gives us so much more ability to do things when the video first loads. Can't just move the script tag in the html down below our other scrips, because they expect player to be a thing. Then agai*n a lot of that code is in the document.onReadystate stuff, which runs after the page is already loaded, including the JS in the html.
+* Load player from JS--not on the index.html page. Gives us so much more ability to do things when the video first loads. Can't just move the script tag in the html down below our other scrips, because they expect player to be a thing. Then again a lot of that code is in the document.onReadystate stuff, which runs after the page is already loaded, including the JS in the html.
     ** This won't work. Instead, start the page with an HTML5 video just like watch2gether. A user can then create a player when they search and play a video.
 
 ~~~~~~~~~~~
@@ -98,11 +91,21 @@ DONE
 ===========
 ~~~~~~~~~~~
 
+1/23/1
+
+* Delete interval when we destroy a youtube video
+* Make a route for '/room/'. Redirect it to index.
+* Change history so it does store repeats. No reason not to store a video just because it's been watched already.
+* after videostate = ended, if you seek, keep it paused. 
+* Just make the login stuff take you back to the homepage.
+    * Probably have to set up a dashboard or something, but even then logging you in should not take you there; it should take you to the homepage.
+* Set any room to NSFW while it has a youtube-dl video in it. Do so as soon as the youtube-dl request is made.
+
 ======
 
 1/22/21
 
-* Set up the EJS layouts
+* Set up the EJS
 
 =====
 

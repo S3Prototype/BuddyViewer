@@ -24,9 +24,10 @@ class OtherPlayer extends BuddyViewer{
     createPlayer(data){
         this.createVideoElement(data);
         OtherPlayer.currentPlayer = this.player;
-    this.setState(data.videoState);
-        // this.seek(data.videoTime);
-       this.addListeners();
+        this.setState(data.videoState);
+        this.setLooping(true);
+            // this.seek(data.videoTime);
+        this.addListeners();
     }
 
     static sendSyncEvent(){
@@ -49,7 +50,13 @@ class OtherPlayer extends BuddyViewer{
             BuddyViewer.showRecommendedCard();
         })
         this.player.addEventListener('ended', ()=>{
-            BuddyViewer.showRecommendedCard();
+            if(this.getLooping()){
+                this.startVideoOver();
+            } else {
+                this.setState(CustomStates.ENDED);
+                this.showPlayIcon();            
+                BuddyViewer.showRecommendedCard();
+            }
         });
     }
 
@@ -131,6 +138,9 @@ class OtherPlayer extends BuddyViewer{
 
     seek(newTime){
         this.player.currentTime = newTime;
+        if(this.getState() == CustomStates.ENDED){
+            this.pause();
+        }
     }
 
     play(){
