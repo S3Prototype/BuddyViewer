@@ -13,26 +13,36 @@ DOING:
 * You're done!
 
 TODO:
+* To make the recommendeds line up better, have to make the result container for each individual result either a vertical flex or just a grid. The point is, they have to be even height across the board, or they'll never line up properly.
+* Make sure that you auto-set room to NSFW after you try to use youtube-dl to play videos, and change the thumbnail to that in the DB or Redis.
+* Thumbnail updating no longer works for some reason. Like when you send the data, thumbnail isn't sent for some reason.
+* Make it so if a video fails to load, you let the user sign in to the site. Also let them sign in. Put a button next to the search button or something. But either way, if a video fails, ask them to try to sign in, then use their credentials to try to get the video.
 * Have to learn more about passport. req.isAuthenticated() checks if user is logged in, I think? From there, you have to show each page with the user profile pic or not.
-* Make it so nsfw rooms only have the NSFW thumbnail.
 * Still have to save room state after everyone leaves. Or if that's happening, load from roomstate.
 * Set the video controls to fixed position and a higher z-index when in fullscreen. That way you can make them appear/disappear.
 * Add a search button to the searchbar. Also detach it from the videocontainer so it's its own thing.
 * Change from buttons to a tags so they don't do that weird press animation anymore.
+* Users should be able to choose who the room host is
+    * Need a "Become host" button, so you can just take control of the room. Would fix a lot of issues.
 * Definitely gonna have to change it back to some form of saving rooms in local storage like redis or something until it's time to save it to mongodb.
+* Also have a little chat icon button in the video player so you can bring the chat up at the side. If you're in fullscreen, chat appears in a z-index above the player.
 * Gotta implement a different session store from the default.
     ** https://github.com/expressjs/session#compatible-session-stores
 * Add an overlay over the room that says "PLEASE REFRESH THE PAGE, but disappears if you press join room. This way, the join room modal always happens. No idea why tf it's not always popping up now.
-* Why does it say someone tried to join a room that didn't exist when you get '/'?
 * When host leaves a room and it becomes empty, it reverts to a default state. Shouldn't do that.
+    * It should try to request state, and set a timer. If no response from host, try one more time. If still no host, you become host.
+    * If room is empty, get room state info and return that.
+* share secret link feature. Sends a link that contains the password, or a "secret" style link that is a different url with a key param in it that, when it hits the server, gets the users redirected to the room with the password stored.
+    * Probably can just add some hashed password to the url param. When the user enters the url, unencrypt and check the param against the room password. If it passes, just let them into the room with some ejs value like 'secretLink: true', and they should be allowed in.
+* Confirmation email can just contain a randomly generated word that has been hashed by bcrypt. When they click the link, check it with bcrypt. If it matches the stored random word, they're activated. Only hold the random word for a temporary period in redis.
 * Swap out most buttons for divs. Divs don't give that weird shifting animation buttons automatically do.
+* Make it so when a player loads into an empty room that already has a video, that video loads up paused.
 * Make room passwords work. Require new entrants to enter the password if they want to actually execute the joinRoom code. Perhaps have a password prompt replace the joinButton interface.
 * If you can, add video length to the info on the search results.
 * For some reason the playback rate initializes as undefined in the html. Probably because of the initialization code when hotjoining.
 * Add a "re-align" button so if things get unaligned, just press that, boom. trigger the sendstate event
-* Fix the search so that if you return a number of results x that x % 4 != 0, then you insert 4 minus that amount of results. Such as, 21 results, 21 % 4 = 1, insert 4 - 1 results, meaning 3 fake results, so the results list balances out. Otherwise figure out how to make everything justify to the left rather than space out evenly.
-* Now just have to test everything thoroughly. All features.
-* Change the chat so it's ways floating
+* Fix the search so the results line up properly when less than whole row
+* Change the chat so it's always floating
 * Show text to say who put in a video/pressed play/etc
 * When a yt video is played, search youtube for that video title or the uploader. Then in recommendeds, show the results.
 * Change icon to replay icon when video ended
@@ -46,45 +56,19 @@ TODO:
     ** Probably have to put the css in a -webkit thing
 * REFACTOR/CLEAN UP CODE/ORGANIZE FOLDERS
 
-
-* Stretch goal: Let users paste embed codes of any video player <iframe>, then play it in our video container div.
-* Write code that tries to play a video on any site by seeking out the most common tags that hold videos. Maybe grab the mp4 links directly and load those up into a video tag? The code should try as many tactics as possible until it succeeds. Maybe even have a way to ask the viewer "Is this the video? If no, we'll try to find it in the link again. Is this the video?" This requires web scraping.
-* Write
-
 ===
-* Add private messaging functionality
-    ** Have to create tabs within the webpage, one for each chat that's open (general, privatechat1, privatechat2, etc). The tabs exist above the chat. In private chats, the serverlist lists everyone included in the private chat.
-* Add the ability to @ someone. (I have implemented very rudimentary code for this.)
-* Once all above is instituted, do refactoring. Clean up the code. Once that's done, make simultaneous youtube videos work. Once that's done, set up the database. Once that's done, do the frontend so it looks nice using just css and html5 animations etc.
 
 REFACTORING:
 
 * Maybe add all buttons to an array with their names as the indices. Would allow for cycling through them to add the enlarged classes.
 * Put the join-room-button code in the actual index.html, in a script in the head, so it runs before the rest of the page loads; otherwise people are able to click on things before the overlay loads to block mouse events.
 * Split chat code and video code into separate JS files
-* Get rid of clientYTPlayer util class and have literal instantiated objects. Use polymorphism to handle different video types (as in, youtube vs not youtube)
-* Remove Jquery
-* Write a clientytplayer function that is passed a state and sets current state to that, previous state to whatever it was before, as well as makes 
-* In IsNameAvailable(), change the for loop to something cleaner.
 * Set up something similar to: https://stackoverflow.com/questions/36327702/nodejs-express-getting-error-as-referenceerror-bodyparser-is-not-defined
 
 THOUGHTS:
 
-* Use web-scraping to get better search results than the youtube search API might give you. That way you'll do better than watch2gether's search.
-* Activate settings sync in vs code and any other sync for plugins etc.
+* To use webscraping for search results, you could search google with flags in the query to make sure you only get youtube results. Probably easier to do it that way anyway. Probably get better results.
 * Default video should be a 1-minute explanation of what the site is and how it works.
-* When done with this whole list, refactor the code before proceeding with the next phase of development.
-* This will ultimately be a watch2gether clone. I think it's possible to do by having the client catch when the user changes the time on the embeded video, then send that new set time to the server, then send that to the other viewers' clients.
-* Add error handling. For example, currently (11/8/20), if your name for some reason is never released after you choose a new one, the code has no way of recognizing that issue. That's a serious issue because the name can never be used again, even by you.
-* Could make it so it stores the status of videos. So when you put in a new video, you can press a "back" button that reverts to the previous video at the time that it was at.
-* Consider what to do about buffering. I guess just ignore it? It's kinda handled by the time buffer and everything.
-    ** Probably if it's buffering, the client shouldn't ping the video state, because we kinda need to wait until it's done.
-    ** in the onplayerstatechange callback, check if the event triggered is buffering. If so, set our state to buffering. If the event is not buffering, check if our state is buffering--if so, set our state to whatever the event is. This way, we only take the state this callback gives us if we were just buffering; otherwise we ignore it.
-* Big scary thing is how much the youtube API is still checking for me. Like after it seeks, even though it was just playing, it might pause locally. That would not trigger an event on the server. Theoretically, if I seek while playing, the server remembers we were just playing, and when I'm done seeking, it sets me back to playing no matter what. But if I'm still buffering and the server tries to make me play, youtube API might reject the playVideo() call and leave me buffering. What then? I'm left to my fate, because my clientYTPlayer.currentState is still == PLAYING, but I'm not playing.
-
-* SCRAPPED:
-* Load player from JS--not on the index.html page. Gives us so much more ability to do things when the video first loads. Can't just move the script tag in the html down below our other scrips, because they expect player to be a thing. Then again a lot of that code is in the document.onReadystate stuff, which runs after the page is already loaded, including the JS in the html.
-    ** This won't work. Instead, start the page with an HTML5 video just like watch2gether. A user can then create a player when they search and play a video.
 
 ~~~~~~~~~~~
 DONE
@@ -93,6 +77,8 @@ DONE
 
 1/23/1
 
+* Make it so you can add youtube links with the current time set.
+* Make it so nsfw rooms only have the NSFW thumbnail.
 * Delete interval when we destroy a youtube video
 * Make a route for '/room/'. Redirect it to index.
 * Change history so it does store repeats. No reason not to store a video just because it's been watched already.

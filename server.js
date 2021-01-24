@@ -350,7 +350,7 @@ function updateRoomState(data, roomID, newState){
     const {videoSource, videoTitle,
            videoTime, videoID, playRate,
            videoDuration} = data;
-    let thumbnail = data;
+    let {thumbnail} = data;
     RoomModel.findOne({roomID})
     .then(room=>{
         let history = room.history;
@@ -667,6 +667,22 @@ app.post('/get-rooms-list', (req, res)=>{
     });
 });
 
+app.post('/getYouTubeInfo', (req, res)=>{
+    const options = [];
+    youtubedl.getInfo(req.body.videoID, [], (error, info)=>{
+        if (error || !info){
+            console.log('==============');
+            console.log(`Error looking for video ${req.query}.`);
+            console.log(`${error}`);
+            console.log('==============');
+            res.send({error});
+        } else {
+            const {title, description, thumbnail} = info;
+            res.send({title, description, thumbnail});
+        }
+    });
+});
+
 app.post('/otherone', (req, res)=>{
     const options = req.body.options ? req.body.options : [];
     let resultData;
@@ -688,7 +704,7 @@ app.post('/otherone', (req, res)=>{
                 thumbnail: NSFW_THUMBNAIL,
                 videoDuration: undefined
             };
-            updateRoomState(resultData, roomID);
+            updateRoomState(resultData, req.body.roomID);
             res.send(resultData);
         }
         // {

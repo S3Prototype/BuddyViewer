@@ -338,6 +338,18 @@ $(function(){
             url = null
             return url;
         }
+
+        let videoTime = 0;
+        if (url.includes('?t=')){
+            videoTime = Number(url.substring(url.indexOf('?t=') + 3));
+            url = url.substring(0, url.indexOf('?t='));
+        } else if(url.includes('&t=')){
+            videoTime = parsEInt(url.substring(url.indexOf('&t=') + 3));
+            url = url.substring(0, url.indexOf('&t='));
+        }
+
+        console.log("Your time should be "+videoTime);
+
         if(url.includes('&')){
             url = url.substring(0, url.indexOf('&'));
         }
@@ -359,7 +371,8 @@ $(function(){
             videoSource = VideoSource.YOUTUBE;
         }
 
-        return url;
+        const newID = url;
+        return {newID, videoTime};
     }
 
     function searchForOtherOne(query){
@@ -413,9 +426,8 @@ $(function(){
     }
 
     function getIDandSource(url){
-        let newID = null;
         let source = buddyPlayer?.getSource() ?? VideoSource.OTHERONE;
-        newID = tryForYoutube(url);
+        let {newID, videoTime} = tryForYoutube(url);
         if(newID) source = VideoSource.YOUTUBE;
 
         // if(!result) result = tryForOtherOne(url);
@@ -425,7 +437,7 @@ $(function(){
         }
 
         //Keep checking if !result and trying for others.
-        return {newID, source};
+        return {newID, source, videoTime};
     }
 
     const PlayerScripts = {
@@ -441,9 +453,16 @@ $(function(){
         event.preventDefault();           
         const inputText = youtubeInput.val();
         if(inputText == '') return;
-        const {newID, source} = getIDandSource(inputText);
+        const {newID, source, videoTime} = getIDandSource(inputText);
         if(newID){
-            startNewVideo(newID, source);
+                //If it's the same video, do nothing;
+                //unless the url is set to a different time.
+            if(buddyPlayer && newID == buddyPlayer.getID() &&
+                source == buddyPlayer.getSource()){
+                    if(videoTime > 0) buddyPlayer.seek(videoTime);
+                    return;
+            }
+            startNewVideo(newID, source, videoTime);
             youtubeSearch(newID);
         } else {
             console.log("Searching for other one with query: "+inputText);
@@ -454,12 +473,12 @@ $(function(){
         }
     });
 
-    function startNewVideo(videoID, source){
+    function startNewVideo(videoID, source, videoTime){
         const data = {
             videoID,
             videoSource: source, 
             videoTitle: "",
-            videoTime: 0,
+            videoTime,
             playRate: 1,
             videoState: CustomStates.PLAYING,
             thumbnail: "",
@@ -557,10 +576,15 @@ $(function(){
         console.log("Spotify not implemented yet.");
     }
     
-    function ytCreatePlayer(data){
+    function ytCreatePlayer(data){        
         if(buddyPlayer){
-            buddyPlayer.destroy();
-            clearInterval(ytInterval);
+            if(buddyPlayer.getSource() == data.videoSource &&
+                buddyPlayer.getID() != data.videoID){
+                    buddyPlayer.destroy();
+                    clearInterval(ytInterval);
+            } else {
+                return;
+            }
         }
         if(!scriptExists(PlayerScripts.YOUTUBE_A)){
             document.addEventListener('ytReady', _=>{

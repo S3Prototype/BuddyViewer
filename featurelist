@@ -1,6 +1,8 @@
 FEATURE LIST:
 
-* Make it so when a player loads into an empty room that already has a video, that video loads up with its current state.
+* For full screen, could use a grid, have video take up entire grid, have controls row in top and bottom just take up their rows with a higher z-index. Then when they're not used for a while, have them slide down until their y position is off screen.
+    * Probably have to add a div that overlays the video, which catches events and when it's clicked/touched, it activates the controls.
+* Have an upcoming theater list. Like people can schedule viewings in theaters. A user can sort by scheduled theaters. Kind of like a scheduled group viewing of something.
 * Add ability to switch waht the default search is from youtube to other sites. Even allow them to type in the domain of the site they want searched.
 * Polls in the room. Like strawpoll. Don't need to store it in the server at all.
     * Could have a poll pop up whenever the video is about to end saying "Next up: [video name and thumbnail] <Replay Current Video> <Skip to next video> <pause queue>
@@ -11,33 +13,14 @@ FEATURE LIST:
 * People can become "admins" of rooms. These users always have host rights, and can change it so only certain people are able to change the video, play/pause, etc.
     * Maybe a premium feature.
 * On the room list, say what's currently being watched. Try to get that damn gif youtube has when you hover over thumbnails.
-* share secret link feature. Sends a link that contains the password, or a "secret" style link that is a different url with a key param in it that, when it hits the server, gets the users redirected to the room with the password stored.
-* If users are watching NSFW content, show a default thumbnail
 * Rooms in the roomlist should show the flag of the host. But that's complex, involves IP resolving through 3rd party libraries.
 * Banning users from your room.
-* Setting rooms to private so they're not on the list
-* Setting rooms to locked so they're on the list but require pword
 * In the room list page, when you hover over the thumbnail it shows a box with the video name, description, and a progressbar set to their saved timestamp.
-* Users should be able to choose who the room host is
-* Should have a re-sync button to align everyone to the host if shit gets weird.
-* Chat should be like a floating tray. It should be like the userlist tray in Watch2Gether, always on the bottom, able to be popped up and popped down.
-* Should have a row in the video player that shows the most recently sent message in the chat, maybe with a higher z-index so it just appears above the video and then eventually fades away.
-* Also have a little chat icon button in the video player so you can bring the chat up at the side. If you're in fullscreen, chat appears in a z-index above the player.
 * Uploading your own videos temporarily for sharing
-* Being able to add a video with the "copy url at current time" so it actually starts at that time.
-* When a user adds a link to another site's videos, what if we write code that just detects a button press within that iframe. It then stores the id/class of that button, and on the other clients triggers the same event on whatever button matches that id/class.
 * Maybe add code for when the ENDED state is reached, so we can put our own "related videos/recommended videos" screen over the player. That way if the user clicks on one of them, we can make it play in our player.
 * Add an emoji bar with a search feature for the chat
 * Show what each other is typing in the searchbar, and constantly see each other's search results as they pop up while we type them. Also constantly see each other's cursors, except when they're over the video
     ** Ability to disable individual cursors so your screen isn't full of hell.
-* Add a "desync my videos" button that lets the player play locally without sending state to server or aligning state.x11vnc
-* Put your own overlay over the video whenever it's paused/ended so users can click a video and it'll load in the player.
-    **This will require setting the iframe display to none in css everytime it pauses/stops, Perhaps leave an empty div in the video_container beneath the iframe, then whenever we set the iframe's display to none, we can set that placeholder div's display so it shows, and then put our stuff in there.
-
-DONE:
-* Closed captions option
-* Full screen button
-* Looping
-* Playback rate change
+* Add private messaging functionality
 
 

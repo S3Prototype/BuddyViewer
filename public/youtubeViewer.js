@@ -43,6 +43,28 @@ class YouTubeViewer extends BuddyViewer{
             roomID, videoDuration} = data;
         // $(`<div id="player"></div>`).insertBefore('iframe');
         // $('iframe').remove();
+
+        $.ajax({
+            url: '/getYouTubeInfo',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({videoID}, null, 2),
+            success: result=>{
+                    //search youtube if there's a title to use.
+                if(!result) return;
+                const thisBuddyPlayer = YouTubeViewer.currentPlayer;
+                thisBuddyPlayer.videoTitle = result.title;
+                thisBuddyPlayer.description = result.description;
+                thisBuddyPlayer.thumbnail = result.thumbnail;
+                console.log('We got the goods. Data is: ');
+                console.log(JSON.stringify(result, null, 2));
+            },
+            error: (xhr, status, error)=>{
+                console.log('Failed to get yt video info with youtubedl.');
+                console.log(error);
+            }
+        });
+
         this.setState(videoState);
         this.videoTitle = videoTitle;
         this.player = new YT.Player('player', {
@@ -125,6 +147,8 @@ class YouTubeViewer extends BuddyViewer{
     }
 
     getDuration(){
+        if(!this.player.getDuration) return this.duration;
+
         return this.player.getDuration();
     }
 
@@ -141,6 +165,7 @@ class YouTubeViewer extends BuddyViewer{
 
     play(){
         SyncManager.triggeredByControls = true;
+        console.log(this.getThumbnail());
         this.setState(CustomStates.PLAYING);
         this.player.playVideo();
         this.showPauseIcon();
@@ -225,10 +250,16 @@ class YouTubeViewer extends BuddyViewer{
     }
 
     destroy(){
-        clearInterval(YouTubeViewer.timeInterval);
-        if(this.player) this.player.destroy();
-        // $(`<div id="player"></div>`).insertBefore('iframe');
-        // $('iframe').remove();        
+        try{
+            if(this.player) this.player.destroy();
+        } catch(error){
+            console.log("Tried destroying player, but got error:");
+            console.log(error);
+            console.log("Manually destroying player");
+            this.player = null;
+            $(`<div id="player"></div>`).insertBefore('iframe');
+            $('iframe').remove();        
+        }
     }
 
 }
