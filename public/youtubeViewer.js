@@ -1,6 +1,5 @@
 class YouTubeViewer extends BuddyViewer{
 
-    static currentPlayer;
     static timeInterval;
     static startTime;
     static options = {
@@ -34,6 +33,7 @@ class YouTubeViewer extends BuddyViewer{
         this.oldVolume = 0;
         this.volume = data.volume;
         this.muted = true;        
+        this.initialized = false;
         this.createPlayer(data);      
     }
 
@@ -52,12 +52,9 @@ class YouTubeViewer extends BuddyViewer{
             success: result=>{
                     //search youtube if there's a title to use.
                 if(!result) return;
-                const thisBuddyPlayer = YouTubeViewer.currentPlayer;
-                thisBuddyPlayer.videoTitle = result.title;
-                thisBuddyPlayer.description = result.description;
-                thisBuddyPlayer.thumbnail = result.thumbnail;
-                console.log('We got the goods. Data is: ');
-                console.log(JSON.stringify(result, null, 2));
+                this.videoTitle = result.title;
+                this.description = result.description;
+                this.thumbnail = result.thumbnail;
             },
             error: (xhr, status, error)=>{
                 console.log('Failed to get yt video info with youtubedl.');
@@ -72,34 +69,61 @@ class YouTubeViewer extends BuddyViewer{
             width: '100%',
             videoId: videoID,
             events: {
-                'onReady': YouTubeViewer.initNewPlayer,
+                'onReady': this.initNewPlayer.bind(this),
                 "onStateChange": this.stopYTEvent,
                 "start": videoTime
             },
             playerVars: YouTubeViewer.options
         });
-
-        YouTubeViewer.currentPlayer = this;
     }
 
-    static initNewPlayer(event){
+    initNewPlayer(event){
         const thisBuddyPlayer = YouTubeViewer.currentPlayer;
         console.log("initNewPlayer STARTED");
         
-        thisBuddyPlayer.duration = event.target.getDuration();
+        console.log("Duration we're taking is: "+event.target.getDuration())
+        this.duration = this.player.getDuration();
 
-        thisBuddyPlayer.seek(YouTubeViewer.startTime);
+        this.seek(YouTubeViewer.startTime);
         document.dispatchEvent(new Event('initialize'));
-        thisBuddyPlayer.sendTimeEvent();  
+        this.sendTimeEvent();  
 
-        thisBuddyPlayer.getState() == CustomStates.PLAYING ?
-            thisBuddyPlayer.play() : thisBuddyPlayer.pause();
+        this.getState() == CustomStates.PLAYING ?
+            this.play() : this.pause();
 
-        thisBuddyPlayer.setPlayRate(thisBuddyPlayer.playRate);
+        this.setPlayRate(this.playRate);
         
-        thisBuddyPlayer.setVolume(parseInt(thisBuddyPlayer.volume ?? 50));
+        this.setVolume(parseInt(this.volume ?? 50));
         // thisBuddyPlayer.initialized = true;
-        thisBuddyPlayer.captionsEnabled = YouTubeViewer.options.cc_load_policy == 1;
+        this.captionsEnabled = YouTubeViewer.options.cc_load_policy == 1;
+    }
+
+    newVideo(data){ 
+        const {videoSource, videoTitle, videoID,
+            videoTime, playRate, videoState, thumbnail,
+            roomID, videoDuration} = data;
+        console.log('**************');
+        console.log("NEW VIDEO CALLED");
+        console.log('**************');
+        this.destroy();
+        this.playerTime = videoTime;
+        this.time = videoTime;
+        this.videoTitle = videoTitle;
+        this.setState(videoState);
+        this.initialized = false;
+        this.videoID = videoID;
+        this.player = new YT.Player('player', {
+            height: '100%',
+            width: '100%',
+            videoId: videoID,
+            events: {
+                'onReady': this.initNewPlayer.bind(this),
+                "onStateChange": this.stopYTEvent,
+                "start": videoTime
+            },
+            playerVars: YouTubeViewer.options
+        });
+        YouTubeViewer.currentPlayer = this;
     }
 
     getPlayerTime(){
@@ -219,34 +243,6 @@ class YouTubeViewer extends BuddyViewer{
 
         this.captionsEnabled = !this.captionsEnabled;
         return this.captionsEnabled;
-    }
-
-    newVideo(data){ 
-        const {videoSource, videoTitle, videoID,
-            videoTime, playRate, videoState, thumbnail,
-            roomID, videoDuration} = data;
-        console.log('**************');
-        console.log("NEW VIDEO CALLED");
-        console.log('**************');
-        this.destroy();
-        this.playerTime = videoTime;
-        this.time = videoTime;
-        this.videoTitle = videoTitle;
-        this.setState(videoState);
-        this.initialized = false;
-        this.videoID = videoID;
-        this.player = new YT.Player('player', {
-            height: '100%',
-            width: '100%',
-            videoId: videoID,
-            events: {
-                'onReady': YouTubeViewer.initNewPlayer,
-                "onStateChange": this.stopYTEvent,
-                "start": videoTime
-            },
-            playerVars: YouTubeViewer.options
-        });
-        YouTubeViewer.currentPlayer = this;
     }
 
     destroy(){

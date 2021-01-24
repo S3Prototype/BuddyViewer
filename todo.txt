@@ -15,11 +15,14 @@ DOING:
 TODO:
 * To make the recommendeds line up better, have to make the result container for each individual result either a vertical flex or just a grid. The point is, they have to be even height across the board, or they'll never line up properly.
 * Make sure that you auto-set room to NSFW after you try to use youtube-dl to play videos, and change the thumbnail to that in the DB or Redis.
+* For some reason now twitter videos are not initializing the progress bar properly. Duration seems to be initialized just fine. I'm a bit confused.
+    * Also, see if html5 videos can support .m3u8, or if there's any way to play that in the browser. Pretty crucial game changer.
 * Thumbnail updating no longer works for some reason. Like when you send the data, thumbnail isn't sent for some reason.
 * Make it so if a video fails to load, you let the user sign in to the site. Also let them sign in. Put a button next to the search button or something. But either way, if a video fails, ask them to try to sign in, then use their credentials to try to get the video.
 * Have to learn more about passport. req.isAuthenticated() checks if user is logged in, I think? From there, you have to show each page with the user profile pic or not.
 * Still have to save room state after everyone leaves. Or if that's happening, load from roomstate.
 * Set the video controls to fixed position and a higher z-index when in fullscreen. That way you can make them appear/disappear.
+* Seeking doesn't work if you add a video from a search result or recommended. Seems like you have to re-initialize the seekbar etc.
 * Add a search button to the searchbar. Also detach it from the videocontainer so it's its own thing.
 * Change from buttons to a tags so they don't do that weird press animation anymore.
 * Users should be able to choose who the room host is

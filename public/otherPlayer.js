@@ -58,6 +58,10 @@ class OtherPlayer extends BuddyViewer{
                 BuddyViewer.showRecommendedCard();
             }
         });
+
+        this.player.addEventListener('canplay', ()=>{
+            document.dispatchEvent(new Event('initialize'));
+        });
     }
 
     setLooping(loopValue){
@@ -81,16 +85,16 @@ class OtherPlayer extends BuddyViewer{
         const {videoSource, videoTitle, videoID,
             videoTime, playRate, videoState, thumbnail,
             roomID, videoDuration, volume} = data;
-            // this.initialized = false;
             // const playerDiv = document.getElementById('player');
-        // this.player = document.createElement('video');
-        // this.player.setAttribute('src', data.url);
-        // this.player.setAttribute('width', '100%');
-        // this.player.setAttribute('height', '100%');
-        // this.player.setAttribute('muted', "");
-        // this.player.setAttribute('poster', data.thumbnail);
-        // this.player.setAttribute('id', 'otherone');
-        // playerDiv.append(this.player);
+            // this.player = document.createElement('video');
+            // this.player.setAttribute('src', data.url);
+            // this.player.setAttribute('width', '100%');
+            // this.player.setAttribute('height', '100%');
+            // this.player.setAttribute('muted', "");
+            // this.player.setAttribute('poster', data.thumbnail);
+            // this.player.setAttribute('id', 'otherone');
+            // playerDiv.append(this.player);
+        this.initialized = false;
         this.destroy();
         // this.player = new OtherPlayer(data).player;
         this.createVideoElement(data);
@@ -106,7 +110,7 @@ class OtherPlayer extends BuddyViewer{
         this.videoID = videoID;
         this.seek(videoTime);
         this.setVolume(volume);
-        this.setPlayRate(playRate);       
+        this.setPlayRate(playRate);      
 
         this.addListeners();
     }

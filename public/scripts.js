@@ -193,7 +193,7 @@ $(function(){
                     createNewPlayer[VideoSource.YOUTUBE](data);
                 } else {
                     console.log('newvideo!');
-                    console.log(data);
+                    console.log(data);                    
                     buddyPlayer.newVideo(data);
                 }
                 socket.emit('startNew', data, roomID);
@@ -726,10 +726,10 @@ $(function(){
                 return;
             }
         if(!buddyPlayer.isInitialized()){
+            console.log(`Not initialized! Also duration: ${buddyPlayer.getDuration()}`);
             const duration = buddyPlayer.getDuration();
             initializeToolTip(duration);
-            initializeProgressBar(duration);
-            if(duration) buddyPlayer.initialized = true;            
+            initializeProgressBar(duration);            
         }
         const playerTime = Math.round(buddyPlayer.getPlayerTime());
         if(playerTime != buddyPlayer.getSavedTime()){
@@ -1129,8 +1129,9 @@ $(function(){
             document.getElementById('join-room-modal-overlay').classList.add('active');
             document.addEventListener('videotime', updateVideoTime);
             document.addEventListener('initialize', (event)=>{
-                console.log("Initializing toolbars at duration"+buddyPlayer.getDuration());
+                console.log("Initialize event called!");
                 updateVideoTime();
+                buddyPlayer.initialized = true;
             }, false);
             document.addEventListener('trytosync', ()=>{                
                 socket.emit('requestSync', roomID);
@@ -1140,8 +1141,6 @@ $(function(){
                 recCard.style.display = 'none';
             });
             document.addEventListener('showRecommended', ()=>{
-                console.log("Recommededs:");
-                console.log(recommendedContainer.innerHTML);
                 if(!recommendedContainer.innerHTML){
                     console.log("Recommendeds empty. Trying to fill.");
                     youtubeSearch(buddyPlayer.getTitle() || "Benjamin August");                    

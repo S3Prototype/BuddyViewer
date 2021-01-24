@@ -405,6 +405,7 @@ function updateRoomState(data, roomID, newState){
             }} //value to update
         ).then(result=>{
             //This returns the room prior to the update
+            
         });
     })
     .catch((err)=>{
