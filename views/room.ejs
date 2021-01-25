@@ -10,6 +10,8 @@
         <link rel="stylesheet" href="../recommendedStyles.css" type="text/css" />    
         <script>
             var roomID = "<%= roomID %>";
+            var isHost = false;
+            var socket = null;
         </script>
     </head>
     <body>
@@ -45,6 +47,9 @@
                 <button id="increase-playrate-button" class="increase-playrate-button">
                     <span id="increase-playrate-icon" class="fas fa-angle-double-right"></span>
                 </button>
+                <a id="host-button" class="host-button">
+                    <span id="host-icon" class="far fa-star"></span>
+                </a>
                 <button id="loop-button" class="loop-button">
                     <span id="loop-icon" class="fas fa-infinity"></span>
                 </button>
@@ -122,6 +127,7 @@
     <script src="../jquery-3.5.1.js"></script>
     <script src="../buddyviewerclass.js"></script>
     <script src="../otherPlayer.js"></script>
+    <script src="../buttonControls.js"></script>
     <script src="../scripts.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/js-cookie@rc/dist/js.cookie.min.js"></script>
     <!-- <script defer src="../bigscripts.js"></script> -->

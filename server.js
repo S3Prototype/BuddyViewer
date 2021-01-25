@@ -120,13 +120,21 @@ function getAllRooms(){
     return RoomModel.find();
 }
 
+let hostTimeout;
+const hostTimeoutLimit = 2500;
 function joinRoom(socket, userData, roomID){
     findRoom(roomID)
     .then(currRoom=>{
         socket.join(roomID);
         if(currRoom){
             console.log("Joining a pre-existing room.");
-            addToRoom(socket.id, userData, currRoom);
+            addToRoom(socket.id, userData, currRoom);            
+            hostTimeout = setTimeout(() => {
+
+                becomeHost(currRoom.roomID, socket.id);
+                io.to(socket.id).emit('initPlayer', currRoom);
+
+            }, hostTimeoutLimit);
         } else {
             //THis code will basically never run,
             //because we call createEmptyRoom when people
@@ -144,19 +152,27 @@ function logFailure(goal, error){
 
 function addToRoom(socketID, userData, currRoom){    
     const { localName, nameOnServer, userID, pfp } = userData;
-    // findRoom(roomID)
-    // .then(currRoom=>{
         let isHost = false;
         if(currRoom.users.length < 1 || !currRoom.hostSocketID){
             //if this user is the only one in the room, make them host
             isHost = true;
             currRoom.hostSocketID = socketID;
+            io.to(socketID).emit('noOneElseInRoom', false);
         } else {
             // If we're not the host, request state from the host.
             console.log(`Trying to get state from host (${
                 currRoom.hostSocketID})`);
+                            
+                //Request state from the host, and set a timer.
+                //If timer goes off, make new host. If host
+                //responds before then, clear timer.
+                console.log(`Current host is ${currRoom.hostSocketID}`);
+                console.log(`Our socket ID is: ${socketID}`);
             io.to(currRoom.hostSocketID).emit('requestState',
-                socketID);
+                    {                    
+                        socketID
+                    }
+                );            
         }
         
         currRoom.users.push({
@@ -173,17 +189,6 @@ function addToRoom(socketID, userData, currRoom){
         .catch(err=>{
             logFailure('add to room', err);
         });
-        // updateRoomUsers(currRoom.users, currRoom.roomID)
-    // })
-    // .catch(err=>{
-    //     logFailure(`find room ${roomID}`, err);
-    // });
-    // RoomModel.updateOne(
-    //     {roomID: currRoom.roomID}, //query for the room to update
-    //     {$set: {users: currRoom.users}} //value to update
-    // );    
-    //Update room in DB.
-    // console.log(` ${JSON.stringify(currRoom, null, 2)}`);
 }
 
 class RoomSecurity{
@@ -306,11 +311,7 @@ function removeFromRoom(socket){
     .then(rooms=>{
         // console.log(result);
         const foundRoom = rooms.find(room=>room.users.some(user=>user.socketID == socket.id));
-        if(foundRoom){
-            // const {users} = foundRoom;
-            // const thisUser = result.users
-            //             .find(user=>user.socketID == socket.id);
-            
+        if(foundRoom){        
             console.log("USER SHOULD BE OUT OF ROOM NOW");
             socket.leave(foundRoom.roomID); 
             foundRoom.users = foundRoom.users
@@ -343,6 +344,38 @@ function checkIfHost(roomID, socketID){
 
 function findRoom(roomID){
     return RoomModel.findOne({roomID});   
+}
+
+function becomeHost(roomID, socketID){
+    console.log("*****************");
+        console.log("Becoming host of "+roomID);
+        let isHost = false;
+        let finalHostID = null;
+        findRoom(roomID)
+        .then(room=>{
+            if(room){                
+                RoomModel.updateOne(
+                    {roomID}, //query for the room to update
+                    {$set: {
+                        hostSocketID: socketID
+                    }}, //value to update
+                    function(err, updatedRoom){
+                        if(err){
+                            console.log(`Room didn't update. ${err}`);
+                        } else {
+                            console.log("Room is: "+JSON.stringify(updatedRoom, null, 2));
+                        }
+
+                    }    
+                );
+                finalHostID = socketID;
+                isHost = true;
+            }            
+        })
+        .finally(_=>{            
+            console.log(`Our final host ID is ${finalHostID} | The one we sent was ${socketID}`);
+            io.in(roomID).emit('setHost', finalHostID);
+        });
 }
 
 function updateRoomState(data, roomID, newState){
@@ -424,6 +457,39 @@ io.on('connection', socket=>{
         joinRoom(socket, userData, roomID);
     });
 
+    socket.on('becomeHost', (roomID)=>{
+        becomeHost(roomID, socket.id);
+    });
+
+    socket.on('releaseHost', roomID=>{
+        console.log("*****************");
+        console.log("Releasing host of "+roomID);
+        let isHost = false;
+        let newHostID;
+        findRoom(roomID)
+        .then(room=>{
+            if(room){
+                //Find a random user.
+                newHostID = room.users.find(user=>user.socketID != socket.id)?.socketID;                
+                if(newHostID === undefined){
+                    io.to(socket.id).emit('noOneElseInRoom', false);
+                    return;
+                }
+                RoomModel.updateOne(
+                    {roomID}, //query for the room to update
+                    {$set: {
+                        hostSocketID: newHostID
+                    }} //value to update
+                );              
+                socket.to(roomID).emit('setHost', newHostID);
+            }            
+        })
+        .finally(_=>{   
+            if(!newHostID) newHostID = "unchanged, because no one else is in the room.";
+            console.log(`Our final host ID is ${newHostID} | The one we sent was ${socket.id}`);
+        });
+    });
+
     socket.on('sendMessage', (messageData, roomID)=>{
         // console.log(JSON.stringify(messageData));        
         socket.to(roomID).broadcast.emit('getMessage', messageData);
@@ -466,6 +532,10 @@ io.on('connection', socket=>{
     });
 
     socket.on('sendState', (data)=>{
+        if(hostTimeout){
+            clearTimeout(hostTimeout);
+            hostTimeout = null;
+        }
         io.to(data.requesterSocketID).emit('initPlayer', data);
         console.log(`STATE SENT TO ${data.requesterSocketID}`);
     });
@@ -684,9 +754,26 @@ app.post('/getYouTubeInfo', (req, res)=>{
     });
 });
 
+// const fs = require('fs')
+// const youtubedl = require('youtube-dl')
+
+// const video = youtubedl('http://www.youtube.com/watch?v=90AiXO1pAiA',
+//   // Optional arguments passed to youtube-dl.
+//   ['--format=18'],
+//   // Additional options can be given for calling `child_process.execFile()`.
+//   { cwd: __dirname })
+
+// // Will be called when the download starts.
+// video.on('info', function(info) {
+//   console.log('Download started')
+//   console.log('filename: ' + info._filename)
+//   console.log('size: ' + info.size)
+// })
+
+// video.pipe(fs.createWriteStream('myvideo.mp4'))
+
 app.post('/otherone', (req, res)=>{
     const options = req.body.options ? req.body.options : [];
-    let resultData;
     youtubedl.getInfo(req.body.query, options, (error, info)=>{
         if (error || !info){
             console.log('==============');
@@ -704,7 +791,7 @@ app.post('/otherone', (req, res)=>{
                 playRate: 1,
                 thumbnail: NSFW_THUMBNAIL,
                 videoDuration: undefined
-            };
+            };            
             updateRoomState(resultData, req.body.roomID);
             res.send(resultData);
         }
@@ -720,9 +807,7 @@ app.post('/otherone', (req, res)=>{
     });
 });
 
-app.post('/search', function(req, response){
-    // console.log(`${new Date().toLocaleTimeString()} Searching for: ${JSON.stringify(req.body, null, 2)}`);
-    // console.log('===================================');    
+app.post('/search', function(req, response){   
     google.youtube('v3').search.list({
         key: process.env.YOUTUBE_TOKEN,
         part: "snippet",
@@ -743,10 +828,8 @@ app.post('/search', function(req, response){
             }
         });
         response.send(searchData);
-        // YouTubeSearchManager.searchResults[req.body.user_id] = searchData;
     })
     .catch(e=>console.log(e));
-    // res.send(YouTubeSearchManager.searchResults[req.body.user_id]);
 });
 
 app.post('/get-search-results', function(req, res){

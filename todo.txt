@@ -13,10 +13,10 @@ DOING:
 * You're done!
 
 TODO:
+* Give control bar transparent BG in full screen mode, like youtube.
+    * Maybe make it exactly like youtube, with the playpause button being a big icon in the center of the screen.
 * To make the recommendeds line up better, have to make the result container for each individual result either a vertical flex or just a grid. The point is, they have to be even height across the board, or they'll never line up properly.
 * Make sure that you auto-set room to NSFW after you try to use youtube-dl to play videos, and change the thumbnail to that in the DB or Redis.
-* For some reason now twitter videos are not initializing the progress bar properly. Duration seems to be initialized just fine. I'm a bit confused.
-    * Also, see if html5 videos can support .m3u8, or if there's any way to play that in the browser. Pretty crucial game changer.
 * Thumbnail updating no longer works for some reason. Like when you send the data, thumbnail isn't sent for some reason.
 * Make it so if a video fails to load, you let the user sign in to the site. Also let them sign in. Put a button next to the search button or something. But either way, if a video fails, ask them to try to sign in, then use their credentials to try to get the video.
 * Have to learn more about passport. req.isAuthenticated() checks if user is logged in, I think? From there, you have to show each page with the user profile pic or not.
@@ -25,8 +25,6 @@ TODO:
 * Seeking doesn't work if you add a video from a search result or recommended. Seems like you have to re-initialize the seekbar etc.
 * Add a search button to the searchbar. Also detach it from the videocontainer so it's its own thing.
 * Change from buttons to a tags so they don't do that weird press animation anymore.
-* Users should be able to choose who the room host is
-    * Need a "Become host" button, so you can just take control of the room. Would fix a lot of issues.
 * Definitely gonna have to change it back to some form of saving rooms in local storage like redis or something until it's time to save it to mongodb.
 * Also have a little chat icon button in the video player so you can bring the chat up at the side. If you're in fullscreen, chat appears in a z-index above the player.
 * Gotta implement a different session store from the default.
@@ -78,7 +76,16 @@ DONE
 ===========
 ~~~~~~~~~~~
 
-1/23/1
+1/25/21
+
+* When you join a room that's empty, not only should it set you to host, but it should load up the video from the "room state," which the host most recently set.
+* Set off timer when request state is called. When sendstate is called, clear it. Otherwise assign current user to becomeHost
+* Users should be able to choose who the room host is
+    * Need a "Become host" button, so you can just take control of the room. Would fix a lot of issues.
+
+=======
+
+1/23/21
 
 * Make it so you can add youtube links with the current time set.
 * Make it so nsfw rooms only have the NSFW thumbnail.

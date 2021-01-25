@@ -1,5 +1,4 @@
 $(function(){
-
     let ytInterval;
         //!Need code to set up the player controls separate from the player itself, checking certain vars like below.
         //!Not sure individual video players should have individual cc settings. Like if one is set to cc active, all should start that way.
@@ -40,8 +39,6 @@ $(function(){
 
     const playrateText = document.getElementById('playrate-text');
 
-    let socket = {};
-
     function validateUserID(){
         const savedID = localStorage.getItem('userID');
         console.log("LOCAL STORAGE EXISTS? "+ (savedID&&true));
@@ -66,13 +63,8 @@ $(function(){
     //Set of clientside errors:
     const ANON_NAME_ERR = "You cannot create your own anon name!";
 
-    let timeStamp = 0;
     let messageInput = $('#message-input');
     messageInput.val('');
-    let chatTbody = $('#chatbox-tbody');
-    let chatTable = $('#chat-table');
-    let seenArray = [false, false, false];
-    let nameToRemove = null;
 
     const progressBar = document.getElementById('progress-bar');
     const seekToolTip = document.getElementById('seek-tooltip');
@@ -89,9 +81,6 @@ $(function(){
         playrateText.innerHTML = newRate +"x";
         // player.setPlaybackRate(newRate)
     }
-
-    let searchInterval;
-    let searchCount = 0;
 
     function youtubeSearch(query){
         $.ajax({
@@ -1004,35 +993,33 @@ $(function(){
         })
         
         socket.on('initPlayer', data=>{
-            if(data.videoTime === undefined) return;
-            console.log("I'm trying to init my player.");
-            console.log(`Data is: ${JSON.stringify(data, null, 2)}`);
-            const {videoSource, videoID, videoTime} = data;
-            initializeToolTip(data.videoDuration);
-            initializeProgressBar(data.videoDuration);
-            progressBar.value = Math.round(videoTime);
-            updateSeekToolTip(Math.round(videoTime));
-            data.volume = volumeSlider.value;
-            if(!buddyPlayer || buddyPlayer.getSource() != videoSource){
-                //* If it's not the same player, then make a new player
-                disableLoopingIcon();
-                createNewPlayer[videoSource](data);
-            } else {
-                //We have a buddy player and its the same source.
-                if(videoID != buddyPlayer.getID()){
-                    //If we're loading a new video, start over
-                    data.videoTime = 0;
-                    buddyPlayer.newVideo(data);
-                    updateTimeUI(data.videoTime);
+            alignPlayerWithData(data);
+        });
+
+        socket.on('noOneElseInRoom', _=>{
+            isHost = true;
+            enableHostIcon();
+            console.log("You are the only user left in the room.");
+        });
+
+        socket.on('getRoomState', room=>{
+            alignPlayerWithData(room);
+        });
+
+        socket.on('setHost', newHostID=>{
+            if(newHostID){
+                isHost = newHostID == socket.id;
+                if(isHost){
+                    console.log("Setting this browser to host.");
+                    enableHostIcon();
                 } else {
-                    if(videoTime > 0){
-                        seekAndSetUI(videoTime);
-                    }
+                    disableHostIcon();
                 }
             }
         });
     
-        socket.on('requestState', requesterSocketID=>{
+        socket.on('requestState', requestData=>{            
+            const requesterSocketID = requestData.socketID;
             console.log("someone requested my state");
             let sendData;
             if(!buddyPlayer){
@@ -1042,6 +1029,7 @@ $(function(){
             }
             console.log('Im sending a time of: '+sendData?.videoTime);
             sendData.requesterSocketID = requesterSocketID;
+            // sendData.hostTimeout = requestData.hostTimeout;
             socket.emit('sendState', sendData);        
         });
         
@@ -1081,13 +1069,17 @@ $(function(){
         socket.on('seek', videoTime=>{
             seekAndSetUI(videoTime);
         });
-    
-        socket.on('startNew', (data)=>{
-            console.log(`Start new with: ${JSON.stringify(data)}`);
-            const {videoSource, videoTitle,
-                videoID, videoTime, playRate,
-                videoState, thumbnail, roomID} = data;
-                data.volume = volumeSlider.value;
+
+        function alignPlayerWithData(data){
+            if(data.videoTime === undefined) return;
+            console.log("I'm trying to align my player.");
+            console.log(`Data is: ${JSON.stringify(data, null, 2)}`);
+            const {videoSource, videoID, videoTime, videoTitle} = data;
+            initializeToolTip(data.videoDuration);
+            initializeProgressBar(data.videoDuration);
+            progressBar.value = Math.round(videoTime);
+            updateSeekToolTip(Math.round(videoTime));
+            data.volume = volumeSlider.value;
             if(!buddyPlayer || buddyPlayer.getSource() != videoSource){
                 //* If it's not the same player, then make a new player
                 changeVolumeSettings(videoSource);
@@ -1099,11 +1091,17 @@ $(function(){
                     console.log("same source, diff ID");
                     buddyPlayer.newVideo(data);
                 } else {
-                    buddyPlayer.seek(videoTime);
-                    updateTimeUI(videoTime);
+                    if(videoTime > 0){
+                        seekAndSetUI(videoTime);
+                    }
                 }
             }
             youtubeSearch(data.title || videoTitle || videoID);
+        }
+    
+        socket.on('startNew', (data)=>{
+            console.log(`Start new with: ${JSON.stringify(data)}`);
+            alignPlayerWithData(data);
         });
     
         socket.on('startOver', _=>{

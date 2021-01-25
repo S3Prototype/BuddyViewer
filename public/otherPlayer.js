@@ -72,7 +72,19 @@ class OtherPlayer extends BuddyViewer{
     createVideoElement({url, thumbnail}){
         const playerDiv = document.getElementById('player');
         this.player = document.createElement('video');
-        this.player.setAttribute('src', url);
+        const source = [
+            document.createElement('source'),
+            document.createElement('source')
+        ];
+
+        source[0].setAttribute('src', url);
+        source[0].setAttribute('type', 'application/x-mpegURL');
+        
+        source[1].setAttribute('src', url);
+        source[1].setAttribute('type', 'video/mp4');
+
+        source.forEach(src=>this.player.appendChild(src));
+
         this.player.setAttribute('width', '100%');
         this.player.setAttribute('height', '100%');
         this.player.setAttribute('muted', "");
@@ -85,15 +97,6 @@ class OtherPlayer extends BuddyViewer{
         const {videoSource, videoTitle, videoID,
             videoTime, playRate, videoState, thumbnail,
             roomID, videoDuration, volume} = data;
-            // const playerDiv = document.getElementById('player');
-            // this.player = document.createElement('video');
-            // this.player.setAttribute('src', data.url);
-            // this.player.setAttribute('width', '100%');
-            // this.player.setAttribute('height', '100%');
-            // this.player.setAttribute('muted', "");
-            // this.player.setAttribute('poster', data.thumbnail);
-            // this.player.setAttribute('id', 'otherone');
-            // playerDiv.append(this.player);
         this.initialized = false;
         this.destroy();
         // this.player = new OtherPlayer(data).player;

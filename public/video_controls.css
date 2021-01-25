@@ -39,9 +39,15 @@ video {
     grid-column: 1 / -1;
     width: 100%;
     display: inline-grid;
-    grid-template-columns: [play-button] .25fr [time-code] .5fr [mute-button] .25fr [volume-slider] 1fr [closed-captions-button] .25fr [reduce-playrate] .10fr [playrate-button] .25fr [increase-playrate] .10fr [loop-button] .25fr [sync-button] .25fr [fullscreen-button] .25fr;
+    grid-template-columns: [play-button] .25fr [time-code] .5fr [mute-button] .25fr [volume-slider] 1fr [closed-captions-button] .25fr [reduce-playrate] .10fr [playrate-button] .25fr [increase-playrate] .10fr [loop-button] .25fr [host-button] .25fr [sync-button] .25fr [fullscreen-button] .25fr;
     grid-template-rows: 1fr;
     order: 2;
+}
+
+#host-button{
+    color: white;
+    grid-row: video-controls;
+    grid-column: host-button;    
 }
 
 #player {
