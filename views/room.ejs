@@ -53,9 +53,9 @@
                 <button id="loop-button" class="loop-button">
                     <span id="loop-icon" class="fas fa-infinity"></span>
                 </button>
-                <button id="sync-button" class="sync-button">
+                <a id="sync-button" class="sync-button">
                     <span id="sync-icon" class="fas fa-sync-alt"></span>
-                </button>
+                </a>
             </div>
             <div class="playrate-dropdown" id="playrate-dropdown">
                                     <div class="playrate-options" id="playrate-options">
@@ -109,6 +109,23 @@
                 </button>
             </div>
         </div>
+        <div id="password-modal" class="password-modal">
+            <div id="password-modal-header" class="password-modal-header"></div>
+            <div id="password-modal-name" class="password-modal-name"></div>
+            <div id="room-password-status" class="room-password-status"></div>
+                <input type="password" name="room-password" id="room-password-input" class="room-password-input"
+                placeholder="Enter Room Password"
+                >
+                <input type="password" name="confirm-room-password" id="confirm-room-password-input" class="confirm-room-password-input"
+                placeholder="Confirm Room Password"
+                >
+                <button data-join-button id="room-password-button" class="room-password-button">
+                    Enter Room
+                    <span class="fas fa-door-open"></span>
+                </button>
+            </div>
+        </div>
+        <div id="password-modal-overlay" class="password-modal-overlay"></div>
         <div id="join-room-modal-overlay" class="join-room-modal-overlay"></div>
     <script>
         var player = {};

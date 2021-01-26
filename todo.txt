@@ -26,32 +26,24 @@ TODO:
 * Add a search button to the searchbar. Also detach it from the videocontainer so it's its own thing.
 * Change from buttons to a tags so they don't do that weird press animation anymore.
 * Definitely gonna have to change it back to some form of saving rooms in local storage like redis or something until it's time to save it to mongodb.
+* Also have to change the delete code so that when it disconnects people from the room, it sends the setHost event out.
 * Also have a little chat icon button in the video player so you can bring the chat up at the side. If you're in fullscreen, chat appears in a z-index above the player.
 * Gotta implement a different session store from the default.
     ** https://github.com/expressjs/session#compatible-session-stores
-* Add an overlay over the room that says "PLEASE REFRESH THE PAGE, but disappears if you press join room. This way, the join room modal always happens. No idea why tf it's not always popping up now.
-* When host leaves a room and it becomes empty, it reverts to a default state. Shouldn't do that.
-    * It should try to request state, and set a timer. If no response from host, try one more time. If still no host, you become host.
-    * If room is empty, get room state info and return that.
 * share secret link feature. Sends a link that contains the password, or a "secret" style link that is a different url with a key param in it that, when it hits the server, gets the users redirected to the room with the password stored.
     * Probably can just add some hashed password to the url param. When the user enters the url, unencrypt and check the param against the room password. If it passes, just let them into the room with some ejs value like 'secretLink: true', and they should be allowed in.
 * Confirmation email can just contain a randomly generated word that has been hashed by bcrypt. When they click the link, check it with bcrypt. If it matches the stored random word, they're activated. Only hold the random word for a temporary period in redis.
 * Swap out most buttons for divs. Divs don't give that weird shifting animation buttons automatically do.
-* Make it so when a player loads into an empty room that already has a video, that video loads up paused.
-* Make room passwords work. Require new entrants to enter the password if they want to actually execute the joinRoom code. Perhaps have a password prompt replace the joinButton interface.
 * If you can, add video length to the info on the search results.
 * For some reason the playback rate initializes as undefined in the html. Probably because of the initialization code when hotjoining.
-* Add a "re-align" button so if things get unaligned, just press that, boom. trigger the sendstate event
 * Fix the search so the results line up properly when less than whole row
 * Change the chat so it's always floating
 * Show text to say who put in a video/pressed play/etc
-* When a yt video is played, search youtube for that video title or the uploader. Then in recommendeds, show the results.
 * Change icon to replay icon when video ended
 * Implement a history
 * Improve search with ytsr
     https://github.com/TimeForANinja/node-ytsr/blob/master/README.md
 * When a video pauses or ends, above the recommended videos, show tips like "Press the reconnect button to re-align all the videos."
-* Add recommended videos overlay over the video when it reaches ended/paused status, with your own videos in that the viewer can click and add instantly.
 * In the description/title search results on the server, check for the html codes like &quot; etc, and convert them over to their actual characters.
 * Full screen doesn't work in chrome again. Goddammit. The video controls look janky and don't go away.
     ** Probably have to put the css in a -webkit thing
@@ -78,6 +70,10 @@ DONE
 
 1/25/21
 
+* Make room passwords work. Require new entrants to enter the password if they want to actually execute the joinRoom code. Perhaps have a password prompt replace the joinButton interface.
+    * I'm gona have to have the page have an overlay over it when it loads. The join room modal doesn't pop up until it checks the server and asks if this room requires a password or not. If it does, pop up a "what's the password?" modal. If not, just a join-room modal that goes away if you click anywhere on the screen.
+    * actually, when you click the join button, on the server it should just check the room's security setting. If it's locked, send back a socket event to ask for the password.
+* Add a "re-align" button so if things get unaligned, just press that, boom. trigger the initplayer for all players, using the room state.
 * When you join a room that's empty, not only should it set you to host, but it should load up the video from the "room state," which the host most recently set.
 * Set off timer when request state is called. When sendstate is called, clear it. Otherwise assign current user to becomeHost
 * Users should be able to choose who the room host is
@@ -87,6 +83,7 @@ DONE
 
 1/23/21
 
+* Add recommended videos overlay over the video when it reaches ended/paused status, with your own videos in that the viewer can click and add instantly.
 * Make it so you can add youtube links with the current time set.
 * Make it so nsfw rooms only have the NSFW thumbnail.
 * Delete interval when we destroy a youtube video
@@ -108,6 +105,7 @@ DONE
 1/21/21
 
 * Fix up the chat.
+* When a yt video is played, search youtube for that video title or the uploader. Then in recommendeds, show the results.
 * Add your own recommended videos overlay when video is paused.
     * Set it so after you create a video, as soon as we're able to get that video's info such as title or anything, we do a youtubeSearch() for it. The results will be used in our recommended videos. Don't forget that you're doing a search on your otherone videos as well when the ajax call ends. That's a source of recommendeds for those too.
         * Show recommended:

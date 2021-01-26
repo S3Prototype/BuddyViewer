@@ -35,6 +35,7 @@
     "express-handlebars": "^5.2.0",
     "express-session": "^1.17.1",
     "googleapis": "^66.0.0",
+    "html-entities": "^2.0.6",
     "isuuid": "^0.1.0",
     "jade": "^1.11.0",
     "js-cookie": "^2.2.1",

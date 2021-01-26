@@ -21,7 +21,7 @@ class YouTubeViewer extends BuddyViewer{
 
     constructor(data){        
         super(data);
-        YouTubeViewer.startTime = data.videoTime;
+        // YouTubeViewer.startTime = data.videoTime;
 
         this.source = VideoSource.YOUTUBE;
         console.log("Duration when video created: "+data.videoDuration);
@@ -84,7 +84,8 @@ class YouTubeViewer extends BuddyViewer{
         console.log("Duration we're taking is: "+event.target.getDuration())
         this.duration = this.player.getDuration();
 
-        this.seek(YouTubeViewer.startTime);
+        this.seek(this.playerTime);
+        // this.seek(YouTubeViewer.startTime);
         document.dispatchEvent(new Event('initialize'));
         this.sendTimeEvent();  
 

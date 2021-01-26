@@ -7,6 +7,8 @@ var randomWords = require('random-words');
 var express = require('express');
 var bodyparser = require('body-parser');
 const router = express.Router();
+const {decode} = require('html-entities');
+const bcrypt = require('bcryptjs');
 
 const e = require('express');
 const request = require('request');
@@ -125,16 +127,30 @@ const hostTimeoutLimit = 2500;
 function joinRoom(socket, userData, roomID){
     findRoom(roomID)
     .then(currRoom=>{
+        if(currRoom.securitySetting === RoomSecurity.LOCKED &&
+            !userData.passwordSuccess){
+            //If no password, set it up; else, request it.
+            if(!currRoom.password){
+                io.to(socket.id).emit('setUpPassword', currRoom.roomName);
+            } else {                    
+                io.to(socket.id).emit('passwordRequest', currRoom.roomName);
+            }
+            return;
+        }
+
         socket.join(roomID);
         if(currRoom){
+            //Check if the room is locked. If so, ask for credentials.
             console.log("Joining a pre-existing room.");
-            addToRoom(socket.id, userData, currRoom);            
-            hostTimeout = setTimeout(() => {
-
-                becomeHost(currRoom.roomID, socket.id);
-                io.to(socket.id).emit('initPlayer', currRoom);
-
-            }, hostTimeoutLimit);
+            addToRoom(socket.id, userData, currRoom);
+            if(currRoom.users.length > 1){
+                hostTimeout = setTimeout(() => {
+    
+                    becomeHost(currRoom.roomID, socket.id);
+                    io.to(socket.id).emit('initPlayer', currRoom);
+    
+                }, hostTimeoutLimit);
+            }
         } else {
             //THis code will basically never run,
             //because we call createEmptyRoom when people
@@ -143,7 +159,12 @@ function joinRoom(socket, userData, roomID){
             createNewRoom(socket.id, userData, roomID);
         }
     })
-    .catch(err=>logFailure('join room', err));
+    .catch(err=>{
+        //Eventually add code here to send an event
+        //that will redirect user to homepage with
+        //error message; otherwise, to an error page
+        logFailure('join room', err)
+    });
 }
 
 function logFailure(goal, error){
@@ -228,6 +249,7 @@ async function createEmptyRoom(securitySetting, roomName,
         securitySetting,
         thumbnail: firstThumbnail,
         users: [],
+        password: "",
         videoTitle: "",
         videoSource: 4,
         videoID: "", //holds id most recently played video
@@ -396,6 +418,7 @@ function updateRoomState(data, roomID, newState){
             videoTitle,
             videoTime,
             videoID,
+            videoDuration,
             thumbnail
         };
 
@@ -435,7 +458,8 @@ function updateRoomState(data, roomID, newState){
                 videoTitle,
                 videoDuration: videoDuration ?? 0,
                 history
-            }} //value to update
+            }}, //value to update
+            function(err, newRoom){}
         ).then(result=>{
             //This returns the room prior to the update
             
@@ -455,6 +479,74 @@ io.on('connection', socket=>{
 
     socket.on('joinRoom', (userData, roomID)=>{
         joinRoom(socket, userData, roomID);
+    });
+
+    socket.on('checkRoomPassword', data=>{
+        findRoom(data.roomID)
+        .then(room=>{
+            const failMessage = "Something went wrong. Please create a new room.";
+            if(room && room.password){
+                //if room
+                bcrypt.compare(data.password, room.password,
+                    (err, isMatch)=>{
+                        if(err){
+                            console.log(err);
+                            failMessage = err;
+                        } else if(!isMatch){
+                            failMessage = 'Incorrect password.';
+                        } else {
+                            io.to(socket.id).emit('accessRoom', true);                            
+                            return;
+                        }
+                        io.to(socket.id).emit('wrongPassword', failMessage);
+                    }//err, isMatch
+                )//compare()      
+            } else {
+                io.to(socket.id).emit('wrongPassword', failMessage);
+                console.log("Tried to enter password for room that doesn't exist.");
+            }
+        });
+    });
+
+    socket.on('createRoomPassword', data=>{
+        if(data.pass1 !== data.pass2){
+            io.to(socket.id).emit('wrongPassword', "Passwords do not match.");
+            return;
+        }
+        console.log("Trying to find room: "+data.roomID);
+        findRoom(data.roomID)
+        .then(room=>{
+            if(room){
+                if(room.password){
+                    //if room already has a password, something went wrong.
+                    console.log("Someone tried to change the password of a room illegally");
+                    io.to(socket.id).emit('wrongPassword', "A password for this room already exists.");
+                    return;
+                }                    
+                
+                const saltRounds = 10;
+                bcrypt.genSalt(saltRounds, (err, salt)=>{
+                    bcrypt.hash(data.pass2, salt, (err, hash)=>{
+                        if(err){
+                            console.log('Error hashing room password.');
+                            console.log(err);
+                            io.to(socket.id).emit('wrongPassword', 'Error hashing room password.');
+                        } else {
+                            RoomModel.updateOne(
+                                {roomID: data.roomID}, //query for the room to update
+                                {$set: {
+                                    password: hash
+                                }} //value to update
+                            ).catch(err=>{ });
+                            io.to(socket.id).emit('accessRoom', true);                    
+                        }
+                    });
+                });
+            } else {
+                io.to(socket.id).emit('accessRoom', true);
+                console.log("Tried to enter password for room that doesn't exist.");
+            }
+        });
     });
 
     socket.on('becomeHost', (roomID)=>{
@@ -612,13 +704,15 @@ io.on('connection', socket=>{
     socket.on('sync', roomID=>{
         findRoom(roomID)
         .then(room=>{
-            const data = {
-                state: room.videoState,
-                videoID: room.videoID,
-                startTime: room.videoTime,
-                playRate: room.playRate
-            }
-            io.to(roomID).emit('initPlayer', data);
+            // const data = {
+            //     videoState: room.videoState,
+            //     videoSource: room.videoSource,
+            //     videoDuration: room.videoDuration,
+            //     videoID: room.videoID,
+            //     videoTime: room.videoTime,
+            //     videoTitle: room.videoTitle
+            // }
+            io.to(roomID).emit('initPlayer', room);
 
         });
     });
@@ -819,8 +913,8 @@ app.post('/search', function(req, response){
             if(item.id.kind == "youtube#video"){
                 const {snippet} = item;
                 searchData.push({
-                    title: snippet.title,
-                    description: snippet.description,
+                    title: decode(snippet.title),
+                    description: decode(snippet.description),
                     published: snippet.publishedAt,
                     thumbnail: snippet.thumbnails['high'].url,
                     videoID: item.id.videoId
@@ -841,4 +935,7 @@ app.post('/get-search-results', function(req, res){
     }// if(results) YouTubeSearchManager.searchResults[req.body.user_id] = null;
 
     res.send(results);
+});
+
+app.post('/room-password/:roomID', (req, res)=>{
 });

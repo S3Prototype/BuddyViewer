@@ -22,5 +22,6 @@ FEATURE LIST:
 * Show what each other is typing in the searchbar, and constantly see each other's search results as they pop up while we type them. Also constantly see each other's cursors, except when they're over the video
     ** Ability to disable individual cursors so your screen isn't full of hell.
 * Add private messaging functionality
+* Right now you can set a room to private or locked, but not private and locked. Change that.
 
 

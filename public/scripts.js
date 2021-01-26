@@ -90,11 +90,7 @@ $(function(){
             data: JSON.stringify({user_id: userID, query: query}, null, 2),
             success: function (results){                
                 addRecommendedVideos(results);
-                if(buddyPlayer &&
-                    buddyPlayer.getSource() == VideoSource.YOUTUBE)
-                {
-                        addSearchResults(results);
-                }
+                addSearchResults(results);
             }
         });
     }
@@ -131,19 +127,20 @@ $(function(){
                     videoSource: VideoSource.YOUTUBE
                 }
                 
-                if(!buddyPlayer ||
-                    buddyPlayer.getSource() != VideoSource.YOUTUBE)
-                {
-                    console.log('instantiating new video from recommended!');
-                    console.log(data);
-                    disableLoopingIcon();
-                    createNewPlayer[VideoSource.YOUTUBE](data);
-                } else {
-                    console.log('playing recommended video!');
-                    console.log(data);
-                    buddyPlayer.newVideo(data);
-                    youtubeSearch(data.videoTitle);
-                }
+                alignPlayerWithData(data);
+                // if(!buddyPlayer ||
+                //     buddyPlayer.getSource() != VideoSource.YOUTUBE)
+                // {
+                //     console.log('instantiating new video from recommended!');
+                //     console.log(data);
+                //     disableLoopingIcon();
+                //     createNewPlayer[VideoSource.YOUTUBE](data);
+                // } else {
+                //     console.log('playing recommended video!');
+                //     console.log(data);
+                //     buddyPlayer.newVideo(data);
+                //     youtubeSearch(data.videoTitle);
+                // }
                 socket.emit('startNew', data, roomID);
 
             });
@@ -172,19 +169,21 @@ $(function(){
                     videoTitle: result.title,
                     videoSource: VideoSource.YOUTUBE
                 }
+
+                alignPlayerWithData(data);
                 
-                if(!buddyPlayer ||
-                    buddyPlayer.getSource() != VideoSource.YOUTUBE)
-                {
-                    console.log('instantiating new object!');
-                    console.log(data);
-                    disableLoopingIcon();
-                    createNewPlayer[VideoSource.YOUTUBE](data);
-                } else {
-                    console.log('newvideo!');
-                    console.log(data);                    
-                    buddyPlayer.newVideo(data);
-                }
+                // if(!buddyPlayer ||
+                //     buddyPlayer.getSource() != VideoSource.YOUTUBE)
+                // {
+                //     console.log('instantiating new object!');
+                //     console.log(data);
+                //     disableLoopingIcon();
+                //     createNewPlayer[VideoSource.YOUTUBE](data);
+                // } else {
+                //     console.log('newvideo!');
+                //     console.log(data);                    
+                //     buddyPlayer.newVideo(data);
+                // }
                 socket.emit('startNew', data, roomID);
             }
 
@@ -378,8 +377,11 @@ $(function(){
             contentType: 'application/json',
             data: JSON.stringify({query, roomID}, null, 2),
             success: result=>{
+                if(result.error){
+                    console.log("Error. Video not found.");
+                }
                     //search youtube if there's a title to use.
-                if(result.title) youtubeSearch(result.title);
+                if(result.videoTitle) youtubeSearch(result.videoTitle);
                 result.volume = volumeSlider.value;
                 socket.emit('startNew', result, roomID);
                 disableLoopingIcon();
@@ -416,7 +418,13 @@ $(function(){
 
     function getIDandSource(url){
         let source = buddyPlayer?.getSource() ?? VideoSource.OTHERONE;
-        let {newID, videoTime} = tryForYoutube(url);
+        let newID;
+        let videoTime = 0;
+        let ytData = tryForYoutube(url);
+
+        newID = ytData.newID;
+        videoTime = ytData.videoTime;
+
         if(newID) source = VideoSource.YOUTUBE;
 
         // if(!result) result = tryForOtherOne(url);
@@ -475,7 +483,7 @@ $(function(){
         }
 
         disableLoopingIcon();
-        console.log(`Sending new of: ${data}`);
+        console.log(`Sending new of: ${JSON.stringify(data, null, 2)}`);
         changeVolumeSettings(source);
         data.volume = volumeSlider.value;
         createNewPlayer[source](data);
@@ -569,11 +577,9 @@ $(function(){
         if(buddyPlayer){
             if(buddyPlayer.getSource() == data.videoSource &&
                 buddyPlayer.getID() != data.videoID){
-                    buddyPlayer.destroy();
                     clearInterval(ytInterval);
-            } else {
-                return;
-            }
+                }
+            buddyPlayer.destroy();
         }
         if(!scriptExists(PlayerScripts.YOUTUBE_A)){
             document.addEventListener('ytReady', _=>{
@@ -695,10 +701,6 @@ $(function(){
             // stayMuted = true;
             buddyPlayer.mute();              
         }
-    });
-
-    $('#sync-button').click(e=>{        
-        socket.emit('sync', roomID);
     });
 
     $('#play-pause-button').click(function(event){
@@ -969,6 +971,36 @@ $(function(){
         }
     }
 
+    function alignPlayerWithData(data){
+        if(data.videoTime === undefined) return;
+        console.log("I'm trying to align my player.");
+        // console.log(`Data is: ${JSON.stringify(data, null, 2)}`);
+        console.log("The video time is "+data.videoTime);
+        const {videoSource, videoID, videoTime, videoTitle} = data;
+        initializeToolTip(data.videoDuration);
+        initializeProgressBar(data.videoDuration);
+        progressBar.value = Math.round(videoTime);
+        updateSeekToolTip(Math.round(videoTime));
+        data.volume = volumeSlider.value;
+        if(!buddyPlayer || buddyPlayer.getSource() != videoSource){
+            //* If it's not the same player, then make a new player
+            changeVolumeSettings(videoSource);
+            disableLoopingIcon();
+            createNewPlayer[videoSource](data);                                              
+        } else {
+            //if It's the same player, make sure it's a different ID
+            if(videoID != buddyPlayer.getID()){
+                console.log("same source, diff ID");
+                buddyPlayer.newVideo(data);
+            } else {
+                if(videoTime > 0){
+                    seekAndSetUI(Math.round(videoTime));
+                }
+            }
+        }
+        youtubeSearch(data.title || videoTitle || videoID);
+    }
+
     function initSocket(){
         socket = io();
         const userData = {
@@ -985,15 +1017,36 @@ $(function(){
         socket.on('getMessage', messageData=>{
             messageData.timeStamp = new Date().toLocaleTimeString();
             addMessageToChat(messageData);
+        });
+
+        socket.on('accessRoom', _=>{
+            disablePasswordModal();
+            userData.passwordSuccess = true;
+            socket.emit('joinRoom', userData, roomID);
+        });
+
+        socket.on('wrongPassword', message=>{
+            if(!message) message = 'Wrong password. Please try again.';
+            $('#room-password-status').val(message);
+            $('#room-password-input').val('');
         })
+
+        socket.on('passwordRequest', roomName=>{
+            enablePasswordModal(roomName, false);
+        });
+
+        socket.on('setUpPassword', roomName=>{
+            enablePasswordModal(roomName, true);
+        });
 
         socket.on('setLooping', loopValue=>{
             loopValue ? enableLoopingIcon() : disableLoopingIcon();
             buddyPlayer.setLooping(loopValue);
-        })
+        });
         
         socket.on('initPlayer', data=>{
             alignPlayerWithData(data);
+            // youtubeSearch(data.videoTitle);
         });
 
         socket.on('noOneElseInRoom', _=>{
@@ -1068,36 +1121,7 @@ $(function(){
     
         socket.on('seek', videoTime=>{
             seekAndSetUI(videoTime);
-        });
-
-        function alignPlayerWithData(data){
-            if(data.videoTime === undefined) return;
-            console.log("I'm trying to align my player.");
-            console.log(`Data is: ${JSON.stringify(data, null, 2)}`);
-            const {videoSource, videoID, videoTime, videoTitle} = data;
-            initializeToolTip(data.videoDuration);
-            initializeProgressBar(data.videoDuration);
-            progressBar.value = Math.round(videoTime);
-            updateSeekToolTip(Math.round(videoTime));
-            data.volume = volumeSlider.value;
-            if(!buddyPlayer || buddyPlayer.getSource() != videoSource){
-                //* If it's not the same player, then make a new player
-                changeVolumeSettings(videoSource);
-                disableLoopingIcon();
-                createNewPlayer[videoSource](data);                                              
-            } else {
-                //if It's the same player, make sure it's a different ID
-                if(videoID != buddyPlayer.getID()){
-                    console.log("same source, diff ID");
-                    buddyPlayer.newVideo(data);
-                } else {
-                    if(videoTime > 0){
-                        seekAndSetUI(videoTime);
-                    }
-                }
-            }
-            youtubeSearch(data.title || videoTitle || videoID);
-        }
+        });        
     
         socket.on('startNew', (data)=>{
             console.log(`Start new with: ${JSON.stringify(data)}`);
