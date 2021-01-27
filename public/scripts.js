@@ -1,4 +1,17 @@
 $(function(){
+    const tips = [
+        `Press the reconnect button (the little sattelite) if your video player ever starts acting weird.`,
+        `The host button (the little star) is white when you're host and black when you aren't.`,
+        `Press the host button (the little star) to become the host.`,
+        `Some videos require a login to play. Use the login button (the little id card) to securely enter your info.`,
+        `BuddyViewer was made by Benjamin August. Check him out on youtube!`,
+        `Found an issue? Email ben@benjaminaugust.net, or go to our discord!`
+    ];
+    
+    function getRandomTip(){
+        return tips[Math.floor(Math.random() * tips.length)];
+    }
+
     let failureCount = 0;
     const maxFailures = 1;
     let ytInterval;
@@ -104,7 +117,12 @@ $(function(){
             const titleText = document.createTextNode(results[i].title);
             title.appendChild(titleText);
             recDiv.append(title);
-
+            
+            const channelTitle = document.createElement('span');
+            channelTitle.setAttribute('class', 'channel-title');            
+            channelTitle.innerHTML = results[i].channelTitle;
+            recDiv.append(channelTitle);
+        
             const thumbDiv = document.createElement('div');
             thumbDiv.setAttribute('class', 'rec-thumbnail-div');
 
@@ -123,6 +141,7 @@ $(function(){
                     videoState: CustomStates.PLAYING,
                     videoTitle: results[i].title,
                     videoSource: VideoSource.YOUTUBE,
+                    channelTitle: results[i].channelTitle,
                     username: playerUsername,
                     password: playerPassword
                 }
@@ -156,25 +175,13 @@ $(function(){
                     videoState: CustomStates.PLAYING,
                     videoTitle: result.title,
                     videoSource: VideoSource.YOUTUBE,
+                    channelTitle: result.channelTitle,
                     username: playerUsername,
                     password: playerPassword
                 }
                 changeVolumeSettings();
                 data.volume = volumeSlider.value;
                 alignPlayerWithData(data);
-                
-                // if(!buddyPlayer ||
-                //     buddyPlayer.getSource() != VideoSource.YOUTUBE)
-                // {
-                //     console.log('instantiating new object!');
-                //     console.log(data);
-                //     disableLoopingIcon();
-                //     createNewPlayer[VideoSource.YOUTUBE](data);
-                // } else {
-                //     console.log('newvideo!');
-                //     console.log(data);                    
-                //     buddyPlayer.newVideo(data);
-                // }
                 socket.emit('startNew', data, roomID);
             }
 
@@ -186,9 +193,6 @@ $(function(){
             const thumbnail = document.createElement('img');
             thumbnail.setAttribute('class', 'result-thumbnail');
             thumbnail.setAttribute('src', result.thumbnail);
-            // thumbnail.addEventListener('click', function(event){
-            //     addFromResult();
-            // });
             thumbDiv.append(thumbnail)
 
 
@@ -200,13 +204,18 @@ $(function(){
                 addFromResult();
             });
             resultDiv.append(title);
+            
+            const channelTitle = document.createElement('span');
+            channelTitle.setAttribute('class', 'channel-title');            
+            channelTitle.innerHTML = result.channelTitle;
+            resultDiv.append(channelTitle);
 
-            const description = document.createElement('span');
-            description.setAttribute('class', 'result-description');
-            const shortenedDescription = result.description.substring(0, 120) + "..."; 
-            const descriptionText = document.createTextNode(shortenedDescription);
-            description.appendChild(descriptionText);
-            resultDiv.append(description);
+            // const description = document.createElement('span');
+            // description.setAttribute('class', 'result-description');
+            // const shortenedDescription = result.description.substring(0, 120) + "..."; 
+            // const descriptionText = document.createTextNode(shortenedDescription);
+            // description.appendChild(descriptionText);
+            // resultDiv.append(description);
 
             searchResultsContainer.append(resultDiv);
         });
@@ -1045,6 +1054,11 @@ $(function(){
         const titleText = document.createTextNode(historyItem.videoTitle);
         title.appendChild(titleText);
         itemDiv.append(title);
+        
+        const channelTitle = document.createElement('span');
+        channelTitle.setAttribute('class', 'channel-title');            
+        channelTitle.innerHTML = historyItem.channelTitle;
+        itemDiv.append(channelTitle);
 
         const thumbDiv = document.createElement('div');
         thumbDiv.setAttribute('class', 'history-item-thumbnail-div');
@@ -1064,12 +1078,13 @@ $(function(){
                 videoState: CustomStates.PLAYING,
                 videoTitle: historyItem.videoTitle,
                 videoSource: historyItem.videoSource,
+                channelTitle: historyItem.channelTitle,
                 username: playerUsername,
                 password: playerPassword
             }            
             alignPlayerWithData(data);
-            // window.scrollTo(0, 0);
-            $('body').scrollTop(0);
+            // $('body').scrollTop(0);
+            document.getElementById("video_container").scrollIntoView();
             socket.emit('startNew', data, roomID);                
         });
 
@@ -1120,8 +1135,8 @@ $(function(){
         });
         
         socket.on('initPlayer', data=>{
+            $('#sync-icon').addClass('active');
             alignPlayerWithData(data);
-            // youtubeSearch(data.videoTitle);
         });
 
         socket.on('initHistory', history=>{
@@ -1253,9 +1268,11 @@ $(function(){
                     youtubeSearch(buddyPlayer.getTitle() || "Benjamin August");                    
                 }
                 const recCard = document.getElementById('rec-card');
-                const cardTitle = document.getElementById('card-title');
+                const randomTip = document.getElementById('tip-text');            
+                randomTip.innerHTML = getRandomTip();
                 
-                cardTitle.innerHTML = buddyPlayer.getTitle() ?? "Buddy Viewer";
+                const cardTitle = document.getElementById('card-title');
+                cardTitle.innerHTML = buddyPlayer.getTitle() ?? "Buddy Viewer";                
                 recCard.style.display = 'flex';
             });
                                   

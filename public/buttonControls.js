@@ -20,6 +20,7 @@ $('#host-button').click((event)=>{
 
 $('#sync-button').click(e=>{        
     socket.emit('sync', roomID);
+    $('#sync-icon').removeClass('active');
     console.log('trying to sync manually...');
 });
 

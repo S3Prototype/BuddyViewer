@@ -2,6 +2,7 @@
     display: inline-flex;
     overflow: auto;   
     width: 100%;
+    color: black;
     grid-column: main / right-sidebar;
     grid-row: search-results-area;
     max-height: 400px;

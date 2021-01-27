@@ -54,7 +54,7 @@ class OtherPlayer extends BuddyViewer{
                 this.startVideoOver();
             } else {
                 this.setState(CustomStates.ENDED);
-                this.showPlayIcon();            
+                this.showRestartIcon();            
                 BuddyViewer.showRecommendedCard();
             }
         });

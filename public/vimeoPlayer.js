@@ -51,7 +51,7 @@ class VimeoViewer extends BuddyViewer{
         });
         this.player.on('ended', _=>{
             BuddyViewer.showRecommendedCard();
-            this.showPlayIcon();
+            this.showRestartIcon();
             this.setState(CustomStates.ENDED);
             if(this.getLooping()){
                 this.startVideoOver();                

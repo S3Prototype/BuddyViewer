@@ -72,6 +72,7 @@ class YouTubeViewer extends BuddyViewer{
                 this.videoTitle = result.videoTitle;
                 this.description = result.description;
                 this.thumbnail = result.thumbnail;
+                this.channelTitle = result.channelTitle;                
                 result.videoSource = VideoSource.YOUTUBE;
                     document.dispatchEvent(
                         new CustomEvent('addToRoomHistory', {
@@ -129,7 +130,7 @@ class YouTubeViewer extends BuddyViewer{
             videoId: videoID,
             events: {
                 'onReady': this.initNewPlayer.bind(this),
-                "onStateChange": this.stopYTEvent,
+                "onStateChange": this.stopYTEvent.bind(this),
                 "start": videoTime
             },
             playerVars: YouTubeViewer.options
@@ -151,12 +152,12 @@ class YouTubeViewer extends BuddyViewer{
     }
 
     stopYTEvent(event){
-        const thisBuddyPlayer = YouTubeViewer.currentPlayer;
+        // const thisBuddyPlayer = YouTubeViewer.currentPlayer;
         if(event.data == CustomStates.ENDED){
-            thisBuddyPlayer.showPlayIcon();                        
-            thisBuddyPlayer.setState(CustomStates.ENDED);
-            if(thisBuddyPlayer.getLooping()){
-                thisBuddyPlayer.startVideoOver();
+            this.showRestartIcon();                        
+            this.setState(CustomStates.ENDED);
+            if(this.getLooping()){
+                this.startVideoOver();
                 socket.emit('startOver', this.roomID);
             } else {
                 //Show the recommended overlay

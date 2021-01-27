@@ -375,8 +375,8 @@ function findRoom(roomID){
 }
 
 function becomeHost(roomID, socketID){
-    console.log("*****************");
-        console.log("Becoming host of "+roomID);
+    // console.log("*****************");
+    //     console.log("Becoming host of "+roomID);
         let isHost = false;
         let finalHostID = null;
         findRoom(roomID)
@@ -391,7 +391,7 @@ function becomeHost(roomID, socketID){
                         if(err){
                             console.log(`Room didn't update. ${err}`);
                         } else {
-                            console.log("Room is: "+JSON.stringify(updatedRoom, null, 2));
+                            // console.log("Room is: "+JSON.stringify(updatedRoom, null, 2));
                         }
 
                     }    
@@ -401,7 +401,7 @@ function becomeHost(roomID, socketID){
             }            
         })
         .finally(_=>{            
-            console.log(`Our final host ID is ${finalHostID} | The one we sent was ${socketID}`);
+            // console.log(`Our final host ID is ${finalHostID} | The one we sent was ${socketID}`);
             io.in(roomID).emit('setHost', finalHostID);
         });
 }
@@ -437,11 +437,10 @@ function updateRoomState(data, roomID, newState){
             history.push(newHistoryDetails);
         }
 
-        console.log('======');
-        console.log(`Room history is now:`);
-        console.log(JSON.stringify(history, null, 2));
-        console.log('======');
-
+        // console.log('======');
+        // console.log(`Room history is now:`);
+        // console.log(JSON.stringify(history, null, 2));
+        // console.log('======');
 
         if(room.securitySetting == RoomSecurity.PRIVATE){
             thumbnail = PRIVATE_THUMBNAIL;
@@ -713,16 +712,7 @@ io.on('connection', socket=>{
     socket.on('sync', roomID=>{
         findRoom(roomID)
         .then(room=>{
-            // const data = {
-            //     videoState: room.videoState,
-            //     videoSource: room.videoSource,
-            //     videoDuration: room.videoDuration,
-            //     videoID: room.videoID,
-            //     videoTime: room.videoTime,
-            //     videoTitle: room.videoTitle
-            // }
             io.to(roomID).emit('initPlayer', room);
-
         });
     });
 
@@ -928,8 +918,10 @@ app.post('/search', function(req, response){
                     description: decode(snippet.description),
                     published: snippet.publishedAt,
                     thumbnail: snippet.thumbnails['high'].url,
+                    channelTitle: snippet.channelTitle,
                     videoID: item.id.videoId
                 });
+                console.log(JSON.stringify(searchData, null, 2));
             }
         });
         response.send(searchData);

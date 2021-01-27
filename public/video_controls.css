@@ -131,9 +131,13 @@ video {
 }
 
 .sync-button{
-    color: white;
+    color: gray;    
     grid-row: video-controls;
     grid-column: sync-button;
+}
+
+.sync-icon.active{
+    color: white;
 }
 
 #seek-tooltip {

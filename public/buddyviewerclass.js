@@ -1,3 +1,4 @@
+
 class BuddyViewer{
 
     static showRecommendedCard(){
@@ -11,6 +12,8 @@ class BuddyViewer{
     constructor(data){
         this.username = data.username ?? "";
         this.password = data.password ?? "";
+
+        this.channelTitle = data.channelTitle || "Unknown Channel";
 
         this.roomID = data.roomID;
         this.videoID = data.videoID;
@@ -123,6 +126,10 @@ class BuddyViewer{
         return this.muted;
     }
 
+    getChannelTitle(){
+        return this.channelTitle;
+    }
+
     generateData(){
         return {
             videoID: this.getID(),
@@ -131,6 +138,7 @@ class BuddyViewer{
             playRate: this.getPlayRate(),
             videoState: this.getState(),
             thumbnail: this.getThumbnail(),
+            channelTitle: this.getChannelTitle(),
             videoTitle: this.getTitle(),
             videoDuration: this.getDuration()
         }
@@ -191,8 +199,14 @@ class BuddyViewer{
     }
 
     showPauseIcon(){
+        $('#play-pause-icon').removeClass('fa-sync-alt');
         $('#play-pause-icon').removeClass('fa-play');
         $('#play-pause-icon').addClass('fa-pause');
+    }
+
+    showRestartIcon(){
+        $('#play-pause-icon').removeClass('fa-pause');
+        $('#play-pause-icon').addClass('fa-sync-alt');
     }
 
     showPlayIcon(){

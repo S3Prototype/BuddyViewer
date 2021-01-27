@@ -1,8 +1,5 @@
 DOING:
 
-* Change icon to replay icon when video ended
-* Show text to say who put in a video/pressed play/etc
-* When a video pauses or ends, above the recommended videos, show tips like "Press the reconnect button to re-align all the videos."
 * Improve search with ytsr
     https://github.com/TimeForANinja/node-ytsr/blob/master/README.md
 * Definitely gonna have to change it back to some form of saving rooms in local storage like redis or something until it's time to save it to mongodb.
@@ -68,6 +65,14 @@ UNRESOLVED/DISAPPEARED:
 DONE
 ===========
 ~~~~~~~~~~~
+
+1/27/21
+
+* When a video pauses or ends, above the recommended videos, show tips like "Press the reconnect button to re-align all the videos."
+* Change search results/history/recommendeds so they also show the video uploader. Take out the video description.
+* Change icon to replay icon when video ended
+
+=====
 
 1/26/21
 
