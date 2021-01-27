@@ -143,6 +143,7 @@ function joinRoom(socket, userData, roomID){
             //Check if the room is locked. If so, ask for credentials.
             console.log("Joining a pre-existing room.");
             addToRoom(socket.id, userData, currRoom);
+            io.to(socket.id).emit('initHistory', currRoom.history);            
             if(currRoom.users.length > 1){
                 hostTimeout = setTimeout(() => {
     
@@ -155,7 +156,7 @@ function joinRoom(socket, userData, roomID){
             //THis code will basically never run,
             //because we call createEmptyRoom when people
             //take the route to even get here.
-            console.log("Creating a new room.");            
+            console.log("Major error. Possible database failure. In joinRoom(), we didn't find a room at the roomID provided by the client.");            
             createNewRoom(socket.id, userData, roomID);
         }
     })
@@ -205,7 +206,8 @@ function addToRoom(socketID, userData, currRoom){
             {$set: {
                 users: currRoom.users,
                 hostSocketID: currRoom.hostSocketID
-            }}
+            }},
+            (err, newRoom)=>{}
         )
         .catch(err=>{
             logFailure('add to room', err);
@@ -308,7 +310,8 @@ async function createNewRoom(socketID, userData, roomID){
 function updateRoomUsers(users, roomID){
     return RoomModel.updateOne(
         {roomID: roomID}, //query for the room to update
-        {$set: {users: users}} //value to update
+        {$set: {users: users}}, //value to update
+        (err, newRoom)=>{}
     );
 }
 
@@ -316,7 +319,8 @@ function changeRoomName(roomName, roomID){
     const foundRoom = findRoom(roomID);
     RoomModel.updateOne(
         {roomID}, //query for the room to update
-        {$set: {roomName, roomID: roomName+'-'+roomID}} //value to update
+        {$set: {roomName, roomID: roomName+'-'+roomID}}, //value to update
+        (err, newRoom)=>{}
     ).then((result)=>{
         // foundRoom.roomName = result.roomName;
         // foundRoom.roomID = result.roomID;
@@ -345,6 +349,7 @@ function removeFromRoom(socket){
                 foundRoom.hostSocketID = foundRoom.users[
                     Math.floor(Math.random() * foundRoom.users.length)
                 ].socketID;
+                io.in(foundRoom.roomID).emit('setHost', foundRoom.hostSocketID);       
             }
             RoomModel.updateOne(
                 {roomID: foundRoom.roomID}, //query for the room to update
@@ -352,7 +357,8 @@ function removeFromRoom(socket){
                     users: foundRoom.users,
                     hostSocketID: foundRoom.hostSocketID
                     }
-                } //value to update
+                }, //value to update
+                (err, newRoom)=>{}
             )
             .catch(err=>logFailure(`delete user ${socket.id}`, err));
             // updateRoomUsers(foundRoom.users, foundRoom.roomID)
@@ -536,7 +542,8 @@ io.on('connection', socket=>{
                                 {roomID: data.roomID}, //query for the room to update
                                 {$set: {
                                     password: hash
-                                }} //value to update
+                                }}, //value to update
+                                (err, newRoom)=>{}
                             ).catch(err=>{ });
                             io.to(socket.id).emit('accessRoom', true);                    
                         }
@@ -571,7 +578,8 @@ io.on('connection', socket=>{
                     {roomID}, //query for the room to update
                     {$set: {
                         hostSocketID: newHostID
-                    }} //value to update
+                    }}, //value to update
+                    (err, newRoom)=>{}
                 );              
                 socket.to(roomID).emit('setHost', newHostID);
             }            
@@ -588,10 +596,11 @@ io.on('connection', socket=>{
         findRoom(roomID)
         .then(room=>{
             if(!room.messages){
-                room.messages = [messageData]
-            } else {
-                room.messages.push(messageData);
+                room.messages = [];
             }
+            
+            room.messages.push(messageData);
+            
             console.log("======");
             console.log("Now the messages are:")
             console.log(room.messages);
@@ -600,8 +609,8 @@ io.on('connection', socket=>{
                 {roomID}, //query for the room to update
                 {$set: {
                     messages: room.messages
-                }} //value to update
-            )
+                }}, //value to update
+            function(err, newRoom){});
         });
     });
 
@@ -843,7 +852,7 @@ app.post('/getYouTubeInfo', (req, res)=>{
             res.send({error});
         } else {
             const {title, description, thumbnail} = info;
-            res.send({title, description, thumbnail});
+            res.send({videoTitle: title, description, thumbnail});
         }
     });
 });
@@ -867,11 +876,13 @@ app.post('/getYouTubeInfo', (req, res)=>{
 // video.pipe(fs.createWriteStream('myvideo.mp4'))
 
 app.post('/otherone', (req, res)=>{
+        //Validate the options before starting the search.
     const options = req.body.options ? req.body.options : [];
     youtubedl.getInfo(req.body.query, options, (error, info)=>{
         if (error || !info){
             console.log('==============');
-            console.log(`Error looking for video ${req.query}.`);
+            console.log(`Error looking for otherone video ${req.query}.`);
+            console.log('VVVVVVVVVVVVVVVV');
             console.log(`${error}`);
             console.log('==============');
             res.send({error});

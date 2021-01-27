@@ -1,4 +1,6 @@
 $(function(){
+    let failureCount = 0;
+    const maxFailures = 1;
     let ytInterval;
         //!Need code to set up the player controls separate from the player itself, checking certain vars like below.
         //!Not sure individual video players should have individual cc settings. Like if one is set to cc active, all should start that way.
@@ -124,23 +126,13 @@ $(function(){
                     videoID: results[i].videoID,
                     videoState: CustomStates.PLAYING,
                     videoTitle: results[i].title,
-                    videoSource: VideoSource.YOUTUBE
+                    videoSource: VideoSource.YOUTUBE,
+                    username: playerUsername,
+                    password: playerPassword
                 }
-                
+                changeVolumeSettings();
+                data.volume = volumeSlider.value;
                 alignPlayerWithData(data);
-                // if(!buddyPlayer ||
-                //     buddyPlayer.getSource() != VideoSource.YOUTUBE)
-                // {
-                //     console.log('instantiating new video from recommended!');
-                //     console.log(data);
-                //     disableLoopingIcon();
-                //     createNewPlayer[VideoSource.YOUTUBE](data);
-                // } else {
-                //     console.log('playing recommended video!');
-                //     console.log(data);
-                //     buddyPlayer.newVideo(data);
-                //     youtubeSearch(data.videoTitle);
-                // }
                 socket.emit('startNew', data, roomID);
 
             });
@@ -167,9 +159,12 @@ $(function(){
                     videoID: result.videoID,
                     videoState: CustomStates.PLAYING,
                     videoTitle: result.title,
-                    videoSource: VideoSource.YOUTUBE
+                    videoSource: VideoSource.YOUTUBE,
+                    username: playerUsername,
+                    password: playerPassword
                 }
-
+                changeVolumeSettings();
+                data.volume = volumeSlider.value;
                 alignPlayerWithData(data);
                 
                 // if(!buddyPlayer ||
@@ -375,18 +370,34 @@ $(function(){
             url: '/otherone',
             method: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify({query, roomID}, null, 2),
+            data: JSON.stringify({query, roomID,
+                        options: [  `--username=${playerUsername}`, 
+                                    `--password=${playerPassword}`]},
+                null, 2),
             success: result=>{
                 if(result.error){
+                    if(failureCount < maxFailures){
+                        enableVideoLoginModal();
+                    }
+                    failureCount++;
                     console.log("Error. Video not found.");
+                    return;
                 }
+                failureCount = 0;
                     //search youtube if there's a title to use.
-                if(result.videoTitle) youtubeSearch(result.videoTitle);
+                youtubeSearch(result.videoTitle);
+                addToRoomHistory(result);
                 result.volume = volumeSlider.value;
                 socket.emit('startNew', result, roomID);
                 disableLoopingIcon();
                 createNewPlayer[result.videoSource](result);
                 searchResultsContainer.scrollTop = 0;
+                document.dispatchEvent(
+                    new CustomEvent('addToRoomHistory', {
+                        bubbles: false,
+                        detail: { historyItem: result }
+                    })
+                );
             },
             error: (xhr, status, error)=>{
                 console.log('Failed to get otherone.');
@@ -422,10 +433,10 @@ $(function(){
         let videoTime = 0;
         let ytData = tryForYoutube(url);
 
-        newID = ytData.newID;
-        videoTime = ytData.videoTime;
+        newID = ytData?.newID;
+        videoTime = ytData?.videoTime || 0;
 
-        if(newID) source = VideoSource.YOUTUBE;
+        if(newID)source = VideoSource.YOUTUBE;
 
         // if(!result) result = tryForOtherOne(url);
         if(!newID){
@@ -479,7 +490,9 @@ $(function(){
             playRate: 1,
             videoState: CustomStates.PLAYING,
             thumbnail: "",
-            roomID
+            roomID,
+            username: playerUsername,
+            password: playerPassword
         }
 
         disableLoopingIcon();
@@ -584,7 +597,7 @@ $(function(){
         if(!scriptExists(PlayerScripts.YOUTUBE_A)){
             document.addEventListener('ytReady', _=>{
                 loadPlayerScript('../youtubeViewer.js', _=>{
-                    console.log("Loading up new youtubeviewer, line 444");
+                    console.log("Loading up new youtubeviewer");
                     buddyPlayer = new YouTubeViewer(data);
                 });
             });
@@ -976,11 +989,15 @@ $(function(){
         console.log("I'm trying to align my player.");
         // console.log(`Data is: ${JSON.stringify(data, null, 2)}`);
         console.log("The video time is "+data.videoTime);
-        const {videoSource, videoID, videoTime, videoTitle} = data;
-        initializeToolTip(data.videoDuration);
-        initializeProgressBar(data.videoDuration);
-        progressBar.value = Math.round(videoTime);
-        updateSeekToolTip(Math.round(videoTime));
+        const {videoSource, videoID, videoTime, videoTitle, videoDuration} = data;
+        
+        if(videoDuration){
+            initializeToolTip(data.videoDuration);
+            initializeProgressBar(data.videoDuration);
+            progressBar.value = Math.round(videoTime);
+            updateSeekToolTip(Math.round(videoTime));
+        }
+
         data.volume = volumeSlider.value;
         if(!buddyPlayer || buddyPlayer.getSource() != videoSource){
             //* If it's not the same player, then make a new player
@@ -998,7 +1015,69 @@ $(function(){
                 }
             }
         }
+
         youtubeSearch(data.title || videoTitle || videoID);
+        //Now add the history in.
+    }
+
+    function createRoomHistory(history){
+        if(!history) return;
+        const historyContainer = document.getElementById('history');
+        historyContainer.innerHTML = "";
+
+        history.forEach(historyItem=>{
+            addToRoomHistory(historyItem);
+        });
+    }
+
+    function addToRoomHistory(historyItem){
+
+            //First make sure we're not duplicating the last item
+        const lastHistoryItem = $('#history').children().last();
+        const lastTitle = lastHistoryItem
+                        .find('.history-item-title').html();
+        console.log(`Comparing ${historyItem.videoTitle} to ${lastTitle}`);
+            //If we're duplicating, just stop.
+        if(historyItem.videoTitle === lastTitle) return;
+
+        const historyContainer = document.getElementById('history');
+        const itemDiv = document.createElement('div');
+        itemDiv.setAttribute('class', 'history-item');
+
+        const title = document.createElement('span');
+        title.setAttribute('class', 'history-item-title');
+        const titleText = document.createTextNode(historyItem.videoTitle);
+        title.appendChild(titleText);
+        itemDiv.append(title);
+
+        const thumbDiv = document.createElement('div');
+        thumbDiv.setAttribute('class', 'history-item-thumbnail-div');
+
+        const thumbnail = document.createElement('img');
+        thumbnail.setAttribute('class', 'history-item-thumbnail');
+        thumbnail.setAttribute('src', historyItem.thumbnail);
+        thumbDiv.append(thumbnail)            
+        
+        itemDiv.append(thumbDiv);
+
+        itemDiv.addEventListener('click', (event)=>{
+            data = {       
+                videoTime: 0,
+                thumbnail: historyItem.thumbnail,                    
+                videoID: historyItem.videoID,
+                videoState: CustomStates.PLAYING,
+                videoTitle: historyItem.videoTitle,
+                videoSource: historyItem.videoSource,
+                username: playerUsername,
+                password: playerPassword
+            }            
+            alignPlayerWithData(data);
+            // window.scrollTo(0, 0);
+            $('body').scrollTop(0);
+            socket.emit('startNew', data, roomID);                
+        });
+
+        historyContainer.append(itemDiv);
     }
 
     function initSocket(){
@@ -1046,6 +1125,11 @@ $(function(){
         
         socket.on('initPlayer', data=>{
             alignPlayerWithData(data);
+            // youtubeSearch(data.videoTitle);
+        });
+
+        socket.on('initHistory', history=>{
+            createRoomHistory(history);
             // youtubeSearch(data.videoTitle);
         });
 
@@ -1147,6 +1231,11 @@ $(function(){
         // When window loaded ( external resources are loaded too- `css`,`src`, etc...) 
         // if(document.readyState === "complete"){
             console.log("ready state changed!");
+            document.addEventListener('addToRoomHistory', event=>{
+                console.log("Should be adding history item: ");
+                console.log(JSON.stringify(event.detail.historyItem, null, 2));
+                addToRoomHistory(event.detail.historyItem);
+            });
             document.getElementById('join-room-modal').classList.add('active');
             document.getElementById('join-room-modal-overlay').classList.add('active');
             document.addEventListener('videotime', updateVideoTime);

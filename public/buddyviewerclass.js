@@ -9,6 +9,9 @@ class BuddyViewer{
     }
 
     constructor(data){
+        this.username = data.username ?? "";
+        this.password = data.password ?? "";
+
         this.roomID = data.roomID;
         this.videoID = data.videoID;
         this.state = data.videoState ?? CustomStates.PLAYING;
@@ -131,6 +134,11 @@ class BuddyViewer{
             videoTitle: this.getTitle(),
             videoDuration: this.getDuration()
         }
+    }
+
+    setLoginDetails(username, password){
+        this.username = username;
+        this.password = password;
     }
 
     getTitle(){

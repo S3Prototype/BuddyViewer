@@ -4,8 +4,34 @@ body {
     font-family: Helvetica, Arial, sans-serif;
     display: grid;
     grid-template-columns: [left-sidebar] 1fr [main] 30fr [right-sidebar] 1fr;
-    grid-template-rows: [video-area] 1fr [search-results-area] 400px [chat-area] 1fr [bottom-row] 5px;
+    grid-template-rows: [video-area] 1fr [searchbar-area] .25fr [search-results-area] 400px [chat-area] 1fr [history-area] 1fr [bottom-row] 5px;
     grid-gap: 15px;
+}
+
+button{
+    background: none;
+}
+
+button:active {
+    border-style: outset;
+}
+
+button.active.focus, button.active:focus,
+button.focus, button:active.focus, 
+button:active:focus, button:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+/* input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    transition: background-color 5000s ease-in-out 0s;
+} */
+
+a{
+    margin: auto;
 }
 
 #chat-area-container{
@@ -61,7 +87,6 @@ body {
     border: thin;
     padding: 10px
 }
-
 
 .chat-tbody {
     overflow: auto;

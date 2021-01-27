@@ -59,3 +59,60 @@ $('#room-password-button').click(e=>{
         socket.emit('checkRoomPassword', {password: pWord.val(), roomID});
     }
 });
+
+
+$('#search-button').click(e=>{
+    $('#ytsearch').submit();
+});
+
+function enableVideoLoginIcon(){
+    $('#video-login-icon').removeClass('far');
+    $('#video-login-icon').addClass('fas');
+}
+
+function disableVideoLoginIcon(){
+    $('#video-login-icon').removeClass('fas');
+    $('#video-login-icon').addClass('far');
+}
+
+function enableVideoLoginModal(roomName, setUp){
+    $('#password-modal-overlay').addClass('active');
+    $('#video-login-modal').addClass('active');
+}
+
+function disableVideoLoginModal(){
+    loggedIn = false;
+    $('#password-modal-overlay').removeClass('active');
+    $('#video-login-modal').removeClass('active');
+}
+
+let loggedIn = false;
+$('#video-login-button').click(e=>{
+    //First pop up the modal
+    //Then enable the icon if loggedIn.
+    enableVideoLoginModal();
+});
+
+var playerUsername = "";
+var playerPassword = "";
+
+$('#video-login-submit').click(e=>{
+    e.preventDefault();
+    //First grab the data from the form.
+    playerUsername = $('#video-login-username').val();
+    playerPassword = $('#video-login-password').val();
+    buddyPlayer.setLoginDetails(playerUsername, playerPassword);
+    //Then set the UI and clear the modal.
+    enableVideoLoginIcon();
+    disableVideoLoginModal();
+    loggedIn = true;
+    //Finally, try to find the video again,
+    //if there's a link in the searchbar.
+    if($('#ytsearch-input').val()){
+        $('#ytsearch').submit();
+    }
+});
+
+$('#password-modal-overlay').click(e=>{
+    disableVideoLoginModal();
+});

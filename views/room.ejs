@@ -8,6 +8,8 @@
         <link rel="stylesheet" href="../modal_styles.css" type="text/css" />
         <link rel="stylesheet" href="../searchresult_styles.css" type="text/css" />    
         <link rel="stylesheet" href="../recommendedStyles.css" type="text/css" />    
+        <link rel="stylesheet" href="../history_styles.css" type="text/css" />    
+        <link rel="stylesheet" href="../searchbar_styles.css" type="text/css" /> 
         <script>
             var roomID = "<%= roomID %>";
             var isHost = false;
@@ -75,11 +77,21 @@
                 <div class="card-descr" id="card-descr">Recommended Videos</div>
                 <div class="rec-container" id="rec-container">                
                 </div>
-            </div>
+            </div>     
+        </div>
+
+        <div class="searchbar-container" id="searchbar-container">
+            <button class="video-login-button" id="video-login-button">
+                <span class="far fa-address-card video-login-icon" id="video-login-icon"></span>
+            </button>
             <form id="ytsearch">
                 <input type="text" id="ytsearch-input" placeholder="Paste a Youtube link here">                            
             </form>
+            <button class="search-button" id="search-button">
+                <span class="fas fa-search search-icon" id="search-icon"></span>
+            </button>
         </div>
+        
         <div id="search-results" class="search-results">
             <span id="default-search-text">SEARCH RESULTS</span>
         </div>
@@ -87,20 +99,18 @@
             <div class="chat-messages" id="chat-messages"></div>
             <hr>
             <h3 id="user-name">
-                <!-- <form id="name-form"> -->
-                <input type="text" id="name-input" placeholder="Enter Your Name Here">                            
-                <!-- </form> -->
+                <input type="text" id="name-input" placeholder="Enter Your Name Here">           
             </h3>
             <form id="text-form">
                 <input type="text" class="chat-input" id="chat-input"
                 placeholder="Enter message here">
-            </form>
-            <!-- <form id="chat-form">
-                <textarea type="text" id="message-input" class="text-input"
-                        placeholder="Enter your message here">
-                </textarea>
-            </form> -->
+            </form>            
         </div>
+
+        <div id="history" class="history">
+            <span id="default-history-text">VIDEO HISTORY</span>
+        </div>
+
         <div id="join-room-modal" class="join-room-modal">
             <div id="join-room-modal-header" class="join-room-modal-header">
                 <button data-join-button id="join-room-button" class="join-room-button">
@@ -109,10 +119,11 @@
                 </button>
             </div>
         </div>
+
         <div id="password-modal" class="password-modal">
             <div id="password-modal-header" class="password-modal-header"></div>
             <div id="password-modal-name" class="password-modal-name"></div>
-            <div id="room-password-status" class="room-password-status"></div>
+            <div id="password-status"></div>
                 <input type="password" name="room-password" id="room-password-input" class="room-password-input"
                 placeholder="Enter Room Password"
                 >
@@ -125,6 +136,27 @@
                 </button>
             </div>
         </div>
+
+        <div id="video-login-modal" class="video-login-modal">
+            <div id="video-login-modal-header" class="video-login-modal-header"></div>
+            <div id="video-login-modal-name" class="video-login-modal-name"></div>
+            <div id="video-login-status"></div>
+                <div id="video-login-modal-header" class="video-login-modal-header">
+                    Some websites require a login to play their videos in BuddyViewer. If you have an account for the site whose video you want to watch, enter your log in information below.
+                </div>
+                <input type="text" name="video-login-username" id="video-login-username" class="video-login-username" minlength="1"
+                placeholder="Your username for the site."
+                required>
+                <input type="password" minlength="1" name="video-login-password" id="video-login-password-input"
+                class="video-login-password-input" placeholder="Your password for the site."
+                required>
+                <button data-video-login-button id="video-login-submit" class="video-login-submit">
+                    Log into site
+                    <span class="fas fa-key"></span>
+                </button>
+            </div>
+        </div>
+
         <div id="password-modal-overlay" class="password-modal-overlay"></div>
         <div id="join-room-modal-overlay" class="join-room-modal-overlay"></div>
     <script>

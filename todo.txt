@@ -1,5 +1,6 @@
 DOING:
 
+
 *THOUGHTS:
 
 **MOST IMPORTANT TODO**
@@ -13,41 +14,41 @@ DOING:
 * You're done!
 
 TODO:
-* Give control bar transparent BG in full screen mode, like youtube.
-    * Maybe make it exactly like youtube, with the playpause button being a big icon in the center of the screen.
-* To make the recommendeds line up better, have to make the result container for each individual result either a vertical flex or just a grid. The point is, they have to be even height across the board, or they'll never line up properly.
-* Make sure that you auto-set room to NSFW after you try to use youtube-dl to play videos, and change the thumbnail to that in the DB or Redis.
-* Thumbnail updating no longer works for some reason. Like when you send the data, thumbnail isn't sent for some reason.
-* Make it so if a video fails to load, you let the user sign in to the site. Also let them sign in. Put a button next to the search button or something. But either way, if a video fails, ask them to try to sign in, then use their credentials to try to get the video.
 * Have to learn more about passport. req.isAuthenticated() checks if user is logged in, I think? From there, you have to show each page with the user profile pic or not.
-* Still have to save room state after everyone leaves. Or if that's happening, load from roomstate.
-* Set the video controls to fixed position and a higher z-index when in fullscreen. That way you can make them appear/disappear.
-* Seeking doesn't work if you add a video from a search result or recommended. Seems like you have to re-initialize the seekbar etc.
-* Add a search button to the searchbar. Also detach it from the videocontainer so it's its own thing.
-* Change from buttons to a tags so they don't do that weird press animation anymore.
+* Videos added from otherone seem not to initialize their progress bars properly. Slightly off somehow. Maybe a rounding error?
+* Add a search button to the searchbar. Also detach search bar from the videocontainer so it's its own thing.
+    * Or rather, when in full screen, it shouldn't be visible.
 * Definitely gonna have to change it back to some form of saving rooms in local storage like redis or something until it's time to save it to mongodb.
-* Also have to change the delete code so that when it disconnects people from the room, it sends the setHost event out.
-* Also have a little chat icon button in the video player so you can bring the chat up at the side. If you're in fullscreen, chat appears in a z-index above the player.
 * Gotta implement a different session store from the default.
     ** https://github.com/expressjs/session#compatible-session-stores
 * share secret link feature. Sends a link that contains the password, or a "secret" style link that is a different url with a key param in it that, when it hits the server, gets the users redirected to the room with the password stored.
     * Probably can just add some hashed password to the url param. When the user enters the url, unencrypt and check the param against the room password. If it passes, just let them into the room with some ejs value like 'secretLink: true', and they should be allowed in.
 * Confirmation email can just contain a randomly generated word that has been hashed by bcrypt. When they click the link, check it with bcrypt. If it matches the stored random word, they're activated. Only hold the random word for a temporary period in redis.
-* Swap out most buttons for divs. Divs don't give that weird shifting animation buttons automatically do.
-* If you can, add video length to the info on the search results.
+    * Might be possible to implement mailchimp.
 * For some reason the playback rate initializes as undefined in the html. Probably because of the initialization code when hotjoining.
-* Fix the search so the results line up properly when less than whole row
-* Change the chat so it's always floating
 * Show text to say who put in a video/pressed play/etc
 * Change icon to replay icon when video ended
-* Implement a history
 * Improve search with ytsr
     https://github.com/TimeForANinja/node-ytsr/blob/master/README.md
 * When a video pauses or ends, above the recommended videos, show tips like "Press the reconnect button to re-align all the videos."
-* In the description/title search results on the server, check for the html codes like &quot; etc, and convert them over to their actual characters.
-* Full screen doesn't work in chrome again. Goddammit. The video controls look janky and don't go away.
-    ** Probably have to put the css in a -webkit thing
 * REFACTOR/CLEAN UP CODE/ORGANIZE FOLDERS
+
+UI Stuff:
+
+* Full screen doesn't work in chrome again. Goddammit. The video controls look janky and don't go away.
+    ** Probably have to put the css in a -webkit thingy
+* Fix the search so the results line up properly when less than whole row
+* Swap out most buttons for divs. Divs don't give that weird shifting animation buttons automatically do.
+* Change the chat so it's always floating
+* Set the video controls to fixed position and a higher z-index when in fullscreen. That way you can make them appear/disappear.
+* Make sure that you auto-set room to NSFW after you try to use youtube-dl to play videos, and change the thumbnail to that in the DB or Redis.
+* Give control bar transparent BG in full screen mode, like youtube.
+    * Maybe make it exactly like youtube, with the playpause button being a big icon in the center of the screen.
+* To make the recommendeds line up better, have to make the result container for each individual result either a vertical flex or just a grid. The point is, they have to be even height across the board, or they'll never line up properly.
+* Also have a little chat icon button in the video player so you can bring the chat up at the side. If you're in fullscreen, chat appears in a z-index above the player.
+* Put loading icon over videocontainer when loading up a "otherone" video
+* Pressing enter when entering password should work.
+* Make it so when you pick a room from homepage it asks for password there. Can just make a request to the page with params init. 
 
 ===
 
@@ -60,16 +61,39 @@ REFACTORING:
 
 THOUGHTS:
 
+* If you call updateOne without passing a callback, it sometimes doesn't work. Seems very arbitrary.
+* Shouldn't save looping sate in localstorage. Just remove that and have all videos init to not looping.
 * To use webscraping for search results, you could search google with flags in the query to make sure you only get youtube results. Probably easier to do it that way anyway. Probably get better results.
 * Default video should be a 1-minute explanation of what the site is and how it works.
+
+UNRESOLVED/DISAPPEARED:
+
+* Starting the player up after refreshing is broken now. The start time and toolbars are not remotely fucking inited properly. This is ever since we added history to the page.
 
 ~~~~~~~~~~~
 DONE
 ===========
 ~~~~~~~~~~~
 
+1/26/21
+
+* Make it so if a video fails to load, you let the user sign in to the site. Also let them sign in. Put a button next to the search button or something. But either way, if a video fails, ask them to try to sign in, then use their credentials to try to get the video.
+* Messages array seems to not update, but replace.
+* When adding videos from search results, they start muted, but only if you haven't added a video from recommended yet.
+* Also have to change the delete code so that when it disconnects people from the room, it sends the setHost event out.
+* Implement a history
+    * Very jank, but hey.
+* Change from buttons to a tags so they don't do that weird press animation anymore.
+    * Decided to just change the CSS.
+
+=====
+
 1/25/21
 
+* Thumbnail updating no longer works for some reason. Like when you send the data, thumbnail isn't sent for some reason.
+* In the description/title search results on the server, check for the html codes like &quot; etc, and convert them over to their actual characters.
+* Seeking doesn't work if you add a video from a search result or recommended. Seems like you have to re-initialize the seekbar etc.
+* Make sure that if a user tries to release being host, it actually does assign to someone else.
 * Make room passwords work. Require new entrants to enter the password if they want to actually execute the joinRoom code. Perhaps have a password prompt replace the joinButton interface.
     * I'm gona have to have the page have an overlay over it when it loads. The join room modal doesn't pop up until it checks the server and asks if this room requires a password or not. If it does, pop up a "what's the password?" modal. If not, just a join-room modal that goes away if you click anywhere on the screen.
     * actually, when you click the join button, on the server it should just check the room's security setting. If it's locked, send back a socket event to ask for the password.

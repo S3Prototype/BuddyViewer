@@ -136,21 +136,6 @@ video {
     grid-column: sync-button;
 }
 
-#ytsearch{
-    grid-row: search-box;
-    grid-column: play-button / -1;
-    width: 100%;
-    order: 3;
-}
-
-#ytsearch-input {
-    width: 100%;
-    background-color:inherit;
-    color: white;
-    border: none;
-    text-align: center;
-}
-
 #seek-tooltip {
     grid-column: time-code / mute-button;
     grid-row-start: video-controls;
@@ -316,21 +301,6 @@ video {
         grid-template-columns: [play-button] .5fr [time-code] .5fr [mute-button] .25fr [volume-slider] 1fr [closed-captions-button] .5fr [playrate-button] .5fr [fullscreen-button] 1fr;
         grid-template-rows: [video-player] 500px [progress-bar] 80px [video-controls] 40px [search-box] 80px [bottom-row] 40px;
     
-    }
-
-    #ytsearch{
-        height: 80px;
-        margin-top: 40px;
-    }
-
-    #ytsearch-input {
-        width: 100%;
-        height: 100%;
-        background-color:inherit;
-        color: white;
-        border: none;
-        text-align: center;
-        font-size: 48px;
     }
 
     .playrate-text{

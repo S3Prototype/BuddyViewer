@@ -164,7 +164,17 @@ class VimeoViewer extends BuddyViewer{
             this.player.getVideoTitle()
             .then(title=>{
                 this.videoTitle = title;
-                //insert code for showing title on page here.
+                document.dispatchEvent(
+                    new CustomEvent('addToRoomHistory', {
+                        bubbles: false,
+                        detail: { historyItem: {
+                            videoTitle: title,
+                            videoID: this.videoID,
+                            videoSource: CustomStates.VIMEO,
+                            thumbnail: ''                            
+                        } }
+                    })
+                );
             });
         } else {
             this.videoTitle = data.videoTitle;

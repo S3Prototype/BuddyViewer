@@ -44,26 +44,9 @@ class YouTubeViewer extends BuddyViewer{
         // $(`<div id="player"></div>`).insertBefore('iframe');
         // $('iframe').remove();
 
-        $.ajax({
-            url: '/getYouTubeInfo',
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({videoID}, null, 2),
-            success: result=>{
-                    //search youtube if there's a title to use.
-                if(!result) return;
-                this.videoTitle = result.title;
-                this.description = result.description;
-                this.thumbnail = result.thumbnail;
-            },
-            error: (xhr, status, error)=>{
-                console.log('Failed to get yt video info with youtubedl.');
-                console.log(error);
-            }
-        });
-
         this.setState(videoState);
         this.videoTitle = videoTitle;
+        this.getVideoInfoFromServer(data);
         this.player = new YT.Player('player', {
             height: '100%',
             width: '100%',
@@ -77,6 +60,32 @@ class YouTubeViewer extends BuddyViewer{
         });
     }
 
+    getVideoInfoFromServer(data){        
+        $.ajax({
+            url: '/getYouTubeInfo',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({videoID: data.videoID}, null, 2),
+            success: result=>{
+                    //search youtube if there's a title to use.
+                if(!result) return;
+                this.videoTitle = result.videoTitle;
+                this.description = result.description;
+                this.thumbnail = result.thumbnail;
+                result.videoSource = VideoSource.YOUTUBE;
+                    document.dispatchEvent(
+                        new CustomEvent('addToRoomHistory', {
+                            bubbles: false,
+                            detail: { historyItem: result }
+                        }));
+            },
+            error: (xhr, status, error)=>{
+                console.log('Failed to get yt video info with youtubedl.');
+                console.log(error);
+            }
+        });
+    }
+
     initNewPlayer(event){
         const thisBuddyPlayer = YouTubeViewer.currentPlayer;
         console.log("initNewPlayer STARTED");
@@ -84,9 +93,9 @@ class YouTubeViewer extends BuddyViewer{
         console.log("Duration we're taking is: "+event.target.getDuration())
         this.duration = this.player.getDuration();
 
+        document.dispatchEvent(new Event('initialize'));
         this.seek(this.playerTime);
         // this.seek(YouTubeViewer.startTime);
-        document.dispatchEvent(new Event('initialize'));
         this.sendTimeEvent();  
 
         this.getState() == CustomStates.PLAYING ?
@@ -113,6 +122,7 @@ class YouTubeViewer extends BuddyViewer{
         this.setState(videoState);
         this.initialized = false;
         this.videoID = videoID;
+        this.getVideoInfoFromServer(data);
         this.player = new YT.Player('player', {
             height: '100%',
             width: '100%',
