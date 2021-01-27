@@ -1,5 +1,16 @@
 DOING:
 
+* Change icon to replay icon when video ended
+* Show text to say who put in a video/pressed play/etc
+* When a video pauses or ends, above the recommended videos, show tips like "Press the reconnect button to re-align all the videos."
+* Improve search with ytsr
+    https://github.com/TimeForANinja/node-ytsr/blob/master/README.md
+* Definitely gonna have to change it back to some form of saving rooms in local storage like redis or something until it's time to save it to mongodb.
+* Confirmation email can just contain a randomly generated word that has been hashed by bcrypt. When they click the link, check it with bcrypt. If it matches the stored random word, they're activated. Only hold the random word for a temporary period in redis.
+    * Might be possible to implement mailchimp.
+* Have to learn more about passport. req.isAuthenticated() checks if user is logged in, I think? From there, you have to show each page with the user profile pic or not.
+* Gotta implement a different session store from the default.
+    ** https://github.com/expressjs/session#compatible-session-stores
 
 *THOUGHTS:
 
@@ -14,31 +25,14 @@ DOING:
 * You're done!
 
 TODO:
-* Have to learn more about passport. req.isAuthenticated() checks if user is logged in, I think? From there, you have to show each page with the user profile pic or not.
-* Videos added from otherone seem not to initialize their progress bars properly. Slightly off somehow. Maybe a rounding error?
-* Add a search button to the searchbar. Also detach search bar from the videocontainer so it's its own thing.
-    * Or rather, when in full screen, it shouldn't be visible.
-* Definitely gonna have to change it back to some form of saving rooms in local storage like redis or something until it's time to save it to mongodb.
-* Gotta implement a different session store from the default.
-    ** https://github.com/expressjs/session#compatible-session-stores
-* share secret link feature. Sends a link that contains the password, or a "secret" style link that is a different url with a key param in it that, when it hits the server, gets the users redirected to the room with the password stored.
-    * Probably can just add some hashed password to the url param. When the user enters the url, unencrypt and check the param against the room password. If it passes, just let them into the room with some ejs value like 'secretLink: true', and they should be allowed in.
-* Confirmation email can just contain a randomly generated word that has been hashed by bcrypt. When they click the link, check it with bcrypt. If it matches the stored random word, they're activated. Only hold the random word for a temporary period in redis.
-    * Might be possible to implement mailchimp.
-* For some reason the playback rate initializes as undefined in the html. Probably because of the initialization code when hotjoining.
-* Show text to say who put in a video/pressed play/etc
-* Change icon to replay icon when video ended
-* Improve search with ytsr
-    https://github.com/TimeForANinja/node-ytsr/blob/master/README.md
-* When a video pauses or ends, above the recommended videos, show tips like "Press the reconnect button to re-align all the videos."
 * REFACTOR/CLEAN UP CODE/ORGANIZE FOLDERS
 
++++++++++++++++++++++++++++++++++++++
 UI Stuff:
 
 * Full screen doesn't work in chrome again. Goddammit. The video controls look janky and don't go away.
     ** Probably have to put the css in a -webkit thingy
 * Fix the search so the results line up properly when less than whole row
-* Swap out most buttons for divs. Divs don't give that weird shifting animation buttons automatically do.
 * Change the chat so it's always floating
 * Set the video controls to fixed position and a higher z-index when in fullscreen. That way you can make them appear/disappear.
 * Make sure that you auto-set room to NSFW after you try to use youtube-dl to play videos, and change the thumbnail to that in the DB or Redis.
@@ -77,6 +71,8 @@ DONE
 
 1/26/21
 
+* Videos added from otherone seem not to initialize their progress bars properly. Slightly off somehow. Maybe a rounding error?
+* Add a search button to the searchbar. Also detach search bar from the videocontainer so it's its own thing.
 * Make it so if a video fails to load, you let the user sign in to the site. Also let them sign in. Put a button next to the search button or something. But either way, if a video fails, ask them to try to sign in, then use their credentials to try to get the video.
 * Messages array seems to not update, but replace.
 * When adding videos from search results, they start muted, but only if you haven't added a video from recommended yet.

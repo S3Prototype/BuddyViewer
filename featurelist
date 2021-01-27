@@ -1,5 +1,7 @@
 FEATURE LIST:
 
+* share secret link feature. Sends a link that contains the password, or a "secret" style link that is a different url with a key param in it that, when it hits the server, gets the users redirected to the room with the password stored.
+    * Probably can just add some hashed password to the url param. When the user enters the url, unencrypt and check the param against the room password. If it passes, just let them into the room with some ejs value like 'secretLink: true', and they should be allowed in.
 * For full screen, could use a grid, have video take up entire grid, have controls row in top and bottom just take up their rows with a higher z-index. Then when they're not used for a while, have them slide down until their y position is off screen.
     * Probably have to add a div that overlays the video, which catches events and when it's clicked/touched, it activates the controls.
 * Have an upcoming theater list. Like people can schedule viewings in theaters. A user can sort by scheduled theaters. Kind of like a scheduled group viewing of something.

@@ -25,7 +25,7 @@ class OtherPlayer extends BuddyViewer{
         this.createVideoElement(data);
         OtherPlayer.currentPlayer = this.player;
         this.setState(data.videoState);
-        this.setLooping(true);
+        this.setLooping(false);
             // this.seek(data.videoTime);
         this.addListeners();
     }
@@ -148,6 +148,7 @@ class OtherPlayer extends BuddyViewer{
         if(this.getState() == CustomStates.ENDED){
             this.pause();
         }
+        document.dispatchEvent(new Event('videotime'));
     }
 
     play(){

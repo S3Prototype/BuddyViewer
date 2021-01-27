@@ -8,10 +8,6 @@ $(function(){
         $('#closed-captions-icon').removeClass("far");        
         $('#closed-captions-icon').addClass("fas");
     }
-    if(localStorage.getItem('looping') == 'true'){
-        enableLoopingIcon();
-        socket.emit('setLooping', true, roomID);
-    }
 
     const maxRecommended = 10;
 
@@ -378,8 +374,8 @@ $(function(){
                 if(result.error){
                     if(failureCount < maxFailures){
                         enableVideoLoginModal();
+                        failureCount++;
                     }
-                    failureCount++;
                     console.log("Error. Video not found.");
                     return;
                 }
