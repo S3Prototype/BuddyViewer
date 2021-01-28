@@ -1,0 +1,54 @@
+{
+      "type": "video",
+      "title": "Molotov - Amateur (Rock Me Amadeus)",
+      "id": "Pke3A2XuBLg",
+      "url": "https://www.youtube.com/watch?v=Pke3A2XuBLg",
+      "bestThumbnail": {
+        "url": "https://i.ytimg.com/vi/Pke3A2XuBLg/hq720.jpg?sqp=-oaymwEXCNAFEJQDSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLDx1r9Xi7syod-RpbeExq9my9q8kg",
+        "width": 720,
+        "height": 404
+      },
+      "thumbnails": [
+        {
+          "url": "https://i.ytimg.com/vi/Pke3A2XuBLg/hq720.jpg?sqp=-oaymwEXCNAFEJQDSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLDx1r9Xi7syod-RpbeExq9my9q8kg",
+          "width": 720,
+          "height": 404
+        },
+        {
+          "url": "https://i.ytimg.com/vi/Pke3A2XuBLg/hq720.jpg?sqp=-oaymwEjCOgCEMoBSFryq4qpAxUIARUAAAAAGAElAADIQj0AgKJDeAE=&rs=AOn4CLAwzeHbu3LPmrZE5nTUgI2HedYQlA",
+          "width": 360,
+          "height": 202
+        }
+      ],
+      "isUpcoming": false,
+      "upcoming": null,
+      "isLive": false,
+      "badges": [
+        "CC"
+      ],
+      "author": {
+        "name": "Molotov Oficial",
+        "channelID": "UCGeB59j5PTFjyIyWBNCo71g",
+        "url": "https://www.youtube.com/channel/UCGeB59j5PTFjyIyWBNCo71g",
+        "bestAvatar": {
+          "url": "https://yt3.ggpht.com/ytc/AAUvwnivKarAkuemvzvgSad1p2Oy6Dv9Sf-UJEF3alOwqA=s88-c-k-c0x00ffffff-no-rj",
+          "width": 68,
+          "height": 68
+        },
+        "avatars": [
+          {
+            "url": "https://yt3.ggpht.com/ytc/AAUvwnivKarAkuemvzvgSad1p2Oy6Dv9Sf-UJEF3alOwqA=s88-c-k-c0x00ffffff-no-rj",
+            "width": 68,
+            "height": 68
+          }
+        ],
+        "ownerBadges": [
+          "Official Artist Channel"
+        ],
+        "verified": true
+      },
+      "description": "Music video by Molotov performing Amateur (Rock Me Amadeus). (C) 2004 Universal Music Latino.",
+      "views": 22339686,
+      "duration": "4:36",
+      "uploadedAt": "9 years ago"
+    }

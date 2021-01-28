@@ -99,7 +99,8 @@ $(function(){
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify({user_id: userID, query: query}, null, 2),
-            success: function (results){                
+            success: function (results){       
+                console.log(JSON.stringify(results, null, 2));
                 addRecommendedVideos(results);
                 addSearchResults(results);
             }
@@ -109,6 +110,7 @@ $(function(){
     function addRecommendedVideos(results){
         recommendedContainer.innerHTML = "";
         for(let i = 0; i < maxRecommended && i < results.length; i++){
+            if(results[i].type !== "video") return;
             const recDiv = document.createElement('div');
             recDiv.setAttribute('class', 'rec-div');
 
@@ -160,6 +162,7 @@ $(function(){
         console.log(JSON.stringify("Add search results: "+results, null, 2));
         searchResultsContainer.innerHTML = "";
         results.forEach(function(result){
+            if(result.type !== "video") return;
             const resultDiv = document.createElement('div');
             resultDiv.setAttribute('class', 'result');
 
@@ -1270,7 +1273,7 @@ $(function(){
                 const recCard = document.getElementById('rec-card');
                 const randomTip = document.getElementById('tip-text');            
                 randomTip.innerHTML = getRandomTip();
-                
+
                 const cardTitle = document.getElementById('card-title');
                 cardTitle.innerHTML = buddyPlayer.getTitle() ?? "Buddy Viewer";                
                 recCard.style.display = 'flex';

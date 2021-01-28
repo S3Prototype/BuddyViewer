@@ -45,10 +45,12 @@
     "passport": "^0.4.1",
     "passport-local": "^1.0.0",
     "random-words": "^1.1.1",
+    "redis": "^3.0.2",
     "request": "^2.88.2",
     "socket.io": "^3.0.4",
     "uuid": "^8.3.2",
-    "youtube-dl": "^3.1.0"
+    "youtube-dl": "^3.1.0",
+    "ytsr": "^3.2.3"
   },
   "devDependencies": {
     "@babel/core": "^7.12.3",

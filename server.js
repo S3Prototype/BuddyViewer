@@ -10,6 +10,12 @@ const router = express.Router();
 const {decode} = require('html-entities');
 const bcrypt = require('bcryptjs');
 
+const redis = require('redis');
+const roomExpTime = 60*60*24;
+const searchExpTime = 60*15;
+
+const ytsr = require('ytsr');
+
 const e = require('express');
 const request = require('request');
 // const cheerio = require('cheerio');
@@ -60,13 +66,21 @@ var app = express();
 require('./config/passport')(passport);
 const server = http.createServer(app);
 
-// let rooms = [];
+var port = process.env.PORT || 8092;
+var redisPort = process.env.REDIS_PORT || 6379;
+
+const redisClient = redis.createClient();
+
+redisClient.on('connect', _=>{
+   console.log("Connected to redis");
+});
+
 const dbURI = 'mongodb+srv://'+process.env.DB_USERNAME+':'+process.env.DB_PASS+'@cluster0.agmjg.mongodb.net/'+process.env.DB_NAME+'?retryWrites=true&w=majority';
 mongoose.connect(dbURI, {useNewUrlParser: true, useUnifiedTopology: true})
     .then((result)=>{
         server.listen(port, function(){
             // RoomModel.find().then((result)=>{
-            //     // rooms = result;
+            //     if(!rooms) console.log("FATAL ERROR! Could not find rooms!");
             // }).catch((err)=>{
             //     console.log(`Failed to get rooms from DB\n${err}`);
             // });
@@ -201,17 +215,40 @@ function addToRoom(socketID, userData, currRoom){
             socketID, localName, nameOnServer, userID, isHost, pfp
         });
 
-        RoomModel.updateOne(
-            {roomID: currRoom.roomID},
-            {$set: {
-                users: currRoom.users,
-                hostSocketID: currRoom.hostSocketID
-            }},
-            (err, newRoom)=>{}
-        )
-        .catch(err=>{
-            logFailure('add to room', err);
+        redisClient.hset(currRoom.roomID, 'room', JSON.stringify({
+            hostSocketID: currRoom.hostSocketID,
+            users: currRoom.users,
+        }),
+        (err, reply)=>{
+            if(err){
+                console.log("Failed to update room in redis");
+                console.log(err);
+            }
         });
+
+        // redisClient.hmset(currRoom.roomID, 
+        //     [
+        //         'users', JSON.stringify(currRoom.users),
+        //         'hostSocketID', currRoom.hostSocketID
+        //     ],
+        //     (err, reply)=>{
+        //         if(err){
+        //             console.log("Failed to update room in redis");
+        //             console.log(err);
+        //         }
+        // });
+
+        // RoomModel.updateOne(
+        //     {roomID: currRoom.roomID},
+        //     {$set: {
+        //         users: currRoom.users,
+        //         hostSocketID: currRoom.hostSocketID
+        //     }},
+        //     (err, newRoom)=>{}
+        // )
+        // .catch(err=>{
+        //     logFailure('add to room', err);
+        // });
 }
 
 class RoomSecurity{
@@ -226,6 +263,7 @@ const defaultSecuritySetting = RoomSecurity.OPEN;
 async function createEmptyRoom(securitySetting, roomName,
                                 roomDescription, roomID
     ){
+    console.log("We entered createemptyroom");
     if(!roomName){
         roomName = randomWords();
     }
@@ -241,68 +279,132 @@ async function createEmptyRoom(securitySetting, roomName,
             firstThumbnail = LOCKED_DEFAULT_THUMBNAIL;
             break;
     }
-    const newRoom = await RoomModel.create({
-        roomID: roomName+'-'+roomID,
-        hostSocketID: "",
-        roomName,
-        roomDescription,
-        history: [],
-        nsfw: false,
-        securitySetting,
-        thumbnail: firstThumbnail,
-        users: [],
-        password: "",
-        videoTitle: "",
-        videoSource: 4,
-        videoID: "", //holds id most recently played video
-        videoTime: 0, //most recent video time,
-        videoState: CustomStates.UNSTARTED,//most recent state
-        playRate: 1,
-        messages: []
-    });
+    console.log("We made it to the end of it.");
+    return new Promise((resolve, reject)=>{
+            console.log("In the promise");
+            const newRoomID = roomName+'-'+roomID;
+            redisClient.hmset(newRoomID,
+                'roomID', newRoomID,
+                'hostSocketID', "",
+                'roomName', roomName,
+                'roomDescription', roomDescription, 
+                'history', JSON.stringify([]),
+                'nsfw', 'false',
+                'securitySetting', JSON.stringify(securitySetting),
+                'thumbnail', firstThumbnail,
+                'users', JSON.stringify([]),
+                'password', "",
+                'videoTitle', "",
+                'videoSource', '4',
+                'videoID', "", //holds id most recently played video
+                'videoTime', '0', //most recent video time,
+                'videoState', JSON.stringify(CustomStates.UNSTARTED),//most recent state
+                'playRate', '1',
+                'messages', JSON.stringify([])
+            ,
+            (err, reply)=>{
+                console.log("Reply when setting room:");
+                console.log(reply);
+                if(reply) resolve({roomID: newRoomID});
+                if(err) reject(err);
+                reject("Nothing")
+            });
+        });
+    // const newRoom = await RoomModel.create({
+    //     roomID: roomName+'-'+roomID,
+    //     hostSocketID: "",
+    //     roomName,
+    //     roomDescription,
+    //     history: [],
+    //     nsfw: false,
+    //     securitySetting,
+    //     thumbnail: firstThumbnail,
+    //     users: [],
+    //     password: "",
+    //     videoTitle: "",
+    //     videoSource: 4,
+    //     videoID: "", //holds id most recently played video
+    //     videoTime: 0, //most recent video time,
+    //     videoState: CustomStates.UNSTARTED,//most recent state
+    //     playRate: 1,
+    //     messages: []
+    // });
     // rooms.push(newRoom);
-    console.log(`Room created:\n${newRoom}`);
+    console.log(`Creating room ${roomID}... result: ${createResult}`);
+    
+
+
     // console.log("empty room created");
     // return newRoom;
     // return new RoomModel(newRoom).save();
-    return newRoom.save();
+    // return newRoom.save();
     // .catch(err=>logFailure(`creat empty room from ${roomID}`, err));
 }
 
 async function createNewRoom(socketID, userData, roomID){
     const { localName, nameOnServer, userID, pfp } = userData;
     const randomName = randomWords();
-    const thisRoom = await RoomModel.create({
-        roomID: randomName+'-'+roomID,
-        roomName: randomName,
-        roomDescription: defaultDescription,
-        history: [],
-        nsfw: false,
-        securitySetting: defaultSecuritySetting,
-        thumbnail: LOCKED_THUMBNAIL,
-        hostSocketID: socketID,
-        users: [{
-            socketID, localName, nameOnServer, userID, isHost: true, pfp
-        }],
-        videoID: "", //holds id most recently played video
-        videoTime: 0, //most recent video time,
-        videoState: CustomStates.UNSTARTED,//most recent state
-        videoDuration: 0,
-        playRate: 1,
-        messages: [
-                    {
-                        messageID: 0,
-                        text: "Welcome to the room!",
-                        userID: "SERVER",
-                        name: "SERVER",
-                        timestamp: "",
-                        universalTimeStamp: ""
-                    }
-                ]
-        })
-    // new RoomModel(thisRoom).save()
-    thisRoom.save()
-    .catch(err=>logFailure(`create new Room at ${roomID}`, err));
+    const createResult = redisClient.setex(roomID, roomExpTime, JSON.stringify(
+        {
+            roomID: randomName+'-'+roomID,
+            roomName: randomName,
+            roomDescription: defaultDescription,
+            history: [],
+            nsfw: false,
+            securitySetting: defaultSecuritySetting,
+            thumbnail: LOCKED_THUMBNAIL,
+            hostSocketID: socketID,
+            users: [{
+                socketID, localName, nameOnServer, userID, isHost: true, pfp
+            }],
+            videoID: "", //holds id most recently played video
+            videoTime: 0, //most recent video time,
+            videoState: CustomStates.UNSTARTED,//most recent state
+            videoDuration: 0,
+            playRate: 1,
+            messages: [
+                        {
+                            messageID: 0,
+                            text: "Welcome to the room!",
+                            userID: "SERVER",
+                            name: "SERVER",
+                            timestamp: "",
+                            universalTimeStamp: ""
+                        }
+                    ]
+        }));
+        console.log(`Creating room ${roomID}... result: ${createResult}`);        
+    // const thisRoom = await RoomModel.create({
+    //     roomID: randomName+'-'+roomID,
+    //     roomName: randomName,
+    //     roomDescription: defaultDescription,
+    //     history: [],
+    //     nsfw: false,
+    //     securitySetting: defaultSecuritySetting,
+    //     thumbnail: LOCKED_THUMBNAIL,
+    //     hostSocketID: socketID,
+    //     users: [{
+    //         socketID, localName, nameOnServer, userID, isHost: true, pfp
+    //     }],
+    //     videoID: "", //holds id most recently played video
+    //     videoTime: 0, //most recent video time,
+    //     videoState: CustomStates.UNSTARTED,//most recent state
+    //     videoDuration: 0,
+    //     playRate: 1,
+    //     messages: [
+    //                 {
+    //                     messageID: 0,
+    //                     text: "Welcome to the room!",
+    //                     userID: "SERVER",
+    //                     name: "SERVER",
+    //                     timestamp: "",
+    //                     universalTimeStamp: ""
+    //                 }
+    //             ]
+    //     })
+    // // new RoomModel(thisRoom).save()
+    // thisRoom.save()
+    // .catch(err=>logFailure(`create new Room at ${roomID}`, err));
         // console.log(`Just joined ${JSON.stringify(thisRoom, null, 2)}`);
     // return thisRoom;
 }
@@ -332,38 +434,79 @@ function getRoomHostSocketID(roomID){
 }
 
 function removeFromRoom(socket){
-    // RoomModel.findOne({$text: {$search: socket.id}})
-    RoomModel.find({users:{$not:{$eq:null}}})
-    .then(rooms=>{
-        // console.log(result);
-        const foundRoom = rooms.find(room=>room.users.some(user=>user.socketID == socket.id));
-        if(foundRoom){        
-            console.log("USER SHOULD BE OUT OF ROOM NOW");
-            socket.leave(foundRoom.roomID); 
-            foundRoom.users = foundRoom.users
-                        .filter(user=>user.socketID != socket.id);
+
+    socket.rooms.forEach(roomID=>{
+        console.log("Leaving room: "+roomID);
+        redisClient.get(roomID, (err, reply)=>{
+            if(err){
+                console.log("Failed to remove "+socket.id+" from room "+roomID);
+                return;
+            }          
             
-            if(foundRoom.users.length < 1){
-                foundRoom.hostSocketID = "";
-            } else if(foundRoom.hostSocketID == socket.id){
-                foundRoom.hostSocketID = foundRoom.users[
-                    Math.floor(Math.random() * foundRoom.users.length)
-                ].socketID;
-                io.in(foundRoom.roomID).emit('setHost', foundRoom.hostSocketID);       
-            }
-            RoomModel.updateOne(
-                {roomID: foundRoom.roomID}, //query for the room to update
-                {$set: {
-                    users: foundRoom.users,
-                    hostSocketID: foundRoom.hostSocketID
+            if(reply){
+                    //reassign the host if necessary
+                if(reply.users.length < 1){
+                    reply.hostSocketID = "";
+                } else if(reply.hostSocketID == socket.id){
+                    reply.hostSocketID = reply.users[
+                        Math.floor(Math.random() * reply.users.length)
+                    ].socketID;
+                    io.in(reply.roomID).emit('setHost', reply.hostSocketID);       
+                }
+                    //now remove the user
+                reply.users = reply.users.filter(user=>user.socketID != socket.id);
+                redisClient.hmset(roomID, ['users', reply.users],
+                    (err, thisReply)=>{
+                        if(err) console.log(err);
+                        if(!thisReply){
+                            console.log("Failed to update room in redis");
+                            return;
+                        }
+                        console.log("Successfully removed "+socket.id+".");
+                        console.log("Room is now:");
+                        console.log(thisReply);
                     }
-                }, //value to update
-                (err, newRoom)=>{}
-            )
-            .catch(err=>logFailure(`delete user ${socket.id}`, err));
-            // updateRoomUsers(foundRoom.users, foundRoom.roomID)
-        }
-    });
+                );
+            } else {
+                console.log("Failed to remove user from room.");
+            }
+        });
+    });              
+
+                    // RoomModel.findOne({$text: {$search: socket.id}})
+        //! The below code can be changed, since we have access to the socket's
+        //! rooms now that we're listening to 'disconnecting' instead of 'disconnect'
+    // RoomModel.find({users:{$not:{$eq:null}}})
+    // .then(rooms=>{
+    //     // console.log(result);
+    //     const foundRoom = rooms.find(room=>room.users.some(user=>user.socketID == socket.id));
+    //     if(foundRoom){        
+    //         console.log("USER SHOULD BE OUT OF ROOM NOW");
+    //         socket.leave(foundRoom.roomID); 
+    //         foundRoom.users = foundRoom.users
+    //                     .filter(user=>user.socketID != socket.id);
+            
+    //         if(foundRoom.users.length < 1){
+    //             foundRoom.hostSocketID = "";
+    //         } else if(foundRoom.hostSocketID == socket.id){
+    //             foundRoom.hostSocketID = foundRoom.users[
+    //                 Math.floor(Math.random() * foundRoom.users.length)
+    //             ].socketID;
+    //             io.in(foundRoom.roomID).emit('setHost', foundRoom.hostSocketID);       
+    //         }
+    //         RoomModel.updateOne(
+    //             {roomID: foundRoom.roomID}, //query for the room to update
+    //             {$set: {
+    //                 users: foundRoom.users,
+    //                 hostSocketID: foundRoom.hostSocketID
+    //                 }
+    //             }, //value to update
+    //             (err, newRoom)=>{}
+    //         )
+    //         .catch(err=>logFailure(`delete user ${socket.id}`, err));
+    //         // updateRoomUsers(foundRoom.users, foundRoom.roomID)
+    //     }
+    // });
 }
 
 function checkIfHost(roomID, socketID){
@@ -371,7 +514,42 @@ function checkIfHost(roomID, socketID){
 }
 
 function findRoom(roomID){
-    return RoomModel.findOne({roomID});   
+    console.log("We were given room");
+    console.log(roomID);
+    return new Promise((resolve, reject)=>{
+        redisClient.hgetall(roomID, (err, reply)=>{            
+            if(err){
+                console.log(err);
+                reject(err);
+            }
+            console.log("GOT ALL");   
+            //Have to reconstruct the object from a string.
+            Object.keys(reply).forEach((key, index)=>{
+                const currObject = reply[key];
+                switch(currObject){
+                    case 'true':
+                    case 'false':
+                        reply[key] = Boolean(currObject);
+                        return;
+                }
+
+                if(currObject[0] === '['){
+                    reply[key] = JSON.parse(currObject);
+                    return;
+                }
+
+                const numConversion = Number(currObject);
+                if(isNaN(numConversion)) return;
+                else reply[key] = numConversion;
+            });
+            console.log(reply);
+            // if(!reply) return RoomModel.findOne({roomID});            
+            // console.log('Reply was:');
+            // console.log(reply);            
+            resolve(reply);
+        });
+    });
+    // return RoomModel.findOne({roomID});
 }
 
 function becomeHost(roomID, socketID){
@@ -382,20 +560,28 @@ function becomeHost(roomID, socketID){
         findRoom(roomID)
         .then(room=>{
             if(room){                
-                RoomModel.updateOne(
-                    {roomID}, //query for the room to update
-                    {$set: {
-                        hostSocketID: socketID
-                    }}, //value to update
-                    function(err, updatedRoom){
-                        if(err){
-                            console.log(`Room didn't update. ${err}`);
-                        } else {
-                            // console.log("Room is: "+JSON.stringify(updatedRoom, null, 2));
-                        }
+                // RoomModel.updateOne(
+                //     {roomID}, //query for the room to update
+                //     {$set: {
+                //         hostSocketID: socketID
+                //     }}, //value to update
+                //     function(err, updatedRoom){
+                //         if(err){
+                //             console.log(`Room didn't update. ${err}`);
+                //         } else {
+                //             // console.log("Room is: "+JSON.stringify(updatedRoom, null, 2));
+                //         }
 
-                    }    
-                );
+                //     }    
+                // );
+                redisClient.hmset(room.roomID, 
+                    [
+                        'hostSocketID', socketID
+                    ],
+                    (err, reply)=>{
+                        if(err) console.log(`Room didn't update. ${err}`);
+                        else if(reply) console.log(`user ${socketID} became host`);
+                });
                 finalHostID = socketID;
                 isHost = true;
             }            
@@ -412,8 +598,10 @@ function updateRoomState(data, roomID, newState){
            videoTime, videoID, playRate,
            videoDuration} = data;
     let {thumbnail} = data;
-    RoomModel.findOne({roomID})
-    .then(room=>{
+
+    redisClient.hget(roomID, 'room', (err, room)=>{
+        console.log("=====================");
+        room = JSON.parse(room);
         let history = room.history;
         if(!history){
             history = [];
@@ -425,7 +613,8 @@ function updateRoomState(data, roomID, newState){
             videoTime,
             videoID,
             videoDuration,
-            thumbnail
+            thumbnail,
+            channelTitle: data.channelTitle
         };
 
             //If this item already exists, we just update it.
@@ -437,11 +626,6 @@ function updateRoomState(data, roomID, newState){
             history.push(newHistoryDetails);
         }
 
-        // console.log('======');
-        // console.log(`Room history is now:`);
-        // console.log(JSON.stringify(history, null, 2));
-        // console.log('======');
-
         if(room.securitySetting == RoomSecurity.PRIVATE){
             thumbnail = PRIVATE_THUMBNAIL;
         } else if(videoSource == VideoSource.OTHERONE){
@@ -452,9 +636,7 @@ function updateRoomState(data, roomID, newState){
             thumbnail = DEFAULT_THUMBNAIL;
         }
 
-        RoomModel.updateOne(
-            {roomID}, //query for the room to update
-            {$set: {
+        redisClient.hset(room.roomID, 'room', JSON.stringify({
                 videoTime,
                 videoSource,
                 videoID,
@@ -463,18 +645,79 @@ function updateRoomState(data, roomID, newState){
                 videoTitle,
                 videoDuration: videoDuration ?? 0,
                 history
-            }}, //value to update
-            function(err, newRoom){}
-        ).then(result=>{
-            //This returns the room prior to the update
-            
-        });
-    })
-    .catch((err)=>{
-        //I assume for now that if there's an error, the room doesn't exist.                
-        console.log(`Failed to update room state\n${err}`);
-        //should probably make a function like logFailure('update room state', err);
+            }),
+            (err, reply)=>{
+                if(err){
+                    console.log("Error updating room state");
+                    console.log(err);
+                }
+            }
+        );
     });
+    // RoomModel.findOne({roomID})
+    // .then(room=>{
+    //     let history = room.history;
+    //     if(!history){
+    //         history = [];
+    //     }
+
+    //     const newHistoryDetails = {
+    //         videoSource,
+    //         videoTitle,
+    //         videoTime,
+    //         videoID,
+    //         videoDuration,
+    //         thumbnail,
+    //         channelTitle: data.channelTitle
+    //     };
+
+    //         //If this item already exists, we just update it.
+    //     if(history.length > 0 &&
+    //         history[history.length -1].videoID == videoID){
+    //             history[history.length -1] = newHistoryDetails;
+    //     } else {
+    //         //Otherwise, add it to the list.
+    //         history.push(newHistoryDetails);
+    //     }
+
+    //     // console.log('======');
+    //     // console.log(`Room history is now:`);
+    //     // console.log(JSON.stringify(history, null, 2));
+    //     // console.log('======');
+
+    //     if(room.securitySetting == RoomSecurity.PRIVATE){
+    //         thumbnail = PRIVATE_THUMBNAIL;
+    //     } else if(videoSource == VideoSource.OTHERONE){
+    //         thumbnail = NSFW_THUMBNAIL;
+    //     }
+
+    //     if(!thumbnail){
+    //         thumbnail = DEFAULT_THUMBNAIL;
+    //     }
+
+    //     RoomModel.updateOne(
+    //         {roomID}, //query for the room to update
+    //         {$set: {
+    //             videoTime,
+    //             videoSource,
+    //             videoID,
+    //             playRate,
+    //             thumbnail,
+    //             videoTitle,
+    //             videoDuration: videoDuration ?? 0,
+    //             history
+    //         }}, //value to update
+    //         function(err, newRoom){}
+    //     ).then(result=>{
+    //         //This returns the room prior to the update
+            
+    //     });
+    // })
+    // .catch((err)=>{
+    //     //I assume for now that if there's an error, the room doesn't exist.                
+    //     console.log(`Failed to update room state\n${err}`);
+    //     //should probably make a function like logFailure('update room state', err);
+    // });
     // .then((result)=>{})
 }
 
@@ -730,13 +973,16 @@ io.on('connection', socket=>{
         socket.to(roomID).broadcast.emit('startNew', data);
     });
 
-    socket.on('disconnect', _=>{
+    // socket.on('disconnect', _=>{
+    //     console.log("DISCONNECTING!!");
+    //     removeFromRoom(socket);
+    // });
+
+    socket.on('disconnecting', _=>{
         console.log("DISCONNECTING!!");
         removeFromRoom(socket);
     });
 });
-
-var port = process.env.PORT || 8092;
 
 app.post('/check-saved-roomID', (req, res)=>{
     console.log("GET FIRED");
@@ -790,11 +1036,15 @@ app.post('/create-new-room', (req, res)=>{
     }
 
     const rawID = uuidV4();
+
     console.log("SECURITY SETTING: "+securitySetting+`(${securityResult})`);
     createEmptyRoom(securityResult, roomName, roomDescription, rawID)
     .then(({roomID})=>{
+        console.log("Trying to join room");
+        console.log(roomID);
         res.redirect(`/room/${roomID}`);
-    });
+    })
+    .catch(err=> console.log(err));
 });
 
 class CustomStates{
@@ -833,37 +1083,20 @@ app.post('/get-rooms-list', (req, res)=>{
 
 app.post('/getYouTubeInfo', (req, res)=>{
     const options = [];
-    youtubedl.getInfo(req.body.videoID, [], (error, info)=>{
-        if (error || !info){
-            console.log('==============');
-            console.log(`Error looking for video ${req.query}.`);
-            console.log(`${error}`);
-            console.log('==============');
-            res.send({error});
-        } else {
-            const {title, description, thumbnail} = info;
-            res.send({videoTitle: title, description, thumbnail});
-        }
-    });
+    ytsrGetOneResult(req.body.videoID, res);
+    // youtubedl.getInfo(req.body.videoID, [], (error, info)=>{
+    //     if (error || !info){
+    //         console.log('==============');
+    //         console.log(`Error looking for video ${req.query}.`);
+    //         console.log(`${error}`);
+    //         console.log('==============');
+    //         res.send({error});
+    //     } else {
+    //         const {title, description, thumbnail} = info;
+    //         res.send({videoTitle: title, description, thumbnail});
+    //     }
+    // });
 });
-
-// const fs = require('fs')
-// const youtubedl = require('youtube-dl')
-
-// const video = youtubedl('http://www.youtube.com/watch?v=90AiXO1pAiA',
-//   // Optional arguments passed to youtube-dl.
-//   ['--format=18'],
-//   // Additional options can be given for calling `child_process.execFile()`.
-//   { cwd: __dirname })
-
-// // Will be called when the download starts.
-// video.on('info', function(info) {
-//   console.log('Download started')
-//   console.log('filename: ' + info._filename)
-//   console.log('size: ' + info.size)
-// })
-
-// video.pipe(fs.createWriteStream('myvideo.mp4'))
 
 app.post('/otherone', (req, res)=>{
         //Validate the options before starting the search.
@@ -902,35 +1135,63 @@ app.post('/otherone', (req, res)=>{
     });
 });
 
-app.post('/search', function(req, response){   
-    google.youtube('v3').search.list({
-        key: process.env.YOUTUBE_TOKEN,
-        part: "snippet",
-        q: req.body.query,
-        maxResults: 20
-    }).then(({ data })=>{
-        const searchData = [];
-        data.items.forEach((item)=>{
-            if(item.id.kind == "youtube#video"){
-                const {snippet} = item;
-                searchData.push({
-                    title: decode(snippet.title),
-                    description: decode(snippet.description),
-                    published: snippet.publishedAt,
-                    thumbnail: snippet.thumbnails['high'].url,
-                    channelTitle: snippet.channelTitle,
-                    videoID: item.id.videoId
-                });
-                console.log(JSON.stringify(searchData, null, 2));
-            }
-        });
-        response.send(searchData);
-    })
-    .catch(e=>console.log(e));
+async function ytsrSearch(query, res){    
+    const searchResults = await ytsr(query, {pages: 1});
+    const searchData = searchResults.items.filter(item=>item.type === 'video');    
+    searchData.forEach(item=>{
+        // console.log(JSON.stringify(item, null, 2));
+        item.thumbnail = item.bestThumbnail.url;
+        item.videoID = item.id;
+        item.title = decode(item.title);
+        item.videoTitle = item.title;
+        item.channelTitle = decode(item.author.name);
+        item.description = decode(item.description);        
+    });
+    res.send(searchData);
+}
+
+async function ytsrGetOneResult(query, res){
+    const searchResults = await ytsr(query, {pages: 1});
+    const searchData = searchResults.items.filter(item=>item.type === 'video');
+    const item = searchData[0];
+    item.thumbnail = item.bestThumbnail.url;
+    item.videoID = item.id;
+    item.title = decode(item.title);
+    item.videoTitle = item.title;
+    item.channelTitle = decode(item.author.name);
+    item.description = decode(item.description);        
+    res.send(item);
+}
+
+app.post('/search', function(req, response){
+    ytsrSearch(req.body.query, response);
+    // google.youtube('v3').search.list({
+    //     key: process.env.YOUTUBE_TOKEN,
+    //     part: "snippet",
+    //     q: req.body.query,
+    //     maxResults: 20
+    // }).then(({ data })=>{
+    //     const searchData = [];
+    //     data.items.forEach((item)=>{
+    //         if(item.id.kind == "youtube#video"){
+    //             const {snippet} = item;
+    //             searchData.push({
+    //                 title: decode(snippet.title),
+    //                 description: decode(snippet.description),
+    //                 published: snippet.publishedAt,
+    //                 thumbnail: snippet.thumbnails['high'].url,
+    //                 channelTitle: snippet.channelTitle,
+    //                 videoID: item.id.videoId
+    //             });
+    //             console.log(JSON.stringify(searchData, null, 2));
+    //         }
+    //     });
+    //     response.send(searchData);
+    // })
+    // .catch(e=>console.log(e));
 });
 
-app.post('/get-search-results', function(req, res){
-    
+app.post('/get-search-results', function(req, res){    
     const results = YouTubeSearchManager.searchResults[req.body.user_id];
     if(results){
         // results.forEach(result=>console.log(`${new Date().toLocaleTimeString()} Result is: ${JSON.stringify(result, null, 2)}`));
