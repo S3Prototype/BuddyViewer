@@ -3,6 +3,8 @@ class BuddyViewer{
 
     static SendVideoHandler;
 
+    static isHost = false;
+
     static showRecommendedCard(){
         document.dispatchEvent(new Event('showRecommended'));
     }
@@ -151,7 +153,8 @@ class BuddyViewer{
             thumbnail: this.getThumbnail(),
             channelTitle: this.getChannelTitle(),
             videoTitle: this.getTitle(),
-            videoDuration: this.getDuration()
+            videoDuration: this.getDuration(),
+            isHost: BuddyViewer.isHost
         }
     }
 

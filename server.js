@@ -10,9 +10,12 @@ const router = express.Router();
 const {decode} = require('html-entities');
 const bcrypt = require('bcryptjs');
 
-const redis = require('redis');
+
 const roomExpTime = 60*60*24;
 const searchExpTime = 60*15;
+
+const redisMongoQueries = require('./utils/redisMongoQueries');
+const redis = redisMongoQueries.redis;
 
 const { promisify } = require("util");
 
@@ -27,25 +30,6 @@ const { title } = require('process');
 const { youtube } = require("googleapis/build/src/apis/youtube");
 const { youtubeAnalytics } = require("googleapis/build/src/apis/youtubeAnalytics");
 
-//!Testing running python code
-// const {spawn} = require('child_process');
-// try{
-//     const childPython = spawn('python', ['test.py', 'URL!']);
-    
-//     childPython.stdout.on('data', (data)=>{
-//         console.log(`stdout: ${data}`);
-//     });
-//     childPython.stderr.on('data', (data)=>{
-//         console.error(`stderr: ${data}`);
-//     });
-//     childPython.on('data', (data)=>{
-//         console.log(`child ended with code: ${data}`);
-//     });
-// } catch(error) {
-//     console.log("PYTHON ERROR: "+error);
-// }
-
-// const fs = require('fs');
 const youtubedl = require('youtube-dl');
 
 const expressLayouts = require('express-ejs-layouts');
@@ -71,7 +55,7 @@ const server = http.createServer(app);
 var port = process.env.PORT || 8092;
 var redisPort = process.env.REDIS_PORT || 6379;
 
-const redisClient = redis.createClient();
+const redisClient = redisMongoQueries.createRedisClient();
 const getRoomFromRedis = promisify(redisClient.hgetall).bind(redisClient);
 const getKeysFromRedis = promisify(redisClient.keys).bind(redisClient);
 
@@ -106,7 +90,7 @@ app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: true,
     saveUninitialized: true
-  }));
+}));
 
 app.use(passport.initialize());
 app.use(passport.session());
@@ -136,11 +120,10 @@ const io = socketio(server);
 
 //let rawData = fs.readFileSync('messages.json');
 
-
 let hostTimeout;
 const hostTimeoutLimit = 2500;
 function joinRoom(socket, userData, roomID){
-    findRoom(roomID)
+    redisMongoQueries.findRoom(roomID)
     .then(currRoom=>{
         if(currRoom.securitySetting === RoomSecurity.LOCKED &&
             !userData.passwordSuccess){
@@ -163,7 +146,7 @@ function joinRoom(socket, userData, roomID){
                 hostTimeout = setTimeout(() => {
 
                     console.log(socket.id+' trying to become Host');
-                    becomeHost(currRoom.roomID, socket.id);
+                    redisMongoQueries.becomeHost(currRoom.roomID, socket.id);
                     io.to(socket.id).emit('initPlayer', currRoom);
 
                 }, hostTimeoutLimit);
@@ -172,8 +155,9 @@ function joinRoom(socket, userData, roomID){
             //THis code will basically never run,
             //because we call createEmptyRoom when people
             //take the route to even get here.
-            console.log("Major error. Possible database failure. In joinRoom(), we didn't find a room at the roomID provided by the client.");            
-            createNewRoom(socket.id, userData, roomID);
+            console.log(`Major error. Possible database failure. In joinRoom(), we didn't find a room at the roomID provided by the client. ID (${roomID}). Creating an empty room`);            
+            redisMongoQueries.createEmptyRoom(RoomSecurity.PRIVATE, randomWords(),
+                defaultDescription, uuidV4());
         }
     })
     .catch(err=>{
@@ -214,27 +198,17 @@ function addToRoom(socketID, userData, currRoom){
             socketID, localName, nameOnServer, userID, isHost, pfp
         });
 
-        redisClient.hmset(currRoom.roomID,
-            'hostSocketID', currRoom.hostSocketID,
-            'users', JSON.stringify(currRoom.users),
-            (err, reply)=>{
-                console.log(`Adding user (${socketID}) to room ${currRoom.roomID}. Status: ${reply}`);
-                if(!reply) logFailure(`add user to room ${roomID}`, `Couldn't find the room.`);
-                if(err) logFailure(`add user to room ${roomID}`, err);
-            }
-        );
+        redisMongoQueries.updateRoomUsers(currRoom);
 
-        // redisClient.hmset(currRoom.roomID, 
-        //     [
-        //         'users', JSON.stringify(currRoom.users),
-        //         'hostSocketID', currRoom.hostSocketID
-        //     ],
+        // redisClient.hmset(currRoom.roomID,
+        //     'hostSocketID', currRoom.hostSocketID,
+        //     'users', JSON.stringify(currRoom.users),
         //     (err, reply)=>{
-        //         if(err){
-        //             console.log("Failed to update room in redis");
-        //             console.log(err);
-        //         }
-        // });
+        //         console.log(`Adding user (${socketID}) to room ${currRoom.roomID}. Status: ${reply}`);
+        //         if(!reply) logFailure(`add user to room ${roomID}`, `Couldn't find the room.`);
+        //         if(err) logFailure(`add user to room ${roomID}`, err);
+        //     }
+        // );
 
         // RoomModel.updateOne(
         //     {roomID: currRoom.roomID},
@@ -340,74 +314,6 @@ async function createEmptyRoom(securitySetting, roomName,
     // .catch(err=>logFailure(`creat empty room from ${roomID}`, err));
 }
 
-async function createNewRoom(socketID, userData, roomID){
-    const { localName, nameOnServer, userID, pfp } = userData;
-    const randomName = randomWords();
-    const createResult = redisClient.set(roomID, JSON.stringify(
-        {
-            roomID: randomName+'-'+roomID,
-            roomName: randomName,
-            roomDescription: defaultDescription,
-            history: [],
-            nsfw: false,
-            securitySetting: defaultSecuritySetting,
-            thumbnail: LOCKED_THUMBNAIL,
-            hostSocketID: socketID,
-            users: [{
-                socketID, localName, nameOnServer, userID, isHost: true, pfp
-            }],
-            videoID: "", //holds id most recently played video
-            videoTime: 0, //most recent video time,
-            videoState: CustomStates.UNSTARTED,//most recent state
-            videoDuration: 0,
-            playRate: 1,
-            messages: [
-                        {
-                            messageID: 0,
-                            text: "Welcome to the room!",
-                            userID: "SERVER",
-                            name: "SERVER",
-                            timestamp: "",
-                            universalTimeStamp: ""
-                        }
-                    ]
-        }));
-        console.log(`Creating room ${roomID}... result: ${createResult}`);        
-    // const thisRoom = await RoomModel.create({
-    //     roomID: randomName+'-'+roomID,
-    //     roomName: randomName,
-    //     roomDescription: defaultDescription,
-    //     history: [],
-    //     nsfw: false,
-    //     securitySetting: defaultSecuritySetting,
-    //     thumbnail: LOCKED_THUMBNAIL,
-    //     hostSocketID: socketID,
-    //     users: [{
-    //         socketID, localName, nameOnServer, userID, isHost: true, pfp
-    //     }],
-    //     videoID: "", //holds id most recently played video
-    //     videoTime: 0, //most recent video time,
-    //     videoState: CustomStates.UNSTARTED,//most recent state
-    //     videoDuration: 0,
-    //     playRate: 1,
-    //     messages: [
-    //                 {
-    //                     messageID: 0,
-    //                     text: "Welcome to the room!",
-    //                     userID: "SERVER",
-    //                     name: "SERVER",
-    //                     timestamp: "",
-    //                     universalTimeStamp: ""
-    //                 }
-    //             ]
-    //     })
-    // // new RoomModel(thisRoom).save()
-    // thisRoom.save()
-    // .catch(err=>logFailure(`create new Room at ${roomID}`, err));
-        // console.log(`Just joined ${JSON.stringify(thisRoom, null, 2)}`);
-    // return thisRoom;
-}
-
 function removeFromRoom(socket){
 
     socket.rooms.forEach(roomID=>{
@@ -427,20 +333,21 @@ function removeFromRoom(socket){
                 }
                     //now remove the user
                 reply.users = reply.users.filter(user=>user.socketID != socket.id);
-                redisClient.hmset(roomID, ['users', JSON.stringify(reply.users)],
-                    (err, thisReply)=>{
-                        if(err) console.log(err);
-                        if(!thisReply){
-                            console.log("Failed to update room in redis");
-                            return;
-                        }
-                        console.log("Successfully removed "+socket.id+". from "+roomID);
-                        console.log("Room is now:");
-                        console.log(thisReply);
-                    }
-                );
+                redisMongoQueries.updateRoomUsers(reply);
+                // redisClient.hmset(roomID, ['users', JSON.stringify(reply.users)],
+                //     (err, thisReply)=>{
+                //         if(err) console.log(err);
+                //         if(!thisReply){
+                //             console.log("Failed to update room in redis");
+                //             return;
+                //         }
+                //         console.log("Successfully removed "+socket.id+". from "+roomID);
+                //         console.log("Room is now:");
+                //         console.log(thisReply);
+                //     }
+                // );
             } else {
-                console.log(`Failed to remove user from ${roomID}.`);
+                console.log(`Failed to remove user from ${roomID}. Couldn't find the room!`);
             }
         });
         // redisClient.hgetall(roomID, (err, reply)=>{
@@ -509,258 +416,258 @@ function convertRedisRoomToObject(reply){
     return reply;
 }
 
-function findRoom(roomID){
-    console.log("We were given room");
-    console.log(roomID);
-    return new Promise((resolve, reject)=>{
-        redisClient.hgetall(roomID, (err, reply)=>{            
-            if(err){
-                console.log(`Tried finding room ${roomID}, but failed.`);
-                console.log(err);
-                reject(err);
-            } else if(!reply){
-                console.log(`New msg: Tried to find room ${roomID}. Didn't work`)
-                reject(`Tried finding room ${roomID}, but failed.`);
-            }
-            // console.log("GOT ALL");   
-            try{
-                //Have to reconstruct the object from a string.
-                reply = convertRedisRoomToObject(reply);
-            } catch(error){
-                reject(error);
-            }
-            // console.log(reply);
-            // if(!reply) return RoomModel.findOne({roomID});            
-            // console.log('Reply was:');
-            // console.log(reply);            
-            resolve(reply);
-        });
-    });
-    // return RoomModel.findOne({roomID});
-}
+// function findRoom(roomID){
+//     console.log("We were given room");
+//     console.log(roomID);
+//     return new Promise((resolve, reject)=>{
+//         redisClient.hgetall(roomID, (err, reply)=>{            
+//             if(err){
+//                 console.log(`Tried finding room ${roomID}, but failed.`);
+//                 console.log(err);
+//                 reject(err);
+//             } else if(!reply){
+//                 console.log(`New msg: Tried to find room ${roomID}. Didn't work`)
+//                 reject(`Tried finding room ${roomID}, but failed.`);
+//             }
+//             // console.log("GOT ALL");   
+//             try{
+//                 //Have to reconstruct the object from a string.
+//                 reply = convertRedisRoomToObject(reply);
+//             } catch(error){
+//                 return RoomModel.findOne({roomID});
+//             }
+//             // console.log(reply);
+//             // if(!reply) return RoomModel.findOne({roomID});            
+//             // console.log('Reply was:');
+//             // console.log(reply);            
+//             resolve(reply);
+//         });
+//     });
+//     // return RoomModel.findOne({roomID});
+// }
 
-function becomeHost(roomID, socketID){
-    // console.log("*****************");
-    //     console.log("Becoming host of "+roomID);
-        let isHost = false;
-        let finalHostID = null;
-        console.log("Trying to become the host");
-        findRoom(roomID)
-        .then(room=>{
-            if(room){                
-                // RoomModel.updateOne(
-                //     {roomID}, //query for the room to update
-                //     {$set: {
-                //         hostSocketID: socketID
-                //     }}, //value to update
-                //     function(err, updatedRoom){
-                //         if(err){
-                //             console.log(`Room didn't update. ${err}`);
-                //         } else {
-                //             // console.log("Room is: "+JSON.stringify(updatedRoom, null, 2));
-                //         }
+// function becomeHost(roomID, socketID){
+//     // console.log("*****************");
+//     //     console.log("Becoming host of "+roomID);
+//         let isHost = false;
+//         let finalHostID = null;
+//         console.log("Trying to become the host");
+//         findRoom(roomID)
+//         .then(room=>{
+//             if(room){                
+//                 // RoomModel.updateOne(
+//                 //     {roomID}, //query for the room to update
+//                 //     {$set: {
+//                 //         hostSocketID: socketID
+//                 //     }}, //value to update
+//                 //     function(err, updatedRoom){
+//                 //         if(err){
+//                 //             console.log(`Room didn't update. ${err}`);
+//                 //         } else {
+//                 //             // console.log("Room is: "+JSON.stringify(updatedRoom, null, 2));
+//                 //         }
 
-                //     }    
-                // );
-                redisClient.hmset(room.roomID, 
-                    [
-                        'hostSocketID', socketID
-                    ],
-                    (err, reply)=>{
-                        if(err) console.log(`Room didn't update. ${err}`);
-                        else if(reply) console.log(`user ${socketID} became host`);
-                });
-                finalHostID = socketID;
-                isHost = true;
-            }            
-        })
-        .finally(_=>{            
-            // console.log(`Our final host ID is ${finalHostID} | The one we sent was ${socketID}`);
-            io.in(roomID).emit('setHost', finalHostID);
-        });
-}
+//                 //     }    
+//                 // );
+//                 redisClient.hmset(room.roomID, 
+//                     [
+//                         'hostSocketID', socketID
+//                     ],
+//                     (err, reply)=>{
+//                         if(err) console.log(`Room didn't update. ${err}`);
+//                         else if(reply) console.log(`user ${socketID} became host`);
+//                 });
+//                 finalHostID = socketID;
+//                 isHost = true;
+//             }            
+//         })
+//         .finally(_=>{            
+//             // console.log(`Our final host ID is ${finalHostID} | The one we sent was ${socketID}`);
+//             io.in(roomID).emit('setHost', finalHostID);
+//         });
+// }
 
-function updateRoomState(data, roomID, newState){
-    const {videoSource, videoTitle,
-           videoTime, videoID, playRate,
-           videoDuration} = data;
-    let {thumbnail} = data;
-    console.log("We're in room update");
-    findRoom(roomID)
-    .then(room=>{
-        let history = room.history;
-        if(!history){
-            history = [];
-        }
+// function updateRoomState(data, roomID){
+//     const {videoSource, videoTitle,
+//            videoTime, videoID, playRate,
+//            videoDuration} = data;
+//     let {thumbnail} = data;
+//     console.log("We're in room update");
+//     findRoom(roomID)
+//     .then(room=>{
+//         let history = room.history;
+//         if(!history){
+//             history = [];
+//         }
 
-        const newHistoryDetails = {
-            videoSource,
-            videoTitle,
-            videoTime,
-            videoID,
-            videoDuration,
-            thumbnail,
-            channelTitle: data.channelTitle
-        };
+//         const newHistoryDetails = {
+//             videoSource,
+//             videoTitle,
+//             videoTime,
+//             videoID,
+//             videoDuration,
+//             thumbnail,
+//             channelTitle: data.channelTitle
+//         };
 
-            //If this item already exists, we just update it.
-        if(history.length > 0 &&
-            history[history.length -1].videoID == videoID){
-                history[history.length -1] = newHistoryDetails;
-        } else {
-            //Otherwise, add it to the list.
-            history.push(newHistoryDetails);
-        }
+//             //If this item already exists, we just update it.
+//         if(history.length > 0 &&
+//             history[history.length -1].videoID == videoID){
+//                 history[history.length -1] = newHistoryDetails;
+//         } else {
+//             //Otherwise, add it to the list.
+//             history.push(newHistoryDetails);
+//         }
 
-        if(room.securitySetting == RoomSecurity.PRIVATE){
-            thumbnail = PRIVATE_THUMBNAIL;
-        } else if(videoSource == VideoSource.OTHERONE){
-            thumbnail = NSFW_THUMBNAIL;
-        }
+//         if(room.securitySetting == RoomSecurity.PRIVATE){
+//             thumbnail = PRIVATE_THUMBNAIL;
+//         } else if(videoSource == VideoSource.OTHERONE){
+//             thumbnail = NSFW_THUMBNAIL;
+//         }
 
-        if(!thumbnail){
-            thumbnail = DEFAULT_THUMBNAIL;
-        }
+//         if(!thumbnail){
+//             thumbnail = DEFAULT_THUMBNAIL;
+//         }
 
-        redisClient.hmset(room.roomID,
-            'history', JSON.stringify(history),
-            'thumbnail', thumbnail,
-            'videoTitle', videoTitle,
-            'videoSource', JSON.stringify(videoSource),
-            'playRate', JSON.stringify(playRate),
-            'videoDuration', JSON.stringify(videoDuration),
-            'videoID', videoID, //holds id most recently played video
-            'videoTime', JSON.stringify(videoTime), //most recent video time,
-            'videoState', JSON.stringify(CustomStates.UNSTARTED),//most recent state
-            (err, reply)=>{
-                console.log("Updating room state. Status:");
-                if(!reply) logFailure(`update room ${roomID}`, `Couldn't find the room.`);
-                if(err) logFailure(`update room ${roomID}`, err);
-            }
-        );
-    })
-    .catch(err=>logFailure(`find room to update (${roomID})`, err));
-    // redisClient.hget(roomID, 'room', (err, room)=>{
-    //     console.log("=====================");
-    //     room = JSON.parse(room);
-    //     let history = room.history;
-    //     if(!history){
-    //         history = [];
-    //     }
+//         redisClient.hmset(room.roomID,
+//             'history', JSON.stringify(history),
+//             'thumbnail', thumbnail,
+//             'videoTitle', videoTitle,
+//             'videoSource', JSON.stringify(videoSource),
+//             'playRate', JSON.stringify(playRate),
+//             'videoDuration', JSON.stringify(videoDuration),
+//             'videoID', videoID, //holds id most recently played video
+//             'videoTime', JSON.stringify(videoTime), //most recent video time,
+//             'videoState', JSON.stringify(CustomStates.UNSTARTED),//most recent state
+//             (err, reply)=>{
+//                 console.log("Updating room state. Status:");
+//                 if(!reply) logFailure(`update room ${roomID}`, `Couldn't find the room.`);
+//                 if(err) logFailure(`update room ${roomID}`, err);
+//             }
+//         );
+//     })
+//     .catch(err=>logFailure(`find room to update (${roomID})`, err));
+//     // redisClient.hget(roomID, 'room', (err, room)=>{
+//     //     console.log("=====================");
+//     //     room = JSON.parse(room);
+//     //     let history = room.history;
+//     //     if(!history){
+//     //         history = [];
+//     //     }
 
-    //     const newHistoryDetails = {
-    //         videoSource,
-    //         videoTitle,
-    //         videoTime,
-    //         videoID,
-    //         videoDuration,
-    //         thumbnail,
-    //         channelTitle: data.channelTitle
-    //     };
+//     //     const newHistoryDetails = {
+//     //         videoSource,
+//     //         videoTitle,
+//     //         videoTime,
+//     //         videoID,
+//     //         videoDuration,
+//     //         thumbnail,
+//     //         channelTitle: data.channelTitle
+//     //     };
 
-    //         //If this item already exists, we just update it.
-    //     if(history.length > 0 &&
-    //         history[history.length -1].videoID == videoID){
-    //             history[history.length -1] = newHistoryDetails;
-    //     } else {
-    //         //Otherwise, add it to the list.
-    //         history.push(newHistoryDetails);
-    //     }
+//     //         //If this item already exists, we just update it.
+//     //     if(history.length > 0 &&
+//     //         history[history.length -1].videoID == videoID){
+//     //             history[history.length -1] = newHistoryDetails;
+//     //     } else {
+//     //         //Otherwise, add it to the list.
+//     //         history.push(newHistoryDetails);
+//     //     }
 
-    //     if(room.securitySetting == RoomSecurity.PRIVATE){
-    //         thumbnail = PRIVATE_THUMBNAIL;
-    //     } else if(videoSource == VideoSource.OTHERONE){
-    //         thumbnail = NSFW_THUMBNAIL;
-    //     }
+//     //     if(room.securitySetting == RoomSecurity.PRIVATE){
+//     //         thumbnail = PRIVATE_THUMBNAIL;
+//     //     } else if(videoSource == VideoSource.OTHERONE){
+//     //         thumbnail = NSFW_THUMBNAIL;
+//     //     }
 
-    //     if(!thumbnail){
-    //         thumbnail = DEFAULT_THUMBNAIL;
-    //     }
+//     //     if(!thumbnail){
+//     //         thumbnail = DEFAULT_THUMBNAIL;
+//     //     }
 
-    //     redisClient.hset(room.roomID, 'room', JSON.stringify({
-    //             videoTime,
-    //             videoSource,
-    //             videoID,
-    //             playRate,
-    //             thumbnail,
-    //             videoTitle,
-    //             videoDuration: videoDuration ?? 0,
-    //             history
-    //         }),
-    //         (err, reply)=>{
-    //             if(err){
-    //                 console.log("Error updating room state");
-    //                 console.log(err);
-    //             }
-    //         }
-    //     );
-    // });
-    // RoomModel.findOne({roomID})
-    // .then(room=>{
-    //     let history = room.history;
-    //     if(!history){
-    //         history = [];
-    //     }
+//     //     redisClient.hset(room.roomID, 'room', JSON.stringify({
+//     //             videoTime,
+//     //             videoSource,
+//     //             videoID,
+//     //             playRate,
+//     //             thumbnail,
+//     //             videoTitle,
+//     //             videoDuration: videoDuration ?? 0,
+//     //             history
+//     //         }),
+//     //         (err, reply)=>{
+//     //             if(err){
+//     //                 console.log("Error updating room state");
+//     //                 console.log(err);
+//     //             }
+//     //         }
+//     //     );
+//     // });
+//     // RoomModel.findOne({roomID})
+//     // .then(room=>{
+//     //     let history = room.history;
+//     //     if(!history){
+//     //         history = [];
+//     //     }
 
-    //     const newHistoryDetails = {
-    //         videoSource,
-    //         videoTitle,
-    //         videoTime,
-    //         videoID,
-    //         videoDuration,
-    //         thumbnail,
-    //         channelTitle: data.channelTitle
-    //     };
+//     //     const newHistoryDetails = {
+//     //         videoSource,
+//     //         videoTitle,
+//     //         videoTime,
+//     //         videoID,
+//     //         videoDuration,
+//     //         thumbnail,
+//     //         channelTitle: data.channelTitle
+//     //     };
 
-    //         //If this item already exists, we just update it.
-    //     if(history.length > 0 &&
-    //         history[history.length -1].videoID == videoID){
-    //             history[history.length -1] = newHistoryDetails;
-    //     } else {
-    //         //Otherwise, add it to the list.
-    //         history.push(newHistoryDetails);
-    //     }
+//     //         //If this item already exists, we just update it.
+//     //     if(history.length > 0 &&
+//     //         history[history.length -1].videoID == videoID){
+//     //             history[history.length -1] = newHistoryDetails;
+//     //     } else {
+//     //         //Otherwise, add it to the list.
+//     //         history.push(newHistoryDetails);
+//     //     }
 
-    //     // console.log('======');
-    //     // console.log(`Room history is now:`);
-    //     // console.log(JSON.stringify(history, null, 2));
-    //     // console.log('======');
+//     //     // console.log('======');
+//     //     // console.log(`Room history is now:`);
+//     //     // console.log(JSON.stringify(history, null, 2));
+//     //     // console.log('======');
 
-    //     if(room.securitySetting == RoomSecurity.PRIVATE){
-    //         thumbnail = PRIVATE_THUMBNAIL;
-    //     } else if(videoSource == VideoSource.OTHERONE){
-    //         thumbnail = NSFW_THUMBNAIL;
-    //     }
+//     //     if(room.securitySetting == RoomSecurity.PRIVATE){
+//     //         thumbnail = PRIVATE_THUMBNAIL;
+//     //     } else if(videoSource == VideoSource.OTHERONE){
+//     //         thumbnail = NSFW_THUMBNAIL;
+//     //     }
 
-    //     if(!thumbnail){
-    //         thumbnail = DEFAULT_THUMBNAIL;
-    //     }
+//     //     if(!thumbnail){
+//     //         thumbnail = DEFAULT_THUMBNAIL;
+//     //     }
 
-    //     RoomModel.updateOne(
-    //         {roomID}, //query for the room to update
-    //         {$set: {
-    //             videoTime,
-    //             videoSource,
-    //             videoID,
-    //             playRate,
-    //             thumbnail,
-    //             videoTitle,
-    //             videoDuration: videoDuration ?? 0,
-    //             history
-    //         }}, //value to update
-    //         function(err, newRoom){}
-    //     ).then(result=>{
-    //         //This returns the room prior to the update
+//     //     RoomModel.updateOne(
+//     //         {roomID}, //query for the room to update
+//     //         {$set: {
+//     //             videoTime,
+//     //             videoSource,
+//     //             videoID,
+//     //             playRate,
+//     //             thumbnail,
+//     //             videoTitle,
+//     //             videoDuration: videoDuration ?? 0,
+//     //             history
+//     //         }}, //value to update
+//     //         function(err, newRoom){}
+//     //     ).then(result=>{
+//     //         //This returns the room prior to the update
             
-    //     });
-    // })
-    // .catch((err)=>{
-    //     //I assume for now that if there's an error, the room doesn't exist.                
-    //     console.log(`Failed to update room state\n${err}`);
-    //     //should probably make a function like logFailure('update room state', err);
-    // });
-    // .then((result)=>{})
-}
+//     //     });
+//     // })
+//     // .catch((err)=>{
+//     //     //I assume for now that if there's an error, the room doesn't exist.                
+//     //     console.log(`Failed to update room state\n${err}`);
+//     //     //should probably make a function like logFailure('update room state', err);
+//     // });
+//     // .then((result)=>{})
+// }
 
 const listRoomID = "LISTROOM";
 
@@ -771,7 +678,7 @@ io.on('connection', socket=>{
     });
 
     socket.on('checkRoomPassword', data=>{
-        findRoom(data.roomID)
+        redisMongoQueries.findRoom(data.roomID)
         .then(room=>{
             const failMessage = "Something went wrong. Please create a new room.";
             if(room && room.password){
@@ -803,7 +710,7 @@ io.on('connection', socket=>{
             return;
         }
         console.log("Trying to find room: "+data.roomID);
-        findRoom(data.roomID)
+        redisMongoQueries.findRoom(data.roomID)
         .then(room=>{
             if(room){
                 if(room.password){
@@ -840,7 +747,7 @@ io.on('connection', socket=>{
     });
 
     socket.on('becomeHost', (roomID)=>{
-        becomeHost(roomID, socket.id);
+        redisMongoQueries.becomeHost(roomID, socket.id);
     });
 
     socket.on('releaseHost', roomID=>{
@@ -848,7 +755,7 @@ io.on('connection', socket=>{
         console.log("Releasing host of "+roomID);
         let isHost = false;
         let newHostID;
-        findRoom(roomID)
+        redisMongoQueries.findRoom(roomID)
         .then(room=>{
             if(room){
                 //Find a random user.
@@ -876,7 +783,7 @@ io.on('connection', socket=>{
     socket.on('sendMessage', (messageData, roomID)=>{
         // console.log(JSON.stringify(messageData));        
         socket.to(roomID).broadcast.emit('getMessage', messageData);
-        findRoom(roomID)
+        redisMongoQueries.findRoom(roomID)
         .then(room=>{
             if(!room.messages){
                 room.messages = [];
@@ -925,7 +832,7 @@ io.on('connection', socket=>{
     });
 
     socket.on('requestSync', roomID=>{
-        findRoom(roomID)
+        redisMongoQueries.findRoom(roomID)
         .then(({hostSocketID})=>{
             if(hostSocketID && hostSocketID != socket.id){
                 io.to(hostSocketID).emit('sendUpTime', socket.id);
@@ -944,57 +851,48 @@ io.on('connection', socket=>{
     });
 
     socket.on('play', (data, roomID)=>{
-        // const isHost = checkIfHost(roomID, socket.id);
-        findRoom(roomID)
-        .then(({hostSocketID})=>{
-            const isHost = hostSocketID == socket.id
-            // if(isHost){
-                updateRoomState(data, roomID)
-            // }
-            socket.to(roomID).broadcast.emit('play', {
-                state: CustomStates.PLAYING,
-                isHost,
-                videoTime: data.videoTime
-            });
+        socket.to(roomID).broadcast.emit('play', {
+            state: CustomStates.PLAYING,
+            isHost,
+            videoTime: data.videoTime
         });
+        if(data.isHost){
+            redisMongoQueries.updateRoomState(data, roomID);
+        }
     });
 
     socket.on('pause', (data, roomID)=>{
-        findRoom(roomID)
-        .then(({hostSocketID})=>{
-            const isHost = hostSocketID == socket.id
-            // if(isHost){
-                updateRoomState(data, roomID);
-            // }
-            socket.to(roomID).broadcast.emit('pause', {
-                state: CustomStates.PAUSED,
-                isHost,
-                videoTime: data.videoTime
-            });
+        socket.to(roomID).broadcast.emit('pause', {
+            state: CustomStates.PAUSED,
+            isHost,
+            videoTime: data.videoTime
         });
+        if(data.isHost){
+            redisMongoQueries.updateRoomState(data, roomID);
+        }
     });
 
     socket.on('playPause', (data, roomID)=>{
-        findRoom(roomID)
-        .then(({hostSocketID})=>{
-            const isHost = hostSocketID == socket.id
-            if(isHost){
-                updateRoomState(data, roomID)
-            }
-            socket.to(roomID).broadcast.emit('playPause', {
-                videoState: data.videoState,
-                isHost,
-                videoTime: data.videoTime
-            });
+        socket.to(roomID).broadcast.emit('playPause', {
+            videoState: data.videoState,
+            isHost: data.isHost,
+            videoTime: data.videoTime
         });
+            //Then update the room if they're the host.
+        if(data.isHost){
+            redisMongoQueries.updateRoomState(data, roomID);
+        }
     });
 
-    socket.on('seek', (videoTime, roomID)=>{
-        socket.to(roomID).broadcast.emit('seek', videoTime);
+    socket.on('seek', (data, roomID)=>{
+        socket.to(roomID).broadcast.emit('seek', data.videoTime);
+        if(data.isHost){
+            redisMongoQueries.updateRoomState(data, roomID);
+        }
     });
 
     socket.on('sync', roomID=>{
-        findRoom(roomID)
+        redisMongoQueries.findRoom(roomID)
         .then(room=>{
             io.to(roomID).emit('initPlayer', room);
         });
@@ -1010,7 +908,7 @@ io.on('connection', socket=>{
 
     socket.on('startNew', (data, roomID)=>{
         console.log("START NEW CALLED");
-        updateRoomState(data, roomID, CustomStates.PAUSED);
+        redisMongoQueries.updateRoomState(data, roomID);
         data.roomID = roomID;        
         socket.to(roomID).broadcast.emit('startNew', data);
     });
@@ -1028,7 +926,7 @@ io.on('connection', socket=>{
 
 app.post('/check-saved-roomID', (req, res)=>{
     console.log("GET FIRED");
-    const shouldRedirect = isUuid(req.body.currRoomID) && findRoom(req.body.storedRoomID);
+    const shouldRedirect = isUuid(req.body.currRoomID) && redisMongoQueries.findRoom(req.body.storedRoomID);
     res.send(shouldRedirect);
 });
 
@@ -1039,7 +937,7 @@ app.get('/room/', (req, res)=>{
 app.get('/room/:roomID', (req, res)=>{
     // const currRoomID = req.params.roomID;
     // console.log(`ID IS ${currRoomID}`);
-    findRoom(req.params.roomID)
+    redisMongoQueries.findRoom(req.params.roomID)
     .then(room=>{
         if(room){
             res.render('room', {roomID: room.roomID});
@@ -1124,45 +1022,46 @@ app.post('/get-rooms-list', (req, res)=>{
     //* For each key, hgetall the room.
     //* save that result to an array
     //* res.send that array
-    let promises = [];    
-    const roomArray = []; 
+    redisMongoQueries.getRoomsList(res);
+    // let promises = [];    
+    // const roomArray = []; 
     
-    redisClient.keys('*', (err, roomList)=>{
-        if(err){
-            res.render('error', {err});
-            return;
-        }
-        const keys = Object.keys(roomList);
-        // console.log("keys is");
-        // console.log(keys);            
-        roomList.forEach((roomID)=>{
-            promises.push(
-                getRoomFromRedis(roomID)
-                .then(room=>{
-                    if(room.room || !room.roomID) return;
+    // redisClient.keys('*', (err, roomList)=>{
+    //     if(err){
+    //         res.render('error', {err});
+    //         return;
+    //     }
+    //     const keys = Object.keys(roomList);
+    //     // console.log("keys is");
+    //     // console.log(keys);            
+    //     roomList.forEach((roomID)=>{
+    //         promises.push(
+    //             getRoomFromRedis(roomID)
+    //             .then(room=>{
+    //                 if(room.room || !room.roomID) return;
 
-                    return new Promise((resolve, reject)=>{
-                        room = convertRedisRoomToObject(room);
-                        // console.log("Room is");   
-                        // console.log(room);
-                        // console.log('***************');
-                        try{
-                            resolve(roomArray.push(room))
-                        } catch (err){
-                            reject(err);
-                        }
-                    });
-                })//getroomfromredis.then()
-            );//promises.push()
-        });//roomlist.foreach                           
-        Promise.all(promises)
-        .then(_=>{         
-            console.log('888888888888888888888888888');
-            console.log("PROMISE:");
-            console.log(roomArray);
-            res.send({rooms: roomArray});
-        });
-    });
+    //                 return new Promise((resolve, reject)=>{
+    //                     room = convertRedisRoomToObject(room);
+    //                     // console.log("Room is");   
+    //                     // console.log(room);
+    //                     // console.log('***************');
+    //                     try{
+    //                         resolve(roomArray.push(room))
+    //                     } catch (err){
+    //                         reject(err);
+    //                     }
+    //                 });
+    //             })//getroomfromredis.then()
+    //         );//promises.push()
+    //     });//roomlist.foreach                           
+    //     Promise.all(promises)
+    //     .then(_=>{         
+    //         console.log('888888888888888888888888888');
+    //         console.log("PROMISE:");
+    //         console.log(roomArray);
+    //         res.send({rooms: roomArray});
+    //     });
+    // });
 });
 
 app.post('/getYouTubeInfo', (req, res)=>{
@@ -1204,7 +1103,7 @@ app.post('/otherone', (req, res)=>{
                 thumbnail: NSFW_THUMBNAIL,
                 videoDuration: undefined
             };            
-            updateRoomState(resultData, req.body.roomID);
+            redisMongoQueries.updateRoomState(resultData, req.body.roomID);
             res.send(resultData);
         }
         // {

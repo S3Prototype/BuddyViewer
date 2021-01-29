@@ -798,7 +798,9 @@ $(function(){
         );
         changeTriggeredByControls = true;
         seekAndSetUI(scrubTime);
-        socket.emit('seek', scrubTime, roomID);
+        data = buddyPlayer.generateData();
+        data.videoTime = scrubTime;
+        socket.emit('seek', data, roomID);
     }
 
     function seekAndSetUI(time){
@@ -1169,7 +1171,7 @@ $(function(){
         });
 
         socket.on('noOneElseInRoom', _=>{
-            isHost = true;
+            BuddyViewer.isHost = true;
             enableHostIcon();
             console.log("You are the only user left in the room.");
         });
@@ -1180,8 +1182,8 @@ $(function(){
 
         socket.on('setHost', newHostID=>{
             if(newHostID){
-                isHost = newHostID == socket.id;
-                if(isHost){
+                BuddyViewer.isHost = newHostID == socket.id;
+                if(BuddyViewer.isHost){
                     console.log("Setting this browser to host.");
                     enableHostIcon();
                 } else {
@@ -1238,8 +1240,8 @@ $(function(){
             buddyPlayer.pauseFromServer(data);
         });
     
-        socket.on('seek', videoTime=>{
-            seekAndSetUI(videoTime);
+        socket.on('seek', data=>{            
+            seekAndSetUI(data.videoTime);
         });        
     
         socket.on('startNew', (data)=>{

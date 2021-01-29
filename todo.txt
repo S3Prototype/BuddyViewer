@@ -1,9 +1,6 @@
 DOING:
-
-* Fix the code. Have to use hmset in the style of createemptyroom to change the data in each redis room.
-    * Basically I have to have the redis code send the response, and then after res.send, do the mongodb code. That way everything will be in mongodb, 
-    * Then we have to stest that everything is wroking.
     * Then we have to stop redis from saving local backup.
+    * Then we have to design the way it'll decide when to save to mongodb. I'm thinking every 5x the room is updated or so? Then when a room is accessed, check redis first. If it's not there, then check mongodb. Hell, maybe only save to mongodb when the room expires? No, probably at certain time intervals or at least use intervals. Like every 100x it's updated?
 * Definitely gonna have to change it back to some form of saving rooms in local storage like redis or something until it's time to save it to mongodb.
     * Save all rooms in redis with an expiration time. Reset that time every time the room is updated. Once that time is reached, then delete the data from redis and store it in the DB. Time period should be like 24 hours. 24 hours after you close the room and don't open it, it'll be slow to open back up. Otherwise, it stays persistent.
     * (Maybe) Save yt searches. If someone searches for the exact same string as is stored in the redis DB, return them the result saved there. Those should persist for 15 mins max. Just in case new information changes, and people want an updated search.
@@ -77,6 +74,15 @@ UNRESOLVED/DISAPPEARED:
 DONE
 ===========
 ~~~~~~~~~~~
+
+1/28/21
+
+* Fix the code. Have to use hmset in the style of createemptyroom to change the data in each redis room.
+    * Basically I have to have the redis code send the response, and then after res.send, do the mongodb code. That way everything will be in mongodb, 
+    * Then we have to stest that everything is wroking.
+        * Everything works
+
+=====
 
 1/27/21
 
