@@ -1,6 +1,11 @@
 const RoomModel = require('../models/room');
+const randomWords = require('random-words');
 const redis = require('redis');
 let redisClient;
+
+const { promisify } = require("util");
+
+let getRoomFromRedis;
 
 class CustomStates{
     static UNSTARTED = -1;
@@ -149,31 +154,45 @@ function findRoom(roomID){
     console.log("We were given room");
     console.log(roomID);
     return new Promise((resolve, reject)=>{
-        redisClient.hgetall(roomID, (err, reply)=>{            
-            if(err){
-                logFailure(`find room in redis (${roomID})`, err);
-                console.log("Trying MongoDB...");
-                return RoomModel.findOne({roomID});                
-            } else if(!reply){
-                console.log(`New msg: Tried to find room ${roomID}. Didn't work`)
-                reject(`Tried finding room ${roomID}, but failed.`);
+        getRoomFromRedis(roomID)
+        .then(reply=>{
+            if(!reply){
+                console.log(`Redis: Tried to find room ${roomID}. Didn't work`)
+                reject(`Redis: Tried finding room ${roomID}, but failed.`);                
             }
-            // console.log("GOT ALL");   
-            try{
-                //Have to reconstruct the object from a string.
-                reply = convertRedisRoomToObject(reply);
-            } catch(error){
-                logFailure(`find room in redis (${roomID})`, err);
-                console.log("Trying MongoDB...");
-                return RoomModel.findOne({roomID});
-            }           
-            resolve(reply);
+            //Have to reconstruct the object from a string.
+            resolve(convertRedisRoomToObject(reply));
+        })
+        .catch(err=>{
+            logFailure(`find room in redis (${roomID})`, err);
+            console.log("Trying MongoDB...");
+            return RoomModel.findOne({roomID});             
         });
+
+        // redisClient.hgetall(roomID, (err, reply)=>{            
+        //     if(err){
+        //         logFailure(`find room in redis (${roomID})`, err);
+        //         console.log("Trying MongoDB...");
+        //         return RoomModel.findOne({roomID});                
+        //     } else if(!reply){
+        //         console.log(`New msg: Tried to find room ${roomID}. Didn't work`)
+        //         reject(`Tried finding room ${roomID}, but failed.`);
+        //     }
+        //     // console.log("GOT ALL");   
+        //     try{
+        //         //Have to reconstruct the object from a string.
+        //         reply = convertRedisRoomToObject(reply);
+        //     } catch(error){
+        //         logFailure(`find room in redis (${roomID})`, err);
+        //         console.log("Trying MongoDB...");
+        //         return RoomModel.findOne({roomID});
+        //     }           
+        //     resolve(reply);
+        // });
     });
-    // return RoomModel.findOne({roomID});
 }
 
-function becomeHost(roomID, socketID){
+function becomeHost(roomID, socketID, io){
     // console.log("*****************");
     //     console.log("Becoming host of "+roomID);
         let isHost = false;
@@ -371,8 +390,77 @@ function getRoomsList(res){
     });
 }
 
+function removeFromRoom(socketID, roomID, io){
+    return new Promise((resolve, reject)=>{
+        console.log(`${socketID} is leaving room: ${roomID}`);
+        findRoom(roomID)
+        .then(room=>{            
+            if(room){
+                //reassign the host if necessary
+                if(room.users.length < 1){
+                    room.hostSocketID = "";
+                } else if(room.hostSocketID == socketID){
+                    room.hostSocketID = room.users[
+                        Math.floor(Math.random() * room.users.length)
+                    ].socketID;
+                    io.in(room.roomID).emit('setHost', room.hostSocketID);       
+                }
+                    //now remove the user
+                    room.users = room.users.filter(user=>user.socketID != socketID);
+                updateRoomUsers(room);    
+            } else {
+                console.log(`Failed to remove user from ${roomID}. Couldn't find the room!`);
+            }
+        })//then
+        .catch(error=>{
+            logFailure(`remove ${socketID} from ${roomID}`, error);
+        });        
+
+    });
+
+                    // RoomModel.findOne({$text: {$search: socket.id}})
+        //! The below code can be changed, since we have access to the socket's
+        //! rooms now that we're listening to 'disconnecting' instead of 'disconnect'
+    // RoomModel.find({users:{$not:{$eq:null}}})
+    // .then(rooms=>{
+    //     // console.log(result);
+    //     const foundRoom = rooms.find(room=>room.users.some(user=>user.socketID == socket.id));
+    //     if(foundRoom){        
+    //         console.log("USER SHOULD BE OUT OF ROOM NOW");
+    //         socket.leave(foundRoom.roomID); 
+    //         foundRoom.users = foundRoom.users
+    //                     .filter(user=>user.socketID != socket.id);
+            
+    //         if(foundRoom.users.length < 1){
+    //             foundRoom.hostSocketID = "";
+    //         } else if(foundRoom.hostSocketID == socket.id){
+    //             foundRoom.hostSocketID = foundRoom.users[
+    //                 Math.floor(Math.random() * foundRoom.users.length)
+    //             ].socketID;
+    //             io.in(foundRoom.roomID).emit('setHost', foundRoom.hostSocketID);       
+    //         }
+    //         RoomModel.updateOne(
+    //             {roomID: foundRoom.roomID}, //query for the room to update
+    //             {$set: {
+    //                 users: foundRoom.users,
+    //                 hostSocketID: foundRoom.hostSocketID
+    //                 }
+    //             }, //value to update
+    //             (err, newRoom)=>{}
+    //         )
+    //         .catch(err=>logFailure(`delete user ${socket.id}`, err));
+    //         // updateRoomUsers(foundRoom.users, foundRoom.roomID)
+    //     }
+    // });
+}
+
+function getRedisClient(){
+    return redisClient;
+}
+
 function createRedisClient(){
     redisClient = redis.createClient();
+    getRoomFromRedis = promisify(redisClient.hgetall).bind(redisClient);
     return redisClient;
 }
 
@@ -385,5 +473,8 @@ module.exports = {
     becomeHost,
     createEmptyRoom,
     updateRoomUsers,
-    getRoomsList
+    getRoomsList,
+    removeFromRoom,
+    getRedisClient,
+    convertRedisRoomToObject
 }
