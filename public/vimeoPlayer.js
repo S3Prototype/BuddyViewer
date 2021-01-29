@@ -45,9 +45,9 @@ class VimeoViewer extends BuddyViewer{
             }
             this.sendTimeEvent();
         });
-        this.player.on('progress', progress=>{
-            console.log("Buffer updatE: "+update.seconds);
-            this.buffered = progress.percent * this.duration;
+        this.player.on('progress', update=>{
+            // console.log("Buffer update: "+update.seconds);
+            this.buffered = update.percent * update.duration;
         });
         this.player.on('ended', _=>{
             BuddyViewer.showRecommendedCard();
@@ -189,6 +189,7 @@ class VimeoViewer extends BuddyViewer{
             data.videoState == CustomStates.PLAYING){
             this.play();
         }
+        this.sendReadyVideo();
     }
 
     newVideo(data){        
@@ -204,6 +205,7 @@ class VimeoViewer extends BuddyViewer{
                 this.duration = duration;
                 document.dispatchEvent(new Event('initialize'));
             });
+            this.sendReadyVideo();
         })
         .catch(error=>{
             switch (error.name) {

@@ -107,6 +107,8 @@ class YouTubeViewer extends BuddyViewer{
         this.setVolume(parseInt(this.volume ?? 50));
         // thisBuddyPlayer.initialized = true;
         this.captionsEnabled = YouTubeViewer.options.cc_load_policy == 1;
+
+        this.sendReadyVideo();
     }
 
     newVideo(data){ 

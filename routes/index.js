@@ -3,7 +3,6 @@ const router = express.Router();
 const {getAllRooms} = require('../utils/roomQueries');
 
 router.get('/', (req, res, next)=>{
-    // console.log("TEST");
     const successMessage = res.locals.successMessage;
     getAllRooms()
     .then(allRooms=>{
@@ -13,7 +12,7 @@ router.get('/', (req, res, next)=>{
     .catch(error=>{
         console.log(error);
         res.render('errorPage', {error});//Show error page
-    })
+    });
 });
 
 module.exports = router;

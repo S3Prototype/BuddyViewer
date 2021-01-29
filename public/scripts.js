@@ -12,6 +12,19 @@ $(function(){
         return tips[Math.floor(Math.random() * tips.length)];
     }
 
+    function getReadyToSend(){
+        document.addEventListener('videoReadyToSend', event=>{
+            console.log("Sending my video now that it's ready");
+            socket.emit('startNew', event.detail.data, roomID);                
+        });
+    }
+
+    function doNotSend(){
+        if(BuddyViewer.SendVideoHandler){
+            document.removeEventListener('videoReadyToSend', BuddyViewer.SendVideoHandler, false);
+        }
+    }
+
     let failureCount = 0;
     const maxFailures = 1;
     let ytInterval;
@@ -100,7 +113,7 @@ $(function(){
             contentType: 'application/json',
             data: JSON.stringify({user_id: userID, query: query}, null, 2),
             success: function (results){       
-                console.log(JSON.stringify(results, null, 2));
+                // console.log(JSON.stringify(results, null, 2));
                 addRecommendedVideos(results);
                 addSearchResults(results);
             }
@@ -150,7 +163,7 @@ $(function(){
                 changeVolumeSettings();
                 data.volume = volumeSlider.value;
                 alignPlayerWithData(data);
-                socket.emit('startNew', data, roomID);
+                // socket.emit('startNew', data, roomID);
 
             });
 
@@ -185,7 +198,7 @@ $(function(){
                 changeVolumeSettings();
                 data.volume = volumeSlider.value;
                 alignPlayerWithData(data);
-                socket.emit('startNew', data, roomID);
+                // socket.emit('startNew', data, roomID);
             }
 
             resultDiv.addEventListener('click', function(event){
@@ -396,7 +409,7 @@ $(function(){
                 youtubeSearch(result.videoTitle);
                 addToRoomHistory(result);
                 result.volume = volumeSlider.value;
-                socket.emit('startNew', result, roomID);
+                // socket.emit('startNew', result, roomID);
                 disableLoopingIcon();
                 createNewPlayer[result.videoSource](result);
                 searchResultsContainer.scrollTop = 0;
@@ -507,8 +520,12 @@ $(function(){
         console.log(`Sending new of: ${JSON.stringify(data, null, 2)}`);
         changeVolumeSettings(source);
         data.volume = volumeSlider.value;
+
+        //Prepare listener to send new video to others.
+        getReadyToSend();
+        //create the new player
         createNewPlayer[source](data);
-        socket.emit('startNew', data, roomID);
+        // socket.emit('startNew', data, roomID);
     }
 
     function scriptExists(source){
@@ -677,6 +694,7 @@ $(function(){
             buddyPlayer.destroy();
             clearInterval(ytInterval);
         }
+        console.log("Trying to create OTherPlayer");
         buddyPlayer = new OtherPlayer(otherData);
         buddyPlayer.getState() == CustomStates.PLAYING ?
             buddyPlayer.play() : buddyPlayer.pause();
@@ -994,6 +1012,7 @@ $(function(){
 
     function alignPlayerWithData(data){
         if(data.videoTime === undefined) return;
+        if(data.videoSource < 0) return;
         console.log("I'm trying to align my player.");
         // console.log(`Data is: ${JSON.stringify(data, null, 2)}`);
         console.log("The video time is "+data.videoTime);
@@ -1007,6 +1026,10 @@ $(function(){
         }
 
         data.volume = volumeSlider.value;
+
+            //We don't want to send this new video out, since
+            //we're the ones receiving it.
+        doNotSend();
         if(!buddyPlayer || buddyPlayer.getSource() != videoSource){
             //* If it's not the same player, then make a new player
             changeVolumeSettings(videoSource);
@@ -1024,8 +1047,7 @@ $(function(){
             }
         }
 
-        youtubeSearch(data.title || videoTitle || videoID);
-        //Now add the history in.
+        youtubeSearch(data.title || videoTitle || videoID || "Benjamin August");
     }
 
     function createRoomHistory(history){
@@ -1088,7 +1110,7 @@ $(function(){
             alignPlayerWithData(data);
             // $('body').scrollTop(0);
             document.getElementById("video_container").scrollIntoView();
-            socket.emit('startNew', data, roomID);                
+            // socket.emit('startNew', data, roomID);                
         });
 
         historyContainer.append(itemDiv);
@@ -1144,7 +1166,6 @@ $(function(){
 
         socket.on('initHistory', history=>{
             createRoomHistory(history);
-            // youtubeSearch(data.videoTitle);
         });
 
         socket.on('noOneElseInRoom', _=>{
@@ -1245,6 +1266,7 @@ $(function(){
         // When window loaded ( external resources are loaded too- `css`,`src`, etc...) 
         // if(document.readyState === "complete"){
             console.log("ready state changed!");
+
             document.addEventListener('addToRoomHistory', event=>{
                 console.log("Should be adding history item: ");
                 console.log(JSON.stringify(event.detail.historyItem, null, 2));

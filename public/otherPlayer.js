@@ -61,6 +61,7 @@ class OtherPlayer extends BuddyViewer{
 
         this.player.addEventListener('canplay', ()=>{
             document.dispatchEvent(new Event('initialize'));
+            this.sendReadyVideo();
         });
     }
 

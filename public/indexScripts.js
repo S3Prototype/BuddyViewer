@@ -4,7 +4,7 @@ $(function(){
         const roomListContainer = document.getElementById('room-list-container');
         roomListContainer.innerHTML = "";
         const url = "/room";
-        roomsList.map((room)=>{
+        roomsList.forEach((room)=>{
             // console.log(`HISTORY FOR ${room.roomName}:`);
             // console.log('-------------------');
             if(room.history){
@@ -13,7 +13,10 @@ $(function(){
                 // console.log('NONE');                
             }
             // console.log('-------------------');
-            if(room.securitySetting != 2){
+            console.log('--------------');
+            console.log(room);
+            console.log('--------------');
+            if(room.securitySetting){
                     //Create the div that holds everything.
                 const resultDiv = document.createElement('div');
                 resultDiv.setAttribute('class', 'room-result');
@@ -133,6 +136,7 @@ $(function(){
                     //aligned to inner grids. The results will be
                     //flex items, because the container div is a
                     //flexbox
+                    // console.log(res.rooms);
                     createRoomsList(res.rooms);
             }
         });

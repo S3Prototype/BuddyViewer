@@ -1,6 +1,8 @@
 
 class BuddyViewer{
 
+    static SendVideoHandler;
+
     static showRecommendedCard(){
         document.dispatchEvent(new Event('showRecommended'));
     }
@@ -128,6 +130,15 @@ class BuddyViewer{
 
     getChannelTitle(){
         return this.channelTitle;
+    }
+
+    sendReadyVideo(){
+        BuddyViewer.SendVideoHandler = 
+            new CustomEvent('videoReadyToSend', {
+                bubbles: false,
+                detail: { data: this.generateData() }
+            });
+        document.dispatchEvent(BuddyViewer.SendVideoHandler);
     }
 
     generateData(){

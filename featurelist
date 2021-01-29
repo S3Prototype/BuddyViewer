@@ -1,5 +1,7 @@
 FEATURE LIST:
 
+* If watching livestream, the sync button should just skip everyone up to the most the stream's current time.
+* Create a room edit panel modal for editing room info. Then change the updateroomstate code to allow for updating it.
 * Show text to say who put in a video/pressed play/etc
 * When user disconnects/socket loses connection, gray out the sync icon.
 * share secret link feature. Sends a link that contains the password, or a "secret" style link that is a different url with a key param in it that, when it hits the server, gets the users redirected to the room with the password stored.
