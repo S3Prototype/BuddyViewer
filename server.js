@@ -216,59 +216,7 @@ class YouTubeSearchManager{
 }
 
 app.post('/get-rooms-list', (req, res)=>{
-    // RoomModel.find()
-    // .then(rooms=>{
-    //     res.send({rooms});
-    // })
-    // .catch(error=>{
-    //     logFailure('get all rooms', error);
-    //     res.render('error', {error});//Show error page
-    // });
-
-    //* Get all keys.
-    //* For each key, hgetall the room.
-    //* save that result to an array
-    //* res.send that array
-    redisMongoQueries.getRoomsList(res);
-    // let promises = [];    
-    // const roomArray = []; 
-    
-    // redisClient.keys('*', (err, roomList)=>{
-    //     if(err){
-    //         res.render('error', {err});
-    //         return;
-    //     }
-    //     const keys = Object.keys(roomList);
-    //     // console.log("keys is");
-    //     // console.log(keys);            
-    //     roomList.forEach((roomID)=>{
-    //         promises.push(
-    //             getRoomFromRedis(roomID)
-    //             .then(room=>{
-    //                 if(room.room || !room.roomID) return;
-
-    //                 return new Promise((resolve, reject)=>{
-    //                     room = convertRedisRoomToObject(room);
-    //                     // console.log("Room is");   
-    //                     // console.log(room);
-    //                     // console.log('***************');
-    //                     try{
-    //                         resolve(roomArray.push(room))
-    //                     } catch (err){
-    //                         reject(err);
-    //                     }
-    //                 });
-    //             })//getroomfromredis.then()
-    //         );//promises.push()
-    //     });//roomlist.foreach                           
-    //     Promise.all(promises)
-    //     .then(_=>{         
-    //         console.log('888888888888888888888888888');
-    //         console.log("PROMISE:");
-    //         console.log(roomArray);
-    //         res.send({rooms: roomArray});
-    //     });
-    // });
+    redisMongoQueries.getRoomsList(res, true);
 });
 
 app.post('/getYouTubeInfo', (req, res)=>{

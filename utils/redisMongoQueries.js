@@ -31,6 +31,9 @@ class RoomSecurity{
     static PRIVATE = 2;
 }
 
+const mongoUpdateInterval = 25;
+const roomLifeSpan = 60 * 60 * 24; //rooms 24 hours to live in redis
+
 const defaultDescription = "A lovely room for watching videos! Join!";
 const defaultSecuritySetting = RoomSecurity.OPEN;
 
@@ -107,44 +110,80 @@ function updateRoomState(data, roomID){
             thumbnail = DEFAULT_THUMBNAIL;
         }
 
+        const updateInfo = {
+            history,
+            thumbnail,
+            playRate,
+            videoTitle,
+            videoSource,
+            videoDuration: videoDuration ?? 0,
+            videoID,
+            videoTime,
+            videoState: CustomStates.UNSTARTED
+        }
+
+        let {roomUpdateCount} = room;
+        let shouldUpdateMongo = false;
+        if(roomUpdateCount){
+            shouldUpdateMongo = (++roomUpdateCount > mongoUpdateInterval);
+        } else {
+            roomUpdateCount = 1;
+        }
+        
+        if(shouldUpdateMongo) mongoUpdate(roomID, data);
+
         redisClient.hmset(room.roomID,
             'history', JSON.stringify(history),
             'thumbnail', thumbnail,
+            'playRate', JSON.stringify(playRate),
             'videoTitle', videoTitle,
             'videoSource', JSON.stringify(videoSource),
-            'playRate', JSON.stringify(playRate),
             'videoDuration', JSON.stringify(videoDuration),
             'videoID', videoID, //holds id most recently played video
             'videoTime', JSON.stringify(videoTime), //most recent video time,
             'videoState', JSON.stringify(CustomStates.UNSTARTED),//most recent state
+            'roomUpdateCount', roomUpdateCount,
+            'updatedAt', new Date().toString(),
             (err, reply)=>{
                 console.log("Updating room state. Status:");
-                if(!reply) logFailure(`update room ${roomID}`, `Couldn't find the room.`);
-                if(err) logFailure(`update room ${roomID}`, err);
+                if(err || !reply){
+                        //If err, print that as reason. Else, print generic response.
+                    logFailure(`update room ${roomID}`, err || "Couldn't find room.");                
+                    mongoUpdate(roomID, updateInfo);
+                }
+                redisClient.expire(roomID, roomLifeSpan, ()=>{});
             }
         );
 
-        RoomModel.updateOne(
-            {roomID: room.roomID}, //query for the room to update
-            {$set: {
-                videoTime,
-                videoSource,
-                videoState: CustomStates.UNSTARTED,
-                videoID,
-                playRate,
-                thumbnail,
-                videoTitle,
-                videoDuration: videoDuration ?? 0,
-                history
-            }}, //value to update
-            function(err, newRoom){
-                if(err){
-                    const thisRoom = newRoom ? newRoom.roomID : "a room";
-                    logFailure(`update ${thisRoom} in MongoDB`, err);
-                } 
-                // else console.log("Updated in mongodb too");
-            }
-        );
+        // {
+        //     history,
+        //     thumbnail,
+        //     playRate,
+        //     videoTitle,
+        //     videoSource,
+        //     videoDuration: videoDuration ?? 0,
+        //     videoID,
+        //     videoTime,
+        //     videoState: CustomStates.UNSTARTED
+        // }
+
+        function mongoUpdate(roomID, info){
+            roomUpdateCount = 0;
+            console.log("Updating mongodb! Woohoo!");
+            RoomModel.updateOne(
+                {roomID}, //query for the room to update
+                {$set: info}, //value to update
+                function(err, newRoom){
+                }
+            )
+            .then(_=>{
+                console.log("Done updating mongodb!!");
+            })
+            .catch(err=>{      
+                const thisRoom = newRoom ? newRoom.roomID : "a room";
+                logFailure(`update ${thisRoom} in MongoDB`, err);
+            })
+        }
 
     })
     .catch(err=>logFailure(`find room to update (${roomID})`, err));    
@@ -168,27 +207,6 @@ function findRoom(roomID){
             console.log("Trying MongoDB...");
             return RoomModel.findOne({roomID});             
         });
-
-        // redisClient.hgetall(roomID, (err, reply)=>{            
-        //     if(err){
-        //         logFailure(`find room in redis (${roomID})`, err);
-        //         console.log("Trying MongoDB...");
-        //         return RoomModel.findOne({roomID});                
-        //     } else if(!reply){
-        //         console.log(`New msg: Tried to find room ${roomID}. Didn't work`)
-        //         reject(`Tried finding room ${roomID}, but failed.`);
-        //     }
-        //     // console.log("GOT ALL");   
-        //     try{
-        //         //Have to reconstruct the object from a string.
-        //         reply = convertRedisRoomToObject(reply);
-        //     } catch(error){
-        //         logFailure(`find room in redis (${roomID})`, err);
-        //         console.log("Trying MongoDB...");
-        //         return RoomModel.findOne({roomID});
-        //     }           
-        //     resolve(reply);
-        // });
     });
 }
 
@@ -270,6 +288,7 @@ async function createEmptyRoom(securitySetting, roomName,
     return new Promise((resolve, reject)=>{
         const newRoomID = roomName+'-'+roomID;
         redisClient.hmset(newRoomID,
+            'roomUpdateCount', 0,
             'roomID', newRoomID,
             'hostSocketID', "",
             'roomName', roomName,
@@ -288,12 +307,15 @@ async function createEmptyRoom(securitySetting, roomName,
             'videoState', JSON.stringify(CustomStates.UNSTARTED),//most recent state
             'playRate', '1',
             'messages', JSON.stringify([]),
+            'createdAt', new Date().toString(),
+            'updatedAt', new Date().toString(),
             (err, reply)=>{
                 console.log("Reply when setting room:");
                 console.log(reply);
                 
-                if(reply){
+                if(reply){                    
                     resolve({roomID: newRoomID});
+                    redisClient.expire(newRoomID, roomLifeSpan,()=>{});
                 }
 
                 const newRoom = RoomModel.create({
@@ -348,7 +370,7 @@ function updateRoomUsers(updatedRoom){
     });
 }
 
-function getRoomsList(res){
+function getRoomsList(res, isForList){
     let promises = [];    
     const roomArray = []; 
     
@@ -372,20 +394,68 @@ function getRoomsList(res){
                         // console.log(room);
                         // console.log('***************');
                         try{
-                            resolve(roomArray.push(room))
+                            if(room.securitySetting != RoomSecurity.PRIVATE){
+                                roomArray.push(room);
+                            } 
+                            resolve(roomArray);
                         } catch (err){
                             reject(err);
                         }
                     });
                 })//getroomfromredis.then()
+                .catch(err=>{
+                    return new Promise((resolve, reject)=>{
+                        RoomModel.find()
+                        .then(rooms=>{
+                            rooms.forEach(room=>{
+                                if(room.securitySetting != RoomSecurity.PRIVATE){
+                                    console.log(`Mongo Private ${room.roomName}`)
+                                    roomArray.push(room);
+                                } else {
+                                    console.log(`Mongo Not private ${room.roomName}`)
+                                }
+                            });
+                            resolve(roomArray = rooms.filter(
+                                    room=>room.securitySetting != RoomSecurity.PRIVATE
+                            ));
+                        })
+                        .catch(err=>{
+                            reject("Could not get rooms from redis or mongodb.");
+                        });
+                    });
+                })
             );//promises.push()
         });//roomlist.foreach                           
         Promise.all(promises)
-        .then(_=>{         
-            console.log('888888888888888888888888888');
-            console.log("PROMISE:");
-            console.log(roomArray);
-            res.send({rooms: roomArray});
+        .then(_=>{                     
+            const successMessage = res.locals.successMessage;
+            const pageErrors = res.locals.errorMessage;
+            if(roomArray.length <= 1){
+                console.log("Room array small somehow??")
+                RoomModel.find()
+                .then(allRooms=>{
+                    if(isForList) res.send({allRooms});
+                    else{
+                        res.render('homepage', {allRooms,
+                            successMessage, pageErrors});
+                    }
+                    
+                })
+                .catch(error=>{
+                    res.render('errorPage', {error});//Show error page                    
+                });
+            } else {
+                console.log("Sending rooms to index");
+                if(isForList){
+                    res.send({allRooms: roomArray});                
+                } else {
+                    res.render('homepage', {allRooms: roomArray,
+                        successMessage, pageErrors});                
+                }
+            }
+        })
+        .catch(error=>{
+            logFailure(`send rooms list to homepage`, error);
         });
     });
 }
@@ -417,41 +487,6 @@ function removeFromRoom(socketID, roomID, io){
         });        
 
     });
-
-                    // RoomModel.findOne({$text: {$search: socket.id}})
-        //! The below code can be changed, since we have access to the socket's
-        //! rooms now that we're listening to 'disconnecting' instead of 'disconnect'
-    // RoomModel.find({users:{$not:{$eq:null}}})
-    // .then(rooms=>{
-    //     // console.log(result);
-    //     const foundRoom = rooms.find(room=>room.users.some(user=>user.socketID == socket.id));
-    //     if(foundRoom){        
-    //         console.log("USER SHOULD BE OUT OF ROOM NOW");
-    //         socket.leave(foundRoom.roomID); 
-    //         foundRoom.users = foundRoom.users
-    //                     .filter(user=>user.socketID != socket.id);
-            
-    //         if(foundRoom.users.length < 1){
-    //             foundRoom.hostSocketID = "";
-    //         } else if(foundRoom.hostSocketID == socket.id){
-    //             foundRoom.hostSocketID = foundRoom.users[
-    //                 Math.floor(Math.random() * foundRoom.users.length)
-    //             ].socketID;
-    //             io.in(foundRoom.roomID).emit('setHost', foundRoom.hostSocketID);       
-    //         }
-    //         RoomModel.updateOne(
-    //             {roomID: foundRoom.roomID}, //query for the room to update
-    //             {$set: {
-    //                 users: foundRoom.users,
-    //                 hostSocketID: foundRoom.hostSocketID
-    //                 }
-    //             }, //value to update
-    //             (err, newRoom)=>{}
-    //         )
-    //         .catch(err=>logFailure(`delete user ${socket.id}`, err));
-    //         // updateRoomUsers(foundRoom.users, foundRoom.roomID)
-    //     }
-    // });
 }
 
 function getRedisClient(){

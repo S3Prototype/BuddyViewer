@@ -1,17 +1,6 @@
 DOING:
-    * Then we have to stop redis from saving local backup.
-    * Then we have to design the way it'll decide when to save to mongodb. I'm thinking every 5x the room is updated or so? Then when a room is accessed, check redis first. If it's not there, then check mongodb. Hell, maybe only save to mongodb when the room expires? No, probably at certain time intervals or at least use intervals. Like every 100x it's updated?
-* Definitely gonna have to change it back to some form of saving rooms in local storage like redis or something until it's time to save it to mongodb.
-    * Save all rooms in redis with an expiration time. Reset that time every time the room is updated. Once that time is reached, then delete the data from redis and store it in the DB. Time period should be like 24 hours. 24 hours after you close the room and don't open it, it'll be slow to open back up. Otherwise, it stays persistent.
-    * (Maybe) Save yt searches. If someone searches for the exact same string as is stored in the redis DB, return them the result saved there. Those should persist for 15 mins max. Just in case new information changes, and people want an updated search.
-* Put in options to sort rooms from newest to oldest. (means have to add creation date to has we create in redis.)
+* Put in options to sort rooms from newest to oldest. (means have to add creation date to hash we create in redis.)
     * Also other sorting abilities, like name, num users, most recent activity (update time added to hash);
-* Make it so when you seek, you also adjust the room state.
-* Confirmation email can just contain a randomly generated word that has been hashed by bcrypt. When they click the link, check it with bcrypt. If it matches the stored random word, they're activated. Only hold the random word for a temporary period in redis.
-    * Might be possible to implement mailchimp.
-* Have to learn more about passport. req.isAuthenticated() checks if user is logged in, I think? From there, you have to show each page with the user profile pic or not.
-* Gotta implement a different session store from the default.
-    ** https://github.com/expressjs/session#compatible-session-stores
 * Uhhh why the fuck does the searchbar disappear when the window dimensions get small?
 =====
 
@@ -35,6 +24,7 @@ TODO:
 +++++++++++++++++++++++++++++++++++++
 UI Stuff:
 
+* On index page, show when room was created and last updated.
 * Now that we're using ytsr, we have access to tons of info about videos. Can add durations, upload dates and views. Can also add search results for yt channels
 * Full screen doesn't work in chrome again. Goddammit. The video controls look janky and don't go away.
     ** Probably have to put the css in a -webkit thingy
@@ -68,13 +58,30 @@ THOUGHTS:
 
 UNRESOLVED/DISAPPEARED:
 
-* Starting the player up after refreshing is broken now. The start time and toolbars are not remotely fucking inited properly. This is ever since we added history to the page.
+* 
+* Confirmation email can just contain a randomly generated word that has been hashed by bcrypt. When they click the link, check it with bcrypt. If it matches the stored random word, they're activated. Only hold the random word for a temporary period in redis.
+    * Might be possible to implement mailchimp.
+* Have to learn more about passport. req.isAuthenticated() checks if user is logged in, I think? From there, you have to show each page with the user profile pic or not.
+* Gotta implement a different session store from the default.
+    ** https://github.com/expressjs/session#compatible-session-stores
 
 ~~~~~~~~~~~
 DONE
 ===========
 ~~~~~~~~~~~
 
+1/29/21
+
+* When you start a youtube video from recommended, it's muted.
+* Make it so when you seek, you also adjust the room state.
+* Then we have to stop redis from saving local backup.
+* Then we have to design the way it'll decide when to save to mongodb. I'm thinking every 5x the room is updated or so? Then when a room is accessed, check redis first. If it's not there, then check mongodb. Hell, maybe only save to mongodb when the room expires? No, probably at certain time intervals or at least use intervals. Like every 100x it's updated?
+
+* Definitely gonna have to change it back to some form of saving rooms in local storage like redis or something until it's time to save it to mongodb.
+    * Save all rooms in redis with an expiration time. Reset that time every time the room is updated. Once that time is reached, then delete the data from redis and store it in the DB. Time period should be like 24 hours. 24 hours after you close the room and don't open it, it'll be slow to open back up. Otherwise, it stays persistent.
+    * (Maybe) Save yt searches. If someone searches for the exact same string as is stored in the redis DB, return them the result saved there. Those should persist for 15 mins max. Just in case new information changes, and people want an updated search.
+
+=====
 1/28/21
 
 * Fix the code. Have to use hmset in the style of createemptyroom to change the data in each redis room.

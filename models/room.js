@@ -54,6 +54,10 @@ const roomSchema = new Schema({
         type: Number,
         required: false
     },
+    videoTitle: {
+        type: String,
+        required: false
+    },
     videoState: {
         type: Number,
         required: false

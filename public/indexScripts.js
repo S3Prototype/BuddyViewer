@@ -1,22 +1,37 @@
 $(function(){
 
+    $('#sorting-options').change(()=>{        
+        $('#sorting-options option:selected').each(()=>{
+            //You can just change the order attribute of
+            //items in a flexbox. Sort through them that way.
+            switch($(this).val()){
+                case `lastCreated`:
+
+                break;
+
+                case `lastUpdated`:
+                break;
+
+                case `rAlphabetical`:
+                break;
+
+                case `alphabetical`:
+                break;
+            }
+        });
+    });
+
     function createRoomsList(roomsList){
         const roomListContainer = document.getElementById('room-list-container');
         roomListContainer.innerHTML = "";
         const url = "/room";
         roomsList.forEach((room)=>{
-            // console.log(`HISTORY FOR ${room.roomName}:`);
-            // console.log('-------------------');
             if(room.history){
                 // console.log(JSON.stringify(room.history, null, 2));
             } else {
                 // console.log('NONE');                
             }
-            // console.log('-------------------');
-            console.log('--------------');
-            console.log(room);
-            console.log('--------------');
-            if(room.securitySetting){
+            if(room.securitySetting != 2){
                     //Create the div that holds everything.
                 const resultDiv = document.createElement('div');
                 resultDiv.setAttribute('class', 'room-result');
@@ -102,32 +117,21 @@ $(function(){
         // console.log(JSON.stringify(roomListContainer, null, 2));
     }//createRoomsList()
 
-    function checkServerForRooms(){
-        $.ajax({
-            url: '/get-rooms-list',
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({userID: localStorage.getItem('userID')}, null, 2),
-            success: res=>{
-                //use res.rooms
-                // console.log(`ROOMS ARE: ${JSON.stringify(res.rooms, null, 2)}`);
-                createRoomsList(res.rooms);
-            }
-        });
-    }
-
-    createRoomsList(daRooms);
-
-    // checkServerForRooms();
-
-    // createRoomsList(rooms);
+    createRoomsList(roomsArray);
 
     $('#refresh-button').click(e=>{
+        //Temporarily disable the button to prevent
+        //user from spamming.
+        $('#refresh-button').attr('disabled', true);
+        setTimeout(()=>{
+            $('#refresh-button').attr('disabled', false);            
+        }, 3000);
+        //Now get the rooms.
         $.ajax({
             url: '/get-rooms-list',
             method: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify({userID: localStorage.getItem('userID')}, null, 2),
+            data: JSON.stringify({isForList: true}),
             success: res=>{
                 //use res.rooms
                 // console.log(`ROOMS ARE: ${JSON.stringify(res.rooms, null, 2)}`);
@@ -137,7 +141,8 @@ $(function(){
                     //flex items, because the container div is a
                     //flexbox
                     // console.log(res.rooms);
-                    createRoomsList(res.rooms);
+                    roomsArray = res.allRooms;
+                    createRoomsList(roomsArray);
             }
         });
     });

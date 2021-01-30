@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="index_styles.css" type="text/css" />
     <title>Test Chat Room</title>
     <script>
-        var daRooms =<%- JSON.stringify(allRooms) %>;
+        var roomsArray =<%- JSON.stringify(allRooms) %>;
     </script>
 </head>
 <body>
@@ -29,6 +29,14 @@
             <input type="radio" checked id="private-security-radio" name="securitySetting" value="private">
                     <label for="male">Private</label>
         </form>
+        
+        <label for="sorting-options">Sort by:</label>
+        <select name="sorting-options" id="sorting-options">
+            <option value="lastUpdated" selected>Last Updated</option>
+            <option value="lastCreated">Last Created</option>
+            <option value="alphabetical">Name (A-Z)</option>
+            <option value="rAlphabetical">Name (Z-A)</option>            
+        </select>
         <!-- <button id="create-room-button" class="create-room-button">
             <h1 id="create-room-text" class="create-room-text">
                 Create Room

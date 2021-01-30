@@ -160,11 +160,10 @@ $(function(){
                     username: playerUsername,
                     password: playerPassword
                 }
-                changeVolumeSettings();
+                changeVolumeSettings(VideoSource.YOUTUBE);
                 data.volume = volumeSlider.value;
                 alignPlayerWithData(data);
                 // socket.emit('startNew', data, roomID);
-
             });
 
             recommendedContainer.append(recDiv);
@@ -195,7 +194,7 @@ $(function(){
                     username: playerUsername,
                     password: playerPassword
                 }
-                changeVolumeSettings();
+                changeVolumeSettings(VideoSource.YOUTUBE);
                 data.volume = volumeSlider.value;
                 alignPlayerWithData(data);
                 // socket.emit('startNew', data, roomID);
