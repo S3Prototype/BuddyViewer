@@ -117,7 +117,7 @@ $(function(){
         // console.log(JSON.stringify(roomListContainer, null, 2));
     }//createRoomsList()
 
-    createRoomsList(roomsArray);
+    // createRoomsList(roomsArray);
 
     $('#refresh-button').click(e=>{
         //Temporarily disable the button to prevent
@@ -144,6 +144,30 @@ $(function(){
                     roomsArray = res.allRooms;
                     createRoomsList(roomsArray);
             }
+        });
+    });
+
+    const emptyCheckboxURL = `./icons/checkbox_empty.png`;
+    const checkedCheckboxURL = `./icons/checkbox_checked.png`;
+
+    $('label').click(function(){
+        const labelFor = $(this).attr('for');
+        const radioName = labelFor.substring(0, labelFor.indexOf('-'));
+
+        $(this).attr('color', 'blue');
+        $(`input[value="${radioName}"]`).click();
+    });
+
+    $('#security-settings img').click(function(){
+        const imgID = $(this).attr('id');
+        const radioName = imgID.substring(0, imgID.indexOf('-'));
+        $(`input[value="${radioName}"]`).click();
+    });
+
+    $('input[type=radio][name=securitySetting]').change(function() {
+        $('input[type=radio][name=securitySetting]').each(function(){ 
+            let checkedStatus = $(this).is(':checked') ? checkedCheckboxURL : emptyCheckboxURL;
+            $(`#${$(this).val()}-checkbox`).attr('src', checkedStatus);                               
         });
     });
 

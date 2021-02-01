@@ -1,0 +1,47 @@
+@font-face {
+    font-family: 'Gidole';
+    src: url('./fonts/gidole.eot'); /* IE9 Compat Modes */
+    src: url('./fonts/gidole.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+         url('./fonts/gidole.woff2') format('woff2'), /* Super Modern Browsers */
+         url('./fonts/gidole.woff') format('woff'), /* Pretty Modern Browsers */
+         url('./fonts/gidole.ttf')  format('truetype'), /* Safari, Android, iOS */
+         url('./fonts/gidole.svg#svgFontName') format('svg'); /* Legacy iOS */
+
+}
+
+:root{
+    --base-bg-color: rgb(237, 247, 246);
+    --selected-color: rgb(88, 127, 252);
+    --base-button-color: rgb(88, 127, 252);
+    --base-button-text-color: rgb(237, 247, 246);
+    --base-input-color: rgb(146, 165, 253);
+    --base-border-color:  rgb(146, 165, 253);
+    
+    --base-font: 'Gidole';
+    --base-input-font-size: 34px;
+    --base-text-color: rgb(30, 30, 93);
+    --base-button-font-size: 54px;
+}
+
+body{
+    text-transform: uppercase;
+}
+
+input{
+    font: inherit;
+    color: var(--base-input-color);
+}
+
+input::placeholder{
+    color: var(--base-input-color);
+    font: inherit;
+    text-transform: uppercase;
+}
+
+button{
+    text-transform: inherit;
+    background: none;
+    outline: none;
+    border: none;
+}
+

@@ -1,118 +1,209 @@
 body {
-    color: white;
-    background-color: rgb(14, 24, 64);
-    font-family: Helvetica, Arial, sans-serif;
+    color: var(--base-text-color);
+    background-color: var(--base-bg-color);
+    font-family: var(--base-font), Arial, sans-serif;
     display: grid;
-    grid-template-rows: [top-row] 1fr [create-room] .25fr [room-list] 500px [bottom-row] 1fr;
+    grid-template-rows:[searchbar-row] 1fr [create-room] 4fr [join-room] 8fr  [bottom-row] .5fr;
     grid-template-columns: [left-sidebar] 1fr [main] 30fr [right-sidebar] 1fr;
-    grid-gap: 15px;
 }
 
-#room-list-container{
-    background-color: gray;
-    grid-row: room-list;
-    grid-column: main;
-    display: block;
-    overflow: auto;
-}
-
-.room-result{
-    /* background-color: blueviolet; */
-    /* display: flex; */
-    background-color: rgb(0, 0, 107);
-    margin: 5px;
+.searchbar-container{
     display: grid;
-    grid-template-rows: [title-row] 50px [info-row] 50px;
-    grid-template-columns: [thumbnail] 1fr [name-desc] 2fr [user-count] .25fr [lock-nsfw] .25fr;
+    grid-template-columns: [searchbar-icon] .5fr [searchbar-input] 9.5fr;
+    grid-template-rows: [main] 1fr;
+
+    grid-row: searchbar-row;
+    grid-column: main;
+
+    border-radius: 30px;
+    border-style: solid;
+    border-color: var(--base-border-color);
+    /* background-color: burlywood; */
 }
 
-#room-list-controls{
-    background-color: black;
-    display: flex;
+.search-button{
+    grid-column: searchbar-icon;
+    grid-row: main;
+    margin-top: auto;
+    margin-bottom: auto;
+    margin-right: -25px;
+    margin-left: 25px;
+    background: none;
+    outline: none;
+    border: none;
 }
 
-.room-thumbnail-div{
-    margin: 5px;
-    width: 160px;
-    height: 90px;
-    grid-row: title-row;
-    grid-column: thumbnail;
+.searchbar-icon{
+    color: var(--base-input-color);
 }
 
-.room-thumbnail{
-    width: 100%;
-    height: 100%;
-}
-
-.name-description-container{
-    display: inline-flex;
-    flex-direction: column;
-    justify-content: space-evenly;
-    text-align: left;
-    align-items: baseline;
-    grid-row: title-row / -1;
-    grid-column: name-desc;
-}
-
-.room-name{
-    /* background-color: turquoise; */
-    margin-top: 10px;
-    order: 1;
-    padding-left: 5px;
-    width: 100%;
-}
-
-.room-description{
-    order: 2;
-    /* background-color: tomato; */
-    width: 100%;
-    padding-left: 5px;
-}
-
-.room-user-count{
-    display: inline-flex;
-    flex-direction: column;
-    justify-content: space-evenly;
+.searchbar-input{
+    grid-column: searchbar-input;
+    grid-row: main;
+    background: none;
+    margin-right: 20px;
+    border: none;
     text-align: center;
-    align-items: baseline;
-    margin: 10px;
-    grid-row: title-row / -1;
-    grid-column: user-count;
+
+    font-size: var(--base-input-font-size);
 }
 
-.security-status{
-}
+/* 
+rows: [top-row] .5fr [searchbar-row] 1fr [create-room] 4fr [join-room] 8fr  [bottom-row] .5fr;
+columns: [left-sidebar] 1fr [main] 30fr [right-sidebar] 1fr; */
 
-.lock-nsfw-container{    
-    grid-row: title-row /-1;
-    grid-column: lock-nsfw;
-    display: inline-flex;
-    flex-direction: column;
-    justify-content:space-around;
-    text-align: center;
-    align-items: baseline;
-    margin-left: 15px;
-}
+.create-room-container{
 
-.nsfw-status{
-    /* grid-row: info-row;
-    grid-column: lock-nsfw; */
-}
+    padding-top: 60px;
 
-.nsfw-green{
-    color: rgb(0, 170, 0);
-}
-
-.nsfw-yellow{
-    color: yellow;
-}
-
-#refresh-icon{
-    color: white;
-}
-
-#create-room-container{
-    background-color: gray;
     grid-row: create-room;
     grid-column: main;
+
+    display: grid;
+    grid-template-rows: [create-button] 80px [security-settings] 150px [info-inputs] 1.5fr;
+    grid-template-columns: [main] 1fr;
+}
+
+.create-room-button{
+    grid-row: create-button;
+    grid-column: main;
+
+    background-color: var(--base-button-color);
+
+    width: 100%;
+    height: 100%;
+
+    outline: none;
+    border: none;
+    border-radius: 100px;
+}
+
+.create-room-text{
+    text-align: center;
+    font-family: var(--base-font);
+    font-size: var(--base-button-font-size);
+    color: var(--base-button-text-color);
+}
+
+.security-settings{
+    padding-top: 30px;
+    grid-row: security-settings;
+    grid-column: main;
+    width: 100%;
+    height: 100%;
+
+    display: grid;
+    grid-template-columns: [left-col] 1fr [open-radio] 3fr [locked-radio] 3fr [private-radio] 3fr [right-col] 1fr;
+    grid-template-rows: main;
+}
+
+label{
+    font-size: var(--base-input-font-size);
+    cursor: pointer;
+
+}
+
+/*Hide the default radio options*/
+[type=radio] { 
+    opacity: 0;
+    width: 0;
+    height: 0;
+    cursor: pointer;
+}
+
+.checkbox-image{
+    width: 50px;
+    height: 50px;
+    margin: auto;
+}
+
+.checkbox-image:hover{
+    cursor: pointer;
+}
+
+:checked + label {
+    color: var(--base-button-color);
+ }
+
+.open-security{
+    grid-column: open-radio;
+    margin: auto;
+
+    display: flex;
+    align-items: center;
+}
+
+.locked-security{
+    margin: auto;
+    display: flex;
+    align-items: center;
+    grid-column: locked-radio;
+}
+
+.private-security{
+    display: flex;
+    margin: auto;
+    align-items: center;
+    grid-column: private-radio;
+}
+
+.info-inputs{
+    grid-column: info-inputs;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.info-inputs input{
+    padding-top: 30px;
+    background: none;
+    outline: none;
+    border: none;
+    text-align: center;
+    font-size: var(--base-input-font-size);
+}
+
+.info-inputs input::placeholder{
+    text-align: center;
+}
+
+
+/*
+grid-template-rows: [searchbar-row] 1fr [create-room] 4fr [join-room] 8fr  [bottom-row] .5fr;
+grid-template-columns: [left-sidebar] 1fr [main] 30fr [right-sidebar] 1fr;
+*/
+
+.join-room-container{
+
+    padding-top: 200px;
+    grid-row: join-room;
+    grid-column: main;
+
+    display: grid;
+    grid-template-rows: [or-join-text] 1fr [sort-options] .5fr [room-container] 6.5fr;
+}
+
+.or-join-text{
+    font-size: var(--base-button-font-size);
+    color: var(--base-text-color);
+    text-align: center;
+    grid-row: or-join-text;
+}
+
+.room-sort-controls{
+    padding-top: 30px;
+    grid-row: sort-options;
+    display: grid;
+    grid-template-columns: .5fr repeat(4, 1fr) .5fr;
+}
+
+.room-sort-controls div{
+    text-align: center;
+    font-size: var(--base-input-font-size);
+}
+
+.sort-text{
+    text-align: center;
+    border-right: solid;
+    border-color: var(--base-border-color);
 }
