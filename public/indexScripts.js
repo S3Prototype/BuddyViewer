@@ -52,14 +52,14 @@ $(function(){
                 thumbDiv.append(thumbLink);
 
                     //Create room name
-                const roomName = document.createElement('span');
+                const roomName = document.createElement('div');
                 roomName.setAttribute('class', 'room-name');
                 const nameText = document.createTextNode("Room: "+room.roomName);
                 roomName.appendChild(nameText);
                     //Add roomName to result                                
 
                     //Create description
-                const description = document.createElement('span');
+                const description = document.createElement('div');
                 description.setAttribute('class', 'room-description');
                 const elipses = room.roomDescription.length > 160 ? ' ...' : '';
                 const shortenedDescription = "Description:\n"+room.roomDescription.substring(0, 160) + elipses; 
@@ -68,7 +68,7 @@ $(function(){
 
                     //Add name and desc to resultDiv
                 const infoContainer = document.createElement('div');
-                infoContainer.setAttribute('class', 'name-description-container');
+                infoContainer.setAttribute('class', 'result-info-container');
                 infoContainer.appendChild(roomName);
                 infoContainer.appendChild(description);                    
                     //Add description to result
@@ -76,11 +76,12 @@ $(function(){
 
                 
                     //Create the user count
-                const userCount = document.createElement('span');
+                const userCount = document.createElement('div');
                 userCount.setAttribute('class', 'room-user-count');
                 const userCountText = document.createTextNode("Users: "+room.users.length);
                 userCount.appendChild(userCountText);
-                    //Add the count to the result
+
+                //Add the count to the result
                 resultDiv.append(userCount);
 
                     //NSFW Status
@@ -152,22 +153,45 @@ $(function(){
 
     $('label').click(function(){
         const labelFor = $(this).attr('for');
-        const radioName = labelFor.substring(0, labelFor.indexOf('-'));
+        const dashIndex = labelFor.indexOf('-');
+        const radioName = dashIndex !== -1 ?
+            labelFor.substring(0, dashIndex) : labelFor;            
 
-        $(this).attr('color', 'blue');
-        $(`input[value="${radioName}"]`).click();
+        // console.log(radioName);
+        // console.log($(`input[type=radio][value="${radioName}"]`));
+        // $(`input[type=radio][value="${radioName}"]`).click();
+        $(`#${radioName}`).click();
     });
 
     $('#security-settings img').click(function(){
         const imgID = $(this).attr('id');
         const radioName = imgID.substring(0, imgID.indexOf('-'));
-        $(`input[value="${radioName}"]`).click();
+        $(`input[value="${radioName}"]`).click();        
+    });
+
+    $('#room-sort-controls label').click(function(){
+        const labelFor = $(this).attr('for');
+        const dashIndex = labelFor.indexOf('-');
+        const radioName = dashIndex !== -1 ?
+            labelFor.substring(0, dashIndex) : labelFor; 
+
+        const sortLabels = $('#room-sort-controls label');
+        sortLabels.each(function(){
+            console.log($(this).attr('class'));
+            if($(this).hasClass('selected-option')){
+                $(this).removeClass('selected-option');
+            }
+        });
+
+        $(this).addClass('selected-option');
     });
 
     $('input[type=radio][name=securitySetting]').change(function() {
-        $('input[type=radio][name=securitySetting]').each(function(){ 
+        // console.log($(this).val());
+        const securityRadios = $('input[type=radio][name=securitySetting]');
+        securityRadios.each(function(){ 
             let checkedStatus = $(this).is(':checked') ? checkedCheckboxURL : emptyCheckboxURL;
-            $(`#${$(this).val()}-checkbox`).attr('src', checkedStatus);                               
+            $(`#${$(this).val()}-checkbox`).attr('src', checkedStatus);                                       
         });
     });
 

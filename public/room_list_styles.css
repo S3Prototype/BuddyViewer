@@ -1,0 +1,44 @@
+/*Rooms list*/
+
+.room-list-container{
+    display: flex;
+    flex-direction: column;
+}
+
+.room-result{
+    display: grid;
+    grid-template-columns: [thumbnail] 40% [room-descr] 55% [room-info] 5%;    
+}
+
+.room-thumbnail-div{
+    grid-column: thumbnail;
+    margin: auto;
+}
+
+    /*
+    Desktop Dimensions:
+        w 320
+        h 180
+    Mobile Dimensions:
+        w 160
+        h 90
+    */
+.room-thumbnail img{
+    width: 320;
+    height: 180;
+}
+
+.result-info-container{
+    grid-column: room-descr;
+
+    display: grid;
+    grid-template-rows: [name] 40% [descr] 80%;
+}
+
+.room-name{
+    grid-row: name;
+}
+
+.room-description{
+    grid-row: descr;
+}

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="base_styles.css" type="text/css" />
     <link rel="stylesheet" href="index_styles.css" type="text/css" />
+    <link rel="stylesheet" href="room_list_styles.css" type="text/css" />
     <title>Test Chat Room</title>
     <script>
         var roomsArray =<%- JSON.stringify(allRooms) %>;
@@ -30,21 +31,21 @@
             <div class="security-settings" id="security-settings">
                 <div class="open-security">
                     <img id="open-checkbox" class="checkbox-image" src="./icons/checkbox_empty.png" alt="">
-                    <input type="radio" class="open-security-radio" id="open-security-radio" name="securitySetting" value="open">
-                    <label for="open-security-radio" class="open-security-radio" id="open-security-radio">Open</label>
+                    <input type="radio" class="security-radio" id="open-security-radio" name="securitySetting" value="open">
+                    <label for="open-security-radio" class="open-security-label" id="open-security-label">Open</label>
                 </div>
                 
                 <div class="locked-security">
                     <img id="locked-checkbox" class="checkbox-image" src="./icons/checkbox_empty.png" alt="">
-                    <input type="radio" id="locked-security-radio" class="locked-security-radio" name="securitySetting" value="locked">
-                    <label for="locked-security-radio" class="locked-security-label" id="locked-security-radio">Locked</label>
+                    <input type="radio" id="locked-security-radio" class="security-radio" name="securitySetting" value="locked">
+                    <label for="locked-security-radio" class="locked-security-label" id="locked-security-label">Locked</label>
                 </div>
                 
                 <div class="private-security">
                     <img id="private-checkbox" class="checkbox-image" src="./icons/checkbox_checked.png" alt="">
-                    <input type="radio" checked class="private-security-radio"
+                    <input type="radio" checked class="security-radio"
                     id="private-security-radio" name="securitySetting" value="private">
-                    <label for="private-security-radio" class="private-security-radio" id="private-security-radio">Private</label>
+                    <label for="private-security-radio" class="private-security-label" id="private-security-label">Private</label>
                 </div>
             </div>
 
@@ -61,24 +62,24 @@
             <div class="sort-text" id="sort-text">Sort</div>
 
             <div class="newest-sort">
-                <input type="radio" checked id="newest-sort-radio" class="newest-sort-radio" name="securitySetting" value="newest">
-                <label for="newest-sort-radio" class="newest-sort-label" id="newest-sort-label">Newest</label>
+                <input type="radio" checked id="newest-sort-radio" class="newest-sort-radio" name="roomSort" value="newest">
+                <label for="newest-sort-radio" class="sort-label selected-option" id="newest-sort-label">Newest</label>
             </div>
             
             <div class="activity-sort">
-                <input type="radio" id="activity-sort-radio" class="activity-sort-radio" name="securitySetting" value="activity">
-                <label for="activity-sort-radio" class="activity-sort-label" id="activity-sort-label">Activity</label>
+                <input type="radio" id="activity-sort-radio" class="activity-sort-radio" name="roomSort" value="activity">
+                <label for="activity-sort-radio" class="sort-label" id="activity-sort-label">Activity</label>
             </div>
             
             <div class="name-sort">
-                <input type="radio" class="name-sort-radio" id="name-sort-radio" name="securitySetting" value="name">
-                <label for="name-sort-radio" class="name-sort-radio" id="name-sort-label">A-Z</label>
+                <input type="radio" class="name-sort-radio" id="name-sort-radio" name="roomSort" value="name">
+                <label for="name-sort-radio" class="sort-label" id="name-sort-label">A-Z</label>
             </div>
 
             <div class="users-sort">
                 <input type="radio" class="users-sort-radio"
-                id="users-sort-radio" name="securitySetting" value="users">
-                <label for="users-sort-radio" class="users-sort-label" id="users-sort-label">Users</label>
+                id="users-sort-radio" name="roomSort" value="users">
+                <label for="users-sort-radio" class="sort-label" id="users-sort-label">Users</label>
             </div>
 
             <button id="refresh-button" class="refresh-button">

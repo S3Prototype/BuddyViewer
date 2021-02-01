@@ -121,7 +121,7 @@ label{
     cursor: pointer;
 }
 
-:checked + label {
+.security-radio:checked + label {
     color: var(--base-button-color);
  }
 
@@ -202,8 +202,18 @@ grid-template-columns: [left-sidebar] 1fr [main] 30fr [right-sidebar] 1fr;
     font-size: var(--base-input-font-size);
 }
 
+.room-sort-controls label{
+    padding: 10px;
+    border-radius: 30px;
+}
+
 .sort-text{
     text-align: center;
     border-right: solid;
     border-color: var(--base-border-color);
+}
+
+.selected-option{
+    background-color: var(--base-button-color);
+    color: var(--base-bg-color);
 }
