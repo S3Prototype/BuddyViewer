@@ -182,8 +182,6 @@ app.post('/create-new-room', (req, res)=>{
         roomName = roomName.substring(0, 50);
     }
 
-    if(roomName.contains(' ')) roomName = roomName.replace(/\s/g, '-');
-
     const rawID = uuidV4();
 
     console.log("SECURITY SETTING: "+securitySetting+`(${securityResult})`);

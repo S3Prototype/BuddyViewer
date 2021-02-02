@@ -29,9 +29,8 @@ grid-template-columns: [left-sidebar] 1fr [main] 30fr [right-sidebar] 1fr; */
 .room-result{
     display: inline-grid;
     width: 90%;
-    height: 175px;
+    height: var(--result-height);
     color: var(--base-bg-color);
-    align-self: center;
     grid-template-columns: [thumbnail] 35% [room-info] 58% [room-stats] 7%;   
     margin: 10px;
 
@@ -57,8 +56,8 @@ grid-template-columns: [left-sidebar] 1fr [main] 30fr [right-sidebar] 1fr; */
         h 90
     */
 .room-thumbnail{
-    width: 260px;
-    height: 145px;
+    width: var(--thumbnail-width);
+    height: var(--thumbnail-height);
     align-self: center;
     margin-left: 5px;
 }
@@ -101,8 +100,8 @@ grid-template-columns: [left-sidebar] 1fr [main] 30fr [right-sidebar] 1fr; */
 }
 
 .room-stats-container img{
-    width: 25px;
-    height: 30px;
+    width: var(--stats-icon-width);
+    height: var(--stats-icon-height);
     color: var(--base-bg-color);
 }
 
@@ -127,7 +126,7 @@ grid-template-columns: [left-sidebar] 1fr [main] 30fr [right-sidebar] 1fr; */
   
   /* Track */
   ::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: var(--base-input-color);
   }
   
   /* Handle */
@@ -137,5 +136,5 @@ grid-template-columns: [left-sidebar] 1fr [main] 30fr [right-sidebar] 1fr; */
   
   /* Handle on hover */
   ::-webkit-scrollbar-thumb:hover {
-    background: #555;
+    background: var(--base-text-color);
   }

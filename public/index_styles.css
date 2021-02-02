@@ -3,8 +3,8 @@ body {
     background-color: var(--base-bg-color);
     font-family: var(--base-font), Arial, sans-serif;
     display: grid;
-    grid-template-rows:[searchbar-row] 100px [create-room] 250px [join-room] 700px [bottom-row] 50px;
-    grid-template-columns: [left-sidebar] 4fr [main] 22fr [right-sidebar] 4fr;
+    grid-template-rows:[searchbar-row] minmax(40px, 100px) [create-room] 250px [join-room] 700px [bottom-row] 50px;
+    grid-template-columns: [left-sidebar] 2fr [main] 26fr [right-sidebar] 2fr;
 }
 
 .searchbar-container{
@@ -201,15 +201,17 @@ grid-template-columns: [left-sidebar] 1fr [main] 30fr [right-sidebar] 1fr;
     padding-top: 30px;
     grid-row: sort-options;
     display: grid;
-    grid-template-columns: .5fr repeat(4, minmax(40px, 1fr)) .5fr;
+    grid-template-columns: .5fr repeat(4, minmax(10px, 1fr)) .5fr;
+    grid-template-rows: minmax(10px, var(--sort-font-size));    
 }
 
 .room-sort-controls div{
     text-align: center;
-    font-size: var(--base-input-font-size);
+    font-size: var(--sort-font-size);
 }
 
 .room-sort-controls label{
+    font-size: var(--sort-font-size);
     padding: 10px;
     border-radius: 30px;
 }
@@ -224,6 +226,11 @@ grid-template-columns: [left-sidebar] 1fr [main] 30fr [right-sidebar] 1fr;
 .selected-option{
     background-color: var(--base-button-color);
     color: var(--base-bg-color);
+}
+
+.refresh-button img{
+    width: var(--refresh-icon-width);
+    height: var(--refresh-icon-height);
 }
 
 .refresh-icon{

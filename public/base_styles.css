@@ -16,13 +16,26 @@
     --base-button-text-color: rgb(237, 247, 246);
     --base-input-color: rgb(146, 165, 253);
     --base-border-color:  rgb(146, 165, 253);
+    --base-text-color: rgb(30, 30, 93);
     
     --base-font: 'Gidole';
     --base-input-font-size: 34px;
-    --base-text-color: rgb(30, 30, 93);
+    --sort-font-size: 34px;
     --base-button-font-size: 54px;
     --base-room-name-font-size: 24px;
     --base-room-descr-font-size: 18px;
+
+    --thumbnail-width: 260px;
+    --thumbnail-height: 145px;
+
+    --stats-icon-width: 30px;
+    --stats-icon-height: 30px;
+
+    --refresh-icon-width: 50px;
+    --refresh-icon-height: 50px;
+
+    --result-height: 175px;
+
 }
 
 body{
@@ -47,3 +60,85 @@ button{
     border: none;
 }
 
+@media (max-width: 1180px){
+
+:root{
+    
+    /* --base-input-font-size: 34px;
+    --base-button-font-size: 54px;
+    --base-room-name-font-size: 24px;
+    --base-room-descr-font-size: 18px; */
+
+    --thumbnail-width: 225px;
+    --thumbnail-height: 127px;
+
+    --sort-font-size: 32px;
+    
+    --stats-icon-width: 25px;
+    --stats-icon-height: 25px;
+}   
+
+}
+
+@media (max-width: 1090px){
+    :root{
+        --thumbnail-width: 200px;
+        --thumbnail-height: 110px;
+        
+        --sort-font-size: 28px;
+    }
+}
+
+@media (max-width: 980px){
+    :root{
+        --thumbnail-width: 180px;
+        --thumbnail-height: 105px;
+
+        --sort-font-size: 24px;
+    }
+}
+
+@media (max-width: 880px){
+    :root{
+        --thumbnail-width: 160px;
+        --thumbnail-height: 95px;
+
+        --sort-font-size: 20px;
+        --base-button-font-size: 36px;
+    }
+}
+
+@media (max-width: 770px){
+    :root{
+        --thumbnail-width: 140px;
+        --thumbnail-height: 85px;
+
+        --sort-font-size: 18px;
+    }
+}
+
+@media (max-width: 720px){
+    :root{
+        --thumbnail-width: 120px;
+        --thumbnail-height: 75px;
+
+        --sort-font-size: 16px;
+    }
+}
+
+@media (max-width: 680px){
+    :root{
+        --thumbnail-width: 120px;
+        --thumbnail-height: 75px;
+    }
+}
+
+@media (max-width: 610px){
+    :root{
+        --thumbnail-width: 120px;
+        --thumbnail-height: 75px;
+
+        --base-input-font-size: 16px;        
+        --sort-font-size: 14px;
+    }
+}
