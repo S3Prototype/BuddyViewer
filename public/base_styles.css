@@ -18,9 +18,11 @@
     --base-border-color:  rgb(146, 165, 253);
     
     --base-font: 'Gidole';
-    --base-input-font-size: 34px;
+    --base-input-font-size: 44px;
     --base-text-color: rgb(30, 30, 93);
     --base-button-font-size: 54px;
+    --base-room-name-font-size: 36px;
+    --base-room-descr-font-size: 28px;
 }
 
 body{

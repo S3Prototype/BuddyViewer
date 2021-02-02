@@ -1,18 +1,43 @@
 /*Rooms list*/
 
+/* grid-template-rows:[searchbar-row] 1fr [create-room] 4fr [join-room] 8fr [bottom-row] .5fr;
+grid-template-columns: [left-sidebar] 1fr [main] 30fr [right-sidebar] 1fr; */
+
+
 .room-list-container{
-    display: flex;
+    grid-row: rooms-container;
+    display: inline-flex;
+    width: 100%;
+    justify-self: center;
     flex-direction: column;
+    overflow: auto;
+    justify-content: space-evenly;
+}
+
+.room-result:nth-child(odd){
+    background-color: var(--base-button-color);
+}
+
+.room-result:nth-child(even){
+    background-color: var(--base-input-color);
 }
 
 .room-result{
-    display: grid;
-    grid-template-columns: [thumbnail] 40% [room-descr] 55% [room-info] 5%;    
+    display: inline-grid;
+    width: 80%;
+    height: 240px;
+    color: var(--base-bg-color);
+    align-self: center;
+    grid-template-columns: [thumbnail] 35% [room-info] 58% [room-stats] 7%;   
+    margin: 10px;
+
+    box-shadow: 3px 2px 10px 1px gray;
 }
 
 .room-thumbnail-div{
     grid-column: thumbnail;
-    margin: auto;
+    align-self: center;
+    justify-self: center;
 }
 
     /*
@@ -23,13 +48,13 @@
         w 160
         h 90
     */
-.room-thumbnail img{
-    width: 320;
-    height: 180;
+.room-thumbnail{
+    width: 340px;
+    height: 200px;
 }
 
 .result-info-container{
-    grid-column: room-descr;
+    grid-column: room-info;
 
     display: grid;
     grid-template-rows: [name] 40% [descr] 80%;
@@ -37,8 +62,70 @@
 
 .room-name{
     grid-row: name;
+    text-align: center;
+    margin-top: 20px;
+    font-size: var(--base-room-name-font-size);
 }
 
 .room-description{
     grid-row: descr;
+    text-align: center;
+    font-size: var(--base-room-name-font-size);
 }
+
+
+/** Stats */
+
+.room-stats-container{
+
+    grid-column: room-stats;
+
+    /* align-self: center; */
+    display: flex;
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: space-evenly;
+
+    color: var(--base-bg-color);
+}
+
+.room-stats-container img{
+    width: 45px;
+    height: 50px;
+    color: var(--base-bg-color);
+}
+
+.room-user-container{
+    display: flex;
+
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+
+    font-size: var(--base-room-descr-font-size);
+}
+
+.room-user-count{
+    margin-bottom: 5px;
+}
+
+/* width */
+::-webkit-scrollbar {
+    width: 10px;
+  }
+  
+  /* Track */
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+  
+  /* Handle */
+  ::-webkit-scrollbar-thumb {
+    background: var(--base-text-color);
+  }
+  
+  /* Handle on hover */
+  ::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }

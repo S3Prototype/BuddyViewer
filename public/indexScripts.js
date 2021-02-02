@@ -20,30 +20,27 @@ $(function(){
             }
         });
     });
+    
+    const roomListContainer = document.getElementById('room-list-container');
 
     function createRoomsList(roomsList){
-        const roomListContainer = document.getElementById('room-list-container');
+        console.log(roomsList);
         roomListContainer.innerHTML = "";
         const url = "/room";
         roomsList.forEach((room)=>{
-            if(room.history){
-                // console.log(JSON.stringify(room.history, null, 2));
-            } else {
-                // console.log('NONE');                
-            }
             if(room.securitySetting != 2){
                     //Create the div that holds everything.
                 const resultDiv = document.createElement('div');
                 resultDiv.setAttribute('class', 'room-result');
+            
                     //Create the div that holds the thumbnail
                 const thumbDiv = document.createElement('div');
                 thumbDiv.setAttribute('class', 'room-thumbnail-div');
-                resultDiv.append(thumbDiv);
                     //Create the thumbnail
                 const thumbnail = document.createElement('img');
                 thumbnail.setAttribute('class', 'room-thumbnail');
                 thumbnail.setAttribute('src', room.thumbnail);
-                    //Add a tag
+                    //Add <a> tag
                 const thumbLink = document.createElement('a');
                 thumbLink.setAttribute('href', url+"/"+room.roomID);                    
                     //Add thumbnail to the a tag containing it                                        
@@ -51,10 +48,12 @@ $(function(){
                     //Add a tag to thumbdiv
                 thumbDiv.append(thumbLink);
 
+                resultDiv.append(thumbDiv);
+
                     //Create room name
                 const roomName = document.createElement('div');
                 roomName.setAttribute('class', 'room-name');
-                const nameText = document.createTextNode("Room: "+room.roomName);
+                const nameText = document.createTextNode(room.roomName);
                 roomName.appendChild(nameText);
                     //Add roomName to result                                
 
@@ -62,7 +61,7 @@ $(function(){
                 const description = document.createElement('div');
                 description.setAttribute('class', 'room-description');
                 const elipses = room.roomDescription.length > 160 ? ' ...' : '';
-                const shortenedDescription = "Description:\n"+room.roomDescription.substring(0, 160) + elipses; 
+                const shortenedDescription = room.roomDescription.substring(0, 160) + elipses; 
                 const descriptionText = document.createTextNode(shortenedDescription);
                 description.appendChild(descriptionText);
 
@@ -74,43 +73,63 @@ $(function(){
                     //Add description to result
                 resultDiv.append(infoContainer);
 
-                
+                //* Now create a div for the room stats.
+                const roomStatsContainer = document.createElement('div');
+                roomStatsContainer.setAttribute('class', 'room-stats-container');
+
+                    //* create container for user icon and count
+                const userInfoDiv = document.createElement('div');
+                userInfoDiv.setAttribute('class', 'room-user-container');
+
                     //Create the user count
                 const userCount = document.createElement('div');
                 userCount.setAttribute('class', 'room-user-count');
-                const userCountText = document.createTextNode("Users: "+room.users.length);
+                const userCountText = document.createTextNode(room.users.length);
                 userCount.appendChild(userCountText);
 
-                //Add the count to the result
-                resultDiv.append(userCount);
+                    //Add the count to the info div
+                userInfoDiv.append(userCount);
+                
+                    //create user icon  
+                const userIcon = document.createElement('img');
+                userIcon.setAttribute('src', './icons/user.png');
+                userInfoDiv.append(userIcon);    
+
+                roomStatsContainer.append(userInfoDiv);
 
                     //NSFW Status
-                const nsfwStatus = document.createElement('span');
+                const nsfwDiv = document.createElement('div');
+                nsfwDiv.setAttribute('class', 'nsfw-container');
                 const status = room.nsfw ?
-                    'nsfw-status fas fa-thumbs-up nsfw-green nsfw-status' :
-                    'nsfw-status fas fa-exclamation-triangle nsfw-yellow';
-                nsfwStatus.className = status;
-                    //Add nsfw status to result
-                // resultDiv.append(nsfwStatus);
+                    './icons/nsfw.png' :
+                    './icons/sfw1.png';
+                
+                const nsfwImage = document.createElement('img');
+                nsfwImage.setAttribute('src', status);
+                nsfwImage.setAttribute('class', 'nsfw-icon');
+
+                nsfwDiv.append(nsfwImage);
+                roomStatsContainer.append(nsfwDiv);
 
                     //Security Status
-                const securityStatus = document.createElement('span');
-                const security = room.securitySetting == 0 ?
-                    'security-status fas fa-lock-open' :
-                    'security-status fas fa-lock';
-                securityStatus.className = security;
-                    //Add security status to result
-                // resultDiv.append(securityStatus);
+                const securityDiv = document.createElement('div');
+                securityDiv.setAttribute('class', 'security-container');
 
-                const lockNsfwContainer = document.createElement('div');
-                lockNsfwContainer.setAttribute('class', 'lock-nsfw-container');
+                const securitySetting = room.securitySetting == 0 ?
+                    './icons/unlocked.png' :
+                    './icons/locked.png';
 
-                lockNsfwContainer.append(securityStatus);
-                lockNsfwContainer.append(nsfwStatus);
-                resultDiv.append(lockNsfwContainer);
-
+                const securityImage = document.createElement('img');
+                securityImage.setAttribute('class', 'security-image');
+                securityImage.setAttribute('src', securitySetting);
                 
-                // console.log(JSON.stringify(roomListContainer, null, 2));
+                securityDiv.append(securityImage);
+
+                    //Add security status to result
+                roomStatsContainer.append(securityDiv);
+
+                resultDiv.append(roomStatsContainer);
+
                     //Finally add it all to the list.
                 roomListContainer.append(resultDiv);
             }//if securitysetting != 2
@@ -118,14 +137,16 @@ $(function(){
         // console.log(JSON.stringify(roomListContainer, null, 2));
     }//createRoomsList()
 
-    // createRoomsList(roomsArray);
+    createRoomsList(roomsArray);
 
     $('#refresh-button').click(e=>{
         //Temporarily disable the button to prevent
         //user from spamming.
-        $('#refresh-button').attr('disabled', true);
+        $('#refresh-button').attr('disabled', true);        
+        $('#refresh-icon').removeClass('refresh-icon');
         setTimeout(()=>{
-            $('#refresh-button').attr('disabled', false);            
+            $('#refresh-button').attr('disabled', false);    
+            $('#refresh-icon').addClass('refresh-icon');
         }, 3000);
         //Now get the rooms.
         $.ajax({
