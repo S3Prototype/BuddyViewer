@@ -201,7 +201,7 @@ grid-template-columns: [left-sidebar] 1fr [main] 30fr [right-sidebar] 1fr;
     padding-top: 30px;
     grid-row: sort-options;
     display: grid;
-    grid-template-columns: .5fr repeat(4, 1fr) .5fr;
+    grid-template-columns: .5fr repeat(4, minmax(40px, 1fr)) .5fr;
 }
 
 .room-sort-controls div{

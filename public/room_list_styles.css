@@ -8,10 +8,14 @@ grid-template-columns: [left-sidebar] 1fr [main] 30fr [right-sidebar] 1fr; */
     grid-row: rooms-container;
     display: inline-flex;
     width: 100%;
-    justify-self: center;
+    max-height: 600px;
+
+    /* align-content: center; */
+    /* align-items: center; */
+    /* justify-self: center; */
     flex-direction: column;
     overflow: auto;
-    justify-content: space-evenly;
+    /* justify-content: space-evenly; */
 }
 
 .room-result:nth-child(odd){
@@ -24,20 +28,24 @@ grid-template-columns: [left-sidebar] 1fr [main] 30fr [right-sidebar] 1fr; */
 
 .room-result{
     display: inline-grid;
-    width: 80%;
-    height: 240px;
+    width: 90%;
+    height: 175px;
     color: var(--base-bg-color);
     align-self: center;
     grid-template-columns: [thumbnail] 35% [room-info] 58% [room-stats] 7%;   
     margin: 10px;
 
+    justify-items: center;
+    /* align-items: center; */
+
     box-shadow: 3px 2px 10px 1px gray;
 }
 
 .room-thumbnail-div{
+    margin-top: 5px;
     grid-column: thumbnail;
-    align-self: center;
-    justify-self: center;
+    display: flex;
+    align-items: center;
 }
 
     /*
@@ -49,8 +57,10 @@ grid-template-columns: [left-sidebar] 1fr [main] 30fr [right-sidebar] 1fr; */
         h 90
     */
 .room-thumbnail{
-    width: 340px;
-    height: 200px;
+    width: 260px;
+    height: 145px;
+    align-self: center;
+    margin-left: 5px;
 }
 
 .result-info-container{
@@ -70,7 +80,7 @@ grid-template-columns: [left-sidebar] 1fr [main] 30fr [right-sidebar] 1fr; */
 .room-description{
     grid-row: descr;
     text-align: center;
-    font-size: var(--base-room-name-font-size);
+    font-size: var(--base-room-descr-font-size);
 }
 
 
@@ -84,15 +94,15 @@ grid-template-columns: [left-sidebar] 1fr [main] 30fr [right-sidebar] 1fr; */
     display: flex;
     flex-direction: column;
 
-    align-items: center;
-    justify-content: space-evenly;
+    align-content: space-between;
+    justify-content: space-around;
 
     color: var(--base-bg-color);
 }
 
 .room-stats-container img{
-    width: 45px;
-    height: 50px;
+    width: 25px;
+    height: 30px;
     color: var(--base-bg-color);
 }
 
@@ -103,10 +113,10 @@ grid-template-columns: [left-sidebar] 1fr [main] 30fr [right-sidebar] 1fr; */
     align-items: center;
     justify-content: space-between;
 
-    font-size: var(--base-room-descr-font-size);
 }
 
 .room-user-count{
+    font-size: var(--base-room-name-font-size);
     margin-bottom: 5px;
 }
 
