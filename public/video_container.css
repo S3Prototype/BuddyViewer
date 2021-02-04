@@ -1,0 +1,25 @@
+.video_container{
+
+    display: grid;
+
+    width: 640px;
+    height: 800px;
+
+    grid-row: video-container;
+    grid-column: main;
+
+    grid-template-columns: [left-side] 1fr [main] 28fr [right-side] 1fr;
+    grid-template-rows: [video-row] 4fr, [progress-bar] 1fr [controls-bar] 1fr;
+}
+
+#player{
+    grid-row: video-row;
+    grid-column: main;
+    background-color: var(--base-button-text-color);
+    width: 640px;
+}
+
+.video_controls{
+    grid-row: video-row;
+    grid-column: main;
+}

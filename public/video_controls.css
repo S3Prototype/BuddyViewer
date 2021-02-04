@@ -1,21 +1,34 @@
 .video_container {
-    background-color: black;
-    color: white;
-    display: inline-grid;
-    grid-template-columns: [play-button] .25fr [time-code] .5fr [mute-button] .25fr [volume-slider] 1.5fr [closed-captions-button] .25fr [playrate-button] .25fr [fullscreen-button] .5fr;
-    grid-template-rows: [video-player] 400px [progress-bar] 20px [video-controls] 20px [search-box] 20px [bottom-row] 10px;
-
-    /*Below code aligns it in the page grid*/
-    grid-column: main / right-sidebar;
+    background-color: var(--base-text-color);
+    color: var(--base-button-text-color);
+    
     grid-row: video-area;
+    
+    grid-column: 1;
+    width: 100%;
+    
     row-gap: 5px;
-    pointer-events: auto;
     max-height: 780px;
+
+    pointer-events: auto;
+    display: grid;
+
+    grid-template-columns: [play-button] .5fr [time-code] .5fr [mute-button] .25fr [volume-slider] 1fr [closed-captions-button] .5fr [playrate-button] .5fr [fullscreen-button] 1fr;
+    grid-template-rows: [video-player] 500px [progress-bar] 80px [video-controls] 80px;
 }
 
-.video_container button{
-    background: none;
-    border: none;
+#player {
+    grid-column: 1;
+    grid-row: video-player / progress-bar;
+    order: 1;
+    height: 100%;
+    width: 100%;
+
+    pointer-events: none;
+    width: 100%;
+    height: 100%;
+
+    background-color: var(--base-text-color);
 }
 
 .video_container:fullscreen{
@@ -24,56 +37,31 @@
     flex-wrap: nowrap;
 }
 
-iframe{
-pointer-events: none;
-width: 100%;
-height: 100%;
-}
-
-video {
-    pointer-events: none;
-}
-
 .video_controls{
-    grid-row: video-controls / search-box;
-    grid-column: 1 / -1;
+    grid-row: video-controls;
+    grid-column: 1;
     width: 100%;
-    display: inline-grid;
+    display: grid;
     grid-template-columns: [play-button] .25fr [time-code] .5fr [mute-button] .25fr [volume-slider] 1fr [closed-captions-button] .25fr [reduce-playrate] .10fr [playrate-button] .25fr [increase-playrate] .10fr [loop-button] .25fr [host-button] .25fr [sync-button] .25fr [fullscreen-button] .25fr;
-    grid-template-rows: 1fr;
     order: 2;
 }
 
 #host-button{
     color: white;
-    grid-row: video-controls;
     grid-column: host-button;    
-}
-
-#player {
-    grid-column-start: 1;
-    grid-column-end: -1;
-    grid-row-start: video-player;
-    grid-row-end: progress-bar;
-    order: 1;
-    height: 100%;
-    width: 100%;
 }
 
 .reduce-playrate-button{
     grid-column: reduce-playrate;
-    grid-row: video-controls;
     color: white; 
 }
 
 .increase-playrate-button{
     grid-column: increase-playrate;
-    grid-row: video-controls;
     color: white;
 }
 
 .playrate-button{
-    grid-row: video-controls;
     grid-column: playrate-button;
     color: inherit;
     background: inherit;
@@ -86,7 +74,6 @@ video {
     width: .25fr;
     color: white;
     grid-column: playrate-button;
-    grid-row: progress-bar;
     bottom: 150px;
     left: -15px;
     display: none;
@@ -126,13 +113,11 @@ video {
 
 .loop-button{
     color: gray;
-    grid-row: video-controls;
     grid-column: loop-button;
 }
 
 .sync-button{
     color: gray;    
-    grid-row: video-controls;
     grid-column: sync-button;
 }
 
@@ -142,18 +127,13 @@ video {
 
 #seek-tooltip {
     grid-column: time-code / mute-button;
-    grid-row-start: video-controls;
-    grid-row-end: search-box;
-    padding-left:10px;
+    padding-left: 10px;
     padding-top: 4px;
     color: white;
 }
 
 .play-pause-button {
-    grid-column-start: play-button;
-    grid-column-end: time-code;
-    grid-row-start: video-controls;
-    grid-row-end: search-box;
+    grid-column-start: play-button / time-code;
     background:none;
     border:none;
 }
@@ -164,7 +144,6 @@ video {
 
 #closed-captions-button{
     grid-column: closed-captions-button;
-    grid-row: video-controls;
     background:none;
     border:none;
 }
@@ -175,7 +154,7 @@ video {
 
 .video_progress {
     grid-column: 1 / -1;
-    grid-row: progress-bar / video-controls;
+    grid-row: progress-bar;
     width: 100%;
     position: auto;
     order: 2;
@@ -218,7 +197,7 @@ video {
 
 .buffer_progress{
     grid-column: 1 / -1;
-    grid-row: progress-bar / video-controls;
+    grid-row: progress-bar;
     /* color: white; */
     position: auto;
     width: 100%;
@@ -264,10 +243,7 @@ video {
 }
 
 #mute-button {
-    grid-column-start: mute-button;
-    grid-column-end: volume-slider;
-    grid-row-start: video-controls;
-    grid-row-end: search-box;
+    grid-column-start: mute-button / volume-slider;
     background:none;
     border:none;
 }
@@ -278,16 +254,13 @@ video {
 
 #volume-slider {
     grid-column: volume-slider / closed-captions-button;
-    grid-row-start: video-controls;
-    grid-row-end: search-box;
     background:none;
     border:none;
     color: white;
 }
 
 #fullscreen-button{
-    grid-column: fullscreen-button / -1;
-    grid-row: video-controls / search-box;
+    grid-column: fullscreen-button;
     background:none;
     border:none;
 }
@@ -301,11 +274,16 @@ video {
         grid-row: video;
         grid-column: 1;
         width: 100%;
-        
+        display: grid;
         grid-template-columns: [play-button] .5fr [time-code] .5fr [mute-button] .25fr [volume-slider] 1fr [closed-captions-button] .5fr [playrate-button] .5fr [fullscreen-button] 1fr;
-        grid-template-rows: [video-player] 500px [progress-bar] 80px [video-controls] 40px [search-box] 80px [bottom-row] 40px;
+        grid-template-rows: [video-player] 500px [progress-bar] 80px [video-controls] 80px;
     
     }
+
+    /* .video_controls{
+        grid-row: video-controls;
+        grid-column: 1;
+    } */
 
     .playrate-text{
         font-size: 36px;

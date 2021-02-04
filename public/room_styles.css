@@ -1,0 +1,24 @@
+body {
+    display: grid;
+
+    grid-template-columns: [left-side] minmax(10px, 1fr) [main] minmax(380px, 28fr) [right-side] minmax(10px, 1fr);
+    grid-template-rows: [search-bar] minmax(80px, 2fr) [video-container] minmax(200px, 4fr) [history-search] minmax(200px, 4fr);
+}
+
+.search-results{
+    grid-row: history-search;
+    grid-column: main;
+}
+
+.history{
+    grid-row: history-search;
+    grid-column: main;
+}
+
+.searchbar-container{
+    grid-row: search-bar;
+    grid-column: main;
+}
+
+
+

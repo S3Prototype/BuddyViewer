@@ -36,10 +36,13 @@
 
     --result-height: 175px;
 
+    --checkbox-size: 50px;
+
 }
 
 body{
     text-transform: uppercase;
+    background-color: var(--base-bg-color);
 }
 
 input{
@@ -58,6 +61,12 @@ button{
     background: none;
     outline: none;
     border: none;
+}
+
+@media (min-width: 1181px){
+    :root{
+        --result-height: 180px
+    }
 }
 
 @media (max-width: 1180px){
@@ -139,6 +148,45 @@ button{
         --thumbnail-height: 75px;
 
         --base-input-font-size: 16px;        
-        --sort-font-size: 14px;
+        --sort-font-size: 17px;
     }
+}
+
+/*iPhone 6/7/8 Plus*/
+@media(max-width: 500px){
+    :root{
+        --thumbnail-width: 100px;
+        --thumbnail-height: 60px;
+
+        --base-input-font-size: 24px;        
+        --sort-font-size: 17px;
+
+        --base-room-name-font-size: 18px;
+        --base-room-descr-font-size: 14px;        
+    
+        --result-height: 110px;
+
+        --stats-icon-width: 12px;
+        --stats-icon-height: 12px;
+
+        --checkbox-size: 25px;
+
+    }
+    
+    /* .result-info-container{
+        grid-column: room-info;
+    
+        display: grid;
+        
+        /* row-gap: 15px; */
+        grid-template-rows: [name] 40% [descr] 80%;
+    }
+    
+    .room-name{
+        grid-row: name;
+        text-align: center;
+        align-self: flex-start;
+        font-size: var(--base-room-name-font-size);
+        overflow: auto;
+    } */
 }

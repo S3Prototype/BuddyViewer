@@ -217,18 +217,19 @@ $(function(){
     });
 
     function resizeIcons(){
-        const refreshIcon = $('#refresh-icon');
+        const icons = [
+            $('#refresh-icon'),
+            $('#searchbar-icon')
+        ];
+
+        icons.forEach(icon=>icon.removeClass('fa-2x fa-3x fa-lg fa-sm'));
+
         if (window.innerWidth < 800){
-            refreshIcon.removeClass('fa-2x');
-            refreshIcon.removeClass('fa-3x');
-            refreshIcon.addClass('fa-lg');
+            icons.forEach(icon=>icon.addClass('fa-lg')); 
         } else if(window.innerWidth < 1000){
-            refreshIcon.removeClass('fa-3x');
-            refreshIcon.addClass('fa-2x');
+            icons.forEach(icon=>icon.addClass('fa-2x')); 
         } else if (window.innerWidth > 1000) {
-            refreshIcon.removeClass('fa-lg');
-            refreshIcon.removeClass('fa-2x');
-            refreshIcon.addClass('fa-3x');
+            icons.forEach(icon=>icon.addClass('fa-3x'));
         }
     }
     
