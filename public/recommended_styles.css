@@ -1,0 +1,86 @@
+/* .search-results{
+    display: inline-flex;
+    overflow: auto;   
+    width: 100%;
+    grid-column: main / right-sidebar;
+    grid-row: search-results-area;
+    max-height: 400px;
+    background-color: whitesmoke;
+    align-items: flex-start;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    flex-basis: 280px;
+    border-radius: 10px;
+} */
+
+.rec-card{
+    color: white;    
+    grid-column: 1 / -1;
+    grid-row: video-player / progress-bar;
+    z-index: 10;
+    display: none;
+    flex-direction: column;
+    background-color: black;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: space-between;        
+}
+
+.rec-container{
+    background-color: red;
+    width: 100%;
+    height: 400px;
+    display: inline-flex;
+    align-items:center;
+    justify-content: space-around;
+    flex-wrap: none;
+    flex-basis: 280px;
+    border-radius: 10px;
+    overflow-x: scroll;
+    overflow-y: hidden;
+}
+
+.rec-div{
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    text-align: left;
+    align-items: center;
+    width: 240px;
+    height: 350px;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    box-shadow: 4px;
+}
+
+.rec-thumbnail-div{
+    width: 220px;
+    height: 135px;
+    flex-basis: 0;
+    flex-grow: 0;
+}
+
+.rec-thumbnail{
+    width: 100%;
+    height: 100%;
+}
+
+.card-title{
+    width: 100%;
+}
+
+.tip-text{
+    width: 100%;
+}
+
+.card-descr{
+    width: 100%;
+}
+
+.rec-title{
+    width: 100%;
+    color: white;
+    font-weight: bold;
+    margin-top: 5px;
+}

@@ -109,7 +109,7 @@ $('#video-login-submit').click(e=>{
     loggedIn = true;
     //Finally, try to find the video again,
     //if there's a link in the searchbar.
-    if($('#ytsearch-input').val()){
+    if($('#search-input').val()){
         $('#ytsearch').submit();
     }
 });

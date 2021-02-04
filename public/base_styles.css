@@ -42,6 +42,7 @@
 
 body{
     text-transform: uppercase;
+    font-family: var(--base-font), Arial, sans-serif;
     background-color: var(--base-bg-color);
 }
 
@@ -62,6 +63,55 @@ button{
     outline: none;
     border: none;
 }
+
+.searchbar-container{
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+
+    grid-row: searchbar-row;
+    grid-column: main;
+    width: 100%;
+
+    border-radius: 30px;
+    border-style: solid;
+    border-color: var(--base-border-color);
+}
+
+.search-button{
+    grid-column: searchbar-icon;
+    grid-row: main;
+    margin-top: auto;
+    margin-bottom: auto;
+    margin-left: 5px;
+    background: none;
+    outline: none;
+    border: none;
+}
+
+.searchbar-icon{
+    color: var(--base-input-color);
+}
+
+.searchbar-input{
+    /* grid-column: searchbar-input; */
+    /* grid-row: main; */
+    background: none;
+    width: 100%;
+    margin-right: 20px;
+    border: none;
+    text-align: center;
+    height: 100%;
+
+    color: var(--base-text-color);
+
+    font-size: var(--base-input-font-size);
+}
+
+.searchbar-input::placeholder{
+    font-size: var(--base-input-font-size);
+}
+
 
 @media (min-width: 1181px){
     :root{

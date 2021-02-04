@@ -1,8 +1,30 @@
 body {
     display: grid;
 
-    grid-template-columns: [left-side] minmax(10px, 1fr) [main] minmax(380px, 28fr) [right-side] minmax(10px, 1fr);
-    grid-template-rows: [search-bar] minmax(80px, 2fr) [video-container] minmax(200px, 4fr) [history-search] minmax(200px, 4fr);
+    row-gap: 40px;
+    grid-template-columns: [left-side] minmax(10px, .5fr) [main] minmax(380px, 28fr) [right-side] minmax(10px, .5fr);
+    grid-template-rows: [searchbar-row] minmax(140px, 1fr) [video-container] minmax(600px, 6fr) [history-search] minmax(400px, 4fr);
+}
+
+span {
+    color: var(--base-input-color);
+}
+
+.searchbar-container{
+    border-radius: 80px;
+    border-width: 5px;
+}
+
+.searchbar-input::placeholder{
+    font-size: 48px;
+}
+
+.video-login-button{
+    margin-right: 10px;
+}
+
+.searchbar-button{
+    margin-left: 10px;
 }
 
 .search-results{
@@ -12,11 +34,6 @@ body {
 
 .history{
     grid-row: history-search;
-    grid-column: main;
-}
-
-.searchbar-container{
-    grid-row: search-bar;
     grid-column: main;
 }
 

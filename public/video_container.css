@@ -1,25 +1,194 @@
-.video_container{
+.video-container{
 
     display: grid;
 
-    width: 640px;
-    height: 800px;
+    min-width: 640px;
+    min-height: 800px;
+
+    background: var(--base-button-color);
 
     grid-row: video-container;
     grid-column: main;
 
-    grid-template-columns: [left-side] 1fr [main] 28fr [right-side] 1fr;
-    grid-template-rows: [video-row] 4fr, [progress-bar] 1fr [controls-bar] 1fr;
+    grid-template-columns: [main] 29fr;
+    grid-template-rows: [video-row] 4fr [progress-bar] .5fr [controls-bar] .75fr;
 }
 
 #player{
     grid-row: video-row;
-    grid-column: main;
-    background-color: var(--base-button-text-color);
-    width: 640px;
+    background-color: var(--base-text-color);
 }
 
-.video_controls{
-    grid-row: video-row;
-    grid-column: main;
+.video-controls{
+    grid-row: controls-bar;
+    background-color: red;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    
 }
+
+.volume-controls{
+    width: 20%;
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+}
+
+.volume-slider{
+    width: 80%;
+}
+
+.video-controls span {
+    color: var(--base-bg-color);
+}
+
+/*? PROGRESS BAR / BUFFER BAR STUFF */
+
+.progress-buffer-container{
+    grid-row: progress-bar;
+    width: 100%;
+    height: 100%;
+}
+
+.video_progress {
+    width: 100%;
+    position: auto;
+    order: 2;
+    z-index: 5;
+    height: 100%;
+    background: var(--base-bg-color);
+}
+
+#progress-bar {
+    position: auto;
+    height: 100%;
+    width: 100%;
+    border:none;
+    background: none;
+    background: var(--base-bg-color);
+    z-index: 5;
+}
+
+/* For Firefox */ 
+#progress-bar::-moz-progress-bar { 
+    position: auto;
+    border:none;
+    height: 100%;
+    width: 100%;
+    background: var(--base-bg-color);
+    z-index: 5;
+
+} 
+
+/* For Chrome or Safari */ 
+#progress-bar::-webkit-progress-value { 
+    position: auto;
+    height: 100%;
+    width: 100%;
+    background: var(--base-bg-color);
+    border:none;
+    z-index: 5;
+}
+
+#progress-bar::-webkit-progress-bar{
+    height: 100%;
+    background: none;
+}
+
+
+.buffer_progress{
+    grid-column: 1 / -1;
+    grid-row: progress-bar;
+    /* color: white; */
+    position: auto;
+    height: 100%;
+    width: 100%;
+    border:none;
+    order: 2;
+    z-index: 1;
+}
+
+#buffer-bar {
+    grid-column: 1 / -1;
+    grid-row: progress-bar;
+    height: 100%;
+    width: 100%;
+    border:none;
+    background-color: rgb(61, 61, 61);
+    position: auto;
+    z-index: 1;
+}
+
+/* For Firefox */ 
+#buffer-bar::-moz-progress-bar { 
+    height: 100%;
+    position: auto;
+    background-color: rgb(61, 61, 61);
+    background:gray;
+    border:none;
+    width: 100%;
+    z-index: 1;
+
+} 
+
+/* For Chrome or Safari */ 
+#buffer-bar::-webkit-progress-value { 
+    height: 100%;
+    position: auto;
+    background:gray;
+    /* background:gray;  */
+    border:none;
+    width: 100%;
+    z-index: 1;
+
+} 
+
+#buffer-bar::-webkit-progress-bar{
+    height: 100%;
+    background: rgb(61, 61, 61);
+}
+
+/* PLAYRATE CONTROLS STUFF */
+
+.playrate-controls{
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.playrate-dropdown{
+    height: 170px;
+    width: .25fr;
+    color: white;
+    grid-column: playrate-button;
+    bottom: 150px;
+    left: -15px;
+    display: none;
+    background-color: black;
+    /* display: flex;
+    flex-direction: column; */
+    /* justify-content: center;
+    align-items: center; */
+    position: relative;
+    z-index: 9;
+}
+
+.playrate-dropdown button:hover{
+    background-color: white;
+    color: black;
+}
+
+.playrate-options{
+    background-color: inherit;
+    /* background: black; */ 
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+    border-radius: 10px;
+    width: 100%;
+    height: 100%;
+    /* list-style: none; */
+}
+

@@ -98,7 +98,7 @@ $(function(){
     console.log("ROOM ID: "+roomID);
     let tooltipDuration = "00:00";
 
-    const youtubeInput = $('#ytsearch-input');
+    const youtubeInput = $('#search-input');
     const searchResultsContainer = document.getElementById('search-results');
 
     function changePlayRate(newRate){
