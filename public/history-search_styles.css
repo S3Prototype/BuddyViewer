@@ -2,7 +2,8 @@
     grid-row: history-search;
     grid-column: main;
     min-width: 100%;
-    min-height: 400px;
+    min-height: 800px;
+    max-height: 800px;
     background: none;
     overflow: auto;
 
@@ -30,7 +31,12 @@
     border-radius: 30px;
 }
 
-[data-tab-content] {
+
+#search-results {
+    display: none;
+}
+
+#history-results {
     display: none;
 }
 
@@ -38,7 +44,20 @@ div.active[data-tab-content]{
     display: flex;
 }
 
-.history-results{
+#search-results.active{
+    grid-row: data;
+    display: flex;
+    overflow: auto;
+    max-height: 700px; 
+    width: 100%;
+    align-items: flex-start;
+    justify-content: space-evenly;
+    flex-wrap: wrap;
+    /* flex-basis: 180px; */
+    border-radius: 10px;
+}
+
+#history-results.active{
     grid-row: data;
     display: flex;
     overflow: auto;

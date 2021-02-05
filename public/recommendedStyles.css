@@ -16,7 +16,7 @@
 .rec-card{
     color: white;    
     grid-column: 1 / -1;
-    grid-row: video-player / progress-bar;
+    grid-row: video-row / progress-bar;
     z-index: 10;
     display: none;
     flex-direction: column;

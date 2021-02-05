@@ -177,6 +177,20 @@ $(function(){
             if(result.type !== "video") return;
             const resultDiv = document.createElement('div');
             resultDiv.setAttribute('class', 'result');
+            
+            const title = document.createElement('span');
+            title.setAttribute('class', 'result-title');
+            const titleText = document.createTextNode(result.title);
+            title.appendChild(titleText);
+            title.addEventListener('click', function(event){
+                addFromResult();
+            });
+            resultDiv.append(title);
+            
+            const channelTitle = document.createElement('span');
+            channelTitle.setAttribute('class', 'channel-title');            
+            channelTitle.innerHTML = result.channelTitle;
+            resultDiv.append(channelTitle);
 
             const thumbDiv = document.createElement('div');
             thumbDiv.setAttribute('class', 'result-thumbnail-div');
@@ -208,22 +222,7 @@ $(function(){
             const thumbnail = document.createElement('img');
             thumbnail.setAttribute('class', 'result-thumbnail');
             thumbnail.setAttribute('src', result.thumbnail);
-            thumbDiv.append(thumbnail)
-
-
-            const title = document.createElement('span');
-            title.setAttribute('class', 'result-title');
-            const titleText = document.createTextNode(result.title);
-            title.appendChild(titleText);
-            title.addEventListener('click', function(event){
-                addFromResult();
-            });
-            resultDiv.append(title);
-            
-            const channelTitle = document.createElement('span');
-            channelTitle.setAttribute('class', 'channel-title');            
-            channelTitle.innerHTML = result.channelTitle;
-            resultDiv.append(channelTitle);
+            thumbDiv.append(thumbnail);
 
             // const description = document.createElement('span');
             // description.setAttribute('class', 'result-description');
@@ -1284,9 +1283,10 @@ $(function(){
             document.addEventListener('trytosync', ()=>{                
                 socket.emit('requestSync', roomID);
             });
-            document.addEventListener('hideRecommended', ()=>{
+            document.addEventListener('hideRecommended', ()=>{                
                 const recCard = document.getElementById('rec-card');
-                recCard.style.display = 'none';
+                recCard.style.display = 'none';               
+                document.getElementById('player').style.width = '100%';
             });
             document.addEventListener('showRecommended', ()=>{
                 if(!recommendedContainer.innerHTML){
@@ -1300,6 +1300,7 @@ $(function(){
                 const cardTitle = document.getElementById('card-title');
                 cardTitle.innerHTML = buddyPlayer.getTitle() ?? "Buddy Viewer";                
                 recCard.style.display = 'flex';
+                document.getElementById('player').style.width = '0';
             });
                                   
             validateUserID();        

@@ -16,24 +16,25 @@
 .rec-card{
     color: white;    
     grid-column: 1 / -1;
-    grid-row: video-player / progress-bar;
+    grid-row: video-row / progress-bar;
     z-index: 10;
     display: none;
     flex-direction: column;
-    background-color: black;
+    background-color: var(--base-text-color);
     width: 100%;
     height: 100%;
     align-items: center;
-    justify-content: space-between;        
+    justify-content: space-between;
+    overflow: hidden;      
 }
 
 .rec-container{
-    background-color: red;
-    width: 100%;
+    background-color: var(--base-bg-color);
+    width: 90%;
     height: 400px;
-    display: inline-flex;
-    align-items:center;
-    justify-content: space-around;
+    display: flex;
+    align-content: center;
+    justify-content: flex-start;
     flex-wrap: none;
     flex-basis: 280px;
     border-radius: 10px;
@@ -45,10 +46,10 @@
     display: inline-flex;
     flex-direction: column;
     justify-content: flex-start;
-    text-align: left;
+    text-align: center;
     align-items: center;
-    width: 240px;
-    height: 350px;
+    min-width: 240px;
+    min-height: 350px;
     margin-top: 20px;
     margin-bottom: 10px;
     box-shadow: 4px;
@@ -66,8 +67,19 @@
     height: 100%;
 }
 
+.channel-title{
+    font-size: var(--base-input-font-size);
+    overflow: hidden;
+    max-height: 40px;
+    color: var(--base-button-color);
+}
+
 .card-title{
     width: 100%;
+    margin-top: 15px;
+    margin-left: 25px;
+    margin-bottom: 20px;
+    font-size: var(--base-input-font-size);
 }
 
 .tip-text{
@@ -76,11 +88,61 @@
 
 .card-descr{
     width: 100%;
+    font-size: var(--sort-font-size);
+    margin-left: 25px;
+    margin-bottom: 20px;
 }
 
 .rec-title{
     width: 100%;
-    color: white;
+    color: var(--base-text-color);
     font-weight: bold;
     margin-top: 5px;
 }
+
+
+@media (max-width: 1000px){
+
+    .rec-description{
+        display: none;
+    }
+
+    .rec-title{
+        font-size: var(--sort-font-size);
+        overflow: hidden;
+        max-height: 60px;
+        min-height: 60px;
+        width: 100%;
+    }
+
+    .rec-div{
+        min-width: 240px;
+        max-width: 240px;
+
+        min-height: 300px;
+        max-height: 300px;
+        margin: 10px;
+    }
+
+    .rec-thumbnail-div{
+        width: 100%;
+        height: 140px;
+        flex-basis: 0;
+        flex-grow: 0;
+    }
+
+    .rec-thumbnail{
+        width: 100%;
+        height: 100%;
+    }
+
+    .channel-title{
+        font-size: var(--sort-font-size);
+        overflow: hidden;
+        max-height: 40px;
+        color: var(--base-button-color);
+        /* padding-bo */
+    }
+}
+
+

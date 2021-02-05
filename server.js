@@ -277,6 +277,7 @@ async function ytsrSearch(query, res){
 }
 
 async function ytsrGetOneResult(query, res){
+    if(!query) return;
     const searchResults = await ytsr(query, {pages: 1});
     const searchData = searchResults.items.filter(item=>item.type === 'video');
     const item = searchData[0];
