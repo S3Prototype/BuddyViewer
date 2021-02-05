@@ -3,7 +3,7 @@ body {
 
     row-gap: 40px;
     grid-template-columns: [left-side] minmax(10px, .5fr) [main] minmax(380px, 28fr) [right-side] minmax(10px, .5fr);
-    grid-template-rows: [searchbar-row] minmax(140px, 1fr) [video-container] minmax(600px, 6fr) [history-search] minmax(400px, 4fr);
+    grid-template-rows: [searchbar-row] minmax(140px, 1fr) [video-container] minmax(500px, 600px) [history-search] minmax(400px, 4fr);
 }
 
 span {
@@ -27,15 +27,12 @@ span {
     margin-left: 10px;
 }
 
-.search-results{
-    grid-row: history-search;
-    grid-column: main;
-}
 
-.history{
+/* .history{
     grid-row: history-search;
     grid-column: main;
-}
+    z-index: 5;
+} */
 
 
 

@@ -109,11 +109,32 @@ $('#video-login-submit').click(e=>{
     loggedIn = true;
     //Finally, try to find the video again,
     //if there's a link in the searchbar.
-    if($('#search-input').val()){
+    if($('#searchbar-input').val()){
         $('#ytsearch').submit();
     }
 });
 
 $('#password-modal-overlay').click(e=>{
     disableVideoLoginModal();
+});
+
+const tabs = document.querySelectorAll('[data-tab-target]');
+const tabContents = document.querySelectorAll('[data-tab-content]');
+
+tabs.forEach(tab=>{
+    tab.addEventListener('click', ()=>{
+        //set all tab contents inactive
+        tabContents.forEach(content=>{
+            // console.log(content.classList);
+            content.classList.remove('active');
+        });                
+        //set all tabs inactive
+        tabs.forEach(tab=>tab.classList.remove('active'));
+
+            //set the current-selected tab and contents active
+        const target = document.querySelector(tab.dataset.tabTarget);        
+        target.classList.add('active');
+        tab.classList.add('active');
+        console.log(tab.dataset.tabTarget);
+    });
 });

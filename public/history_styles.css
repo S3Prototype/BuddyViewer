@@ -34,6 +34,13 @@
     flex-grow: 0;
 }
 
+.channel-title{
+    font-size: var(--base-input-font-size);
+    overflow: hidden;
+    max-height: 40px;
+    color: var(--base-button-color);
+}
+
 .history-item-thumbnail{
     width: 100%;
     height: 100%;
@@ -79,18 +86,20 @@
     }
 
     .history-item-title{
-        font-size: 48px;
+        font-size: var(--base-input-font-size);
+        overflow: hidden;
+        max-height: 80px;
     }
 
     .history-item{
-        width: 360px;
-        height: 475px;
+        width: 320px;
+        height: 400px;
         margin: 10px;
     }
 
     .history-item-thumbnail-div{
         width: 100%;
-        height: 255px;
+        height: 180px;
         flex-basis: 0;
         flex-grow: 0;
     }

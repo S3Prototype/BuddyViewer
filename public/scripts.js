@@ -93,12 +93,12 @@ $(function(){
     const progressBar = document.getElementById('progress-bar');
     const seekToolTip = document.getElementById('seek-tooltip');
 
-    const videoContainer = document.getElementById('video_container');
+    const videoContainer = document.getElementById('video-container');
 
     console.log("ROOM ID: "+roomID);
     let tooltipDuration = "00:00";
 
-    const youtubeInput = $('#search-input');
+    const youtubeInput = $('#searchbar-input');
     const searchResultsContainer = document.getElementById('search-results');
 
     function changePlayRate(newRate){
@@ -299,7 +299,7 @@ $(function(){
         });
 
         const playrateDropdown = document.getElementById('playrate-dropdown');
-        const videoContainer = document.getElementById('video_container');
+        const videoContainer = document.getElementById('video-container');
         if(playRateOptionsShowing){
             //If it's already showing, toggle it off
             playrateDropdown.style.display = 'none';
@@ -706,12 +706,12 @@ $(function(){
     let inFullScreen = false;
     $('#fullscreen-button').click(function(event){
         if(!document.fullscreenElement){
-            const playerElement = document.getElementById('video_container');
+            const playerElement = document.getElementById('video-container');
             let requestFullScreen = playerElement.requestFullScreen || playerElement.mozRequestFullScreen || playerElement.webkitRequestFullScreen;
             if (requestFullScreen) {
                 buddyPlayer.showContractIcon();
                 requestFullScreen.bind(playerElement)().then(data=>{
-                    // document.getElementById('video_container').setAttribute('rotate', 90);
+                    // document.getElementById('video-container').setAttribute('rotate', 90);
                 });
                 // document.getElementById('ytsearch').style.display = 'none';
             }
@@ -1053,7 +1053,7 @@ $(function(){
 
     function createRoomHistory(history){
         if(!history) return;
-        const historyContainer = document.getElementById('history');
+        const historyContainer = document.getElementById('history-results');
         historyContainer.innerHTML = "";
 
         history.forEach(historyItem=>{
@@ -1064,14 +1064,14 @@ $(function(){
     function addToRoomHistory(historyItem){
 
             //First make sure we're not duplicating the last item
-        const lastHistoryItem = $('#history').children().last();
+        const lastHistoryItem = $('#history-results').children().last();
         const lastTitle = lastHistoryItem
                         .find('.history-item-title').html();
         console.log(`Comparing ${historyItem.videoTitle} to ${lastTitle}`);
             //If we're duplicating, just stop.
         if(historyItem.videoTitle === lastTitle) return;
 
-        const historyContainer = document.getElementById('history');
+        const historyContainer = document.getElementById('history-results');
         const itemDiv = document.createElement('div');
         itemDiv.setAttribute('class', 'history-item');
 
@@ -1110,7 +1110,7 @@ $(function(){
             }            
             alignPlayerWithData(data);
             // $('body').scrollTop(0);
-            document.getElementById("video_container").scrollIntoView();
+            document.getElementById("video-container").scrollIntoView();
             // socket.emit('startNew', data, roomID);                
         });
 

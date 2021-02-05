@@ -1,5 +1,6 @@
 DOING:
-* A
+* Right now swapping between the tabs doesn't clear the space. If I click search results, doesn't erase history tab content.
+* Set code to just add and romve fa-2x and other font awesome sizing classes from spans. Wrap text in spans.
 * redo everything using the chrome iphone emulator. Design it just for the iphone 6/7/8, and then just do a single media query for anything bigger than that.
 * Add into js code that we import the user png logo for user count. User count div will contain the logo and count in a column flex.
 * Put in options to sort rooms from newest to oldest. (means have to add creation date to hash we create in redis.)

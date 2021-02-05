@@ -1,11 +1,11 @@
 .video-container{
-
     display: grid;
 
     min-width: 640px;
-    min-height: 800px;
+    min-height: 500px;
+    max-height: 600px;
 
-    background: var(--base-button-color);
+    background: blue;
 
     grid-row: video-container;
     grid-column: main;
@@ -16,16 +16,17 @@
 
 #player{
     grid-row: video-row;
-    background-color: var(--base-text-color);
+    background-color: black;
+    width: 100%;
+    height: 80%;
 }
 
 .video-controls{
     grid-row: controls-bar;
-    background-color: red;
+    background-color: var(--base-text-color);
     display: flex;
     justify-content: space-evenly;
     align-items: center;
-    
 }
 
 .volume-controls{
@@ -47,27 +48,29 @@
 
 .progress-buffer-container{
     grid-row: progress-bar;
+    grid-column: 1 / -1;
     width: 100%;
     height: 100%;
 }
 
-.video_progress {
+.video-progress {
     width: 100%;
     position: auto;
-    order: 2;
-    z-index: 5;
+    order: 1;
+    z-index: 15;
     height: 100%;
-    background: var(--base-bg-color);
+    /* background: var(--base-bg-color); */
 }
 
 #progress-bar {
     position: auto;
     height: 100%;
     width: 100%;
+    order: 1;
     border:none;
     background: none;
-    background: var(--base-bg-color);
-    z-index: 5;
+    /* background: var(--base-bg-color); */
+    z-index: 2;
 }
 
 /* For Firefox */ 
@@ -76,8 +79,8 @@
     border:none;
     height: 100%;
     width: 100%;
-    background: var(--base-bg-color);
-    z-index: 5;
+    /* background: var(--base-bg-color); */
+    z-index: 15;
 
 } 
 
@@ -88,65 +91,68 @@
     width: 100%;
     background: var(--base-bg-color);
     border:none;
-    z-index: 5;
+    z-index: 15;
 }
 
 #progress-bar::-webkit-progress-bar{
+    position: auto;
     height: 100%;
-    background: none;
+    width: 100%;
+    /* background: none; */
+    border:none;
+    z-index: 15;
 }
 
 
 .buffer_progress{
-    grid-column: 1 / -1;
-    grid-row: progress-bar;
-    /* color: white; */
     position: auto;
     height: 100%;
     width: 100%;
     border:none;
+    background-color: var(--base-input-color);
     order: 2;
-    z-index: 1;
+    z-index: 14;    
 }
 
 #buffer-bar {
-    grid-column: 1 / -1;
-    grid-row: progress-bar;
     height: 100%;
+    background-color: var(--base-input-color);
     width: 100%;
     border:none;
-    background-color: rgb(61, 61, 61);
+    background:var(--base-input-color);
     position: auto;
-    z-index: 1;
+    z-index: 14;
 }
 
 /* For Firefox */ 
 #buffer-bar::-moz-progress-bar { 
     height: 100%;
     position: auto;
-    background-color: rgb(61, 61, 61);
-    background:gray;
+    background:var(--base-input-color);
     border:none;
     width: 100%;
-    z-index: 1;
-
+    z-index: 14;
 } 
 
 /* For Chrome or Safari */ 
 #buffer-bar::-webkit-progress-value { 
     height: 100%;
     position: auto;
-    background:gray;
-    /* background:gray;  */
+    background:var(--base-input-color);
+    color: var(--base-input-color);
     border:none;
     width: 100%;
-    z-index: 1;
-
+    z-index: 14;
 } 
 
 #buffer-bar::-webkit-progress-bar{
     height: 100%;
-    background: rgb(61, 61, 61);
+    position: auto;
+    color: var(--base-input-color);
+    background:var(--base-input-color);
+    border:none;
+    width: 100%;
+    z-index: 14;
 }
 
 /* PLAYRATE CONTROLS STUFF */
