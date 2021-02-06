@@ -224,7 +224,7 @@ button{
 
     }
     
-    /* .result-info-container{
+    .result-info-container{
         grid-column: room-info;
     
         display: grid;
@@ -239,5 +239,5 @@ button{
         align-self: flex-start;
         font-size: var(--base-room-name-font-size);
         overflow: auto;
-    } 
+    }
 }

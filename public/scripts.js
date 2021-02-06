@@ -45,6 +45,7 @@ $(function(){
         localStorage.setItem('roomID', roomID);
     }
     
+    const videoContainer = document.getElementById('video-container');    
     const maxNameLength = 18;
     $("#name-input").attr("maxlength", maxNameLength);
     let localName = '';
@@ -92,8 +93,6 @@ $(function(){
 
     const progressBar = document.getElementById('progress-bar');
     const seekToolTip = document.getElementById('seek-tooltip');
-
-    const videoContainer = document.getElementById('video-container');
 
     console.log("ROOM ID: "+roomID);
     let tooltipDuration = "00:00";
@@ -298,7 +297,6 @@ $(function(){
         });
 
         const playrateDropdown = document.getElementById('playrate-dropdown');
-        const videoContainer = document.getElementById('video-container');
         if(playRateOptionsShowing){
             //If it's already showing, toggle it off
             playrateDropdown.style.display = 'none';
@@ -701,27 +699,61 @@ $(function(){
         // buddyPlayer.showPauseIcon();
         buddyPlayer.initVolume();
     }
+
+    function activateVideoControls(){
+        document.getElementById('progress-buffer-container').style.display = 'block';
+        document.getElementById('video-controls').style.display = 'flex';
+    }
+
+    function deactivateVideoControls(){
+        document.getElementById('progress-buffer-container').style.display = 'none';
+        document.getElementById('video-controls').style.display = 'none';
+    }
+
+    let showControlsTimeout;
+    $('#video-container').click((event)=>{
+        if(!inFullScreen) return;
+        console.log("Clocked in full screen");
+
+        activateVideoControls();
+
+        if(showControlsTimeout) clearTimeout(showControlsTimeout);
+
+        showControlsTimeout = setTimeout(()=>{
+            deactivateVideoControls();
+            showControlsTimeout = null;
+        }, 3000);
+    });
     
     let inFullScreen = false;
     $('#fullscreen-button').click(function(event){
+        if(!buddyPlayer) return;
+        if(showControlsTimeout) clearTimeout(showControlsTimeout);
         if(!document.fullscreenElement){
             const playerElement = document.getElementById('video-container');
             let requestFullScreen = playerElement.requestFullScreen || playerElement.mozRequestFullScreen || playerElement.webkitRequestFullScreen;
             if (requestFullScreen) {
+                inFullScreen = true;
+                videoContainer.style.flexDirection = 'column';
                 buddyPlayer.showContractIcon();
-                requestFullScreen.bind(playerElement)().then(data=>{
-                    // document.getElementById('video-container').setAttribute('rotate', 90);
-                });
-                // document.getElementById('ytsearch').style.display = 'none';
+                if(requestFullScreen.bind){
+                    requestFullScreen.bind(playerElement)().then(data=>{
+                        // document.getElementById('video-container').setAttribute('rotate', 90);
+                    });
+                    // document.getElementById('ytsearch').style.display = 'none';
+                }
             }
         }
         else {
+            document.dispatchEvent(new Event('hideRecommended'));
+            inFullScreen = false;
             buddyPlayer.showExpandIcon();
             document.exitFullscreen();
             // document.getElementById('ytsearch').style.display = '';
             // document.getElementById('ytsearch').style.removeProperty('display');
         }
         document.activeElement.blur();
+        activateVideoControls();
         // inFullScreen = !inFullScreen;
     });
 
@@ -1287,6 +1319,10 @@ $(function(){
                 const recCard = document.getElementById('rec-card');
                 recCard.style.display = 'none';               
                 document.getElementById('player').style.width = '100%';
+                if(inFullScreen){
+                    // deactivateVideoControls();
+                    // videoContainer.style.flexDirection = 'column';
+                }
             });
             document.addEventListener('showRecommended', ()=>{
                 if(!recommendedContainer.innerHTML){
@@ -1299,8 +1335,17 @@ $(function(){
 
                 const cardTitle = document.getElementById('card-title');
                 cardTitle.innerHTML = buddyPlayer.getTitle() ?? "Buddy Viewer";                
-                recCard.style.display = 'flex';
+                recCard.style.display = 'inline-flex';
                 document.getElementById('player').style.width = '0';
+                    //Configure UI for full screen
+                if(inFullScreen){
+                    activateVideoControls();
+                    if(showControlsTimeout){
+                        clearTimeout(showControlsTimeout);
+                        showControlsTimeout = null;
+                    }
+                    // videoContainer.style.flexDirection = 'column-reverse';
+                }
             });
                                   
             validateUserID();        
@@ -1316,30 +1361,31 @@ $(function(){
             videoContainer.addEventListener('mousemove', function(event){
                 if(!inFullScreen) return;
                 const screenHeight = window.screen.height;
-                if(event.screenY < screenHeight*0.85 &&
-                    !controlsToggled){
-                    videoContainer.style.flexWrap = "wrap";
-                } else {
-                    videoContainer.style.flexWrap = "nowrap";
-                }
+                // if(event.screenY < screenHeight*0.85 &&
+                //     !controlsToggled){
+                //     videoContainer.style.flexWrap = "wrap";
+                // } else {
+                //     videoContainer.style.flexWrap = "nowrap";
+                // }
             });
 
-            videoContainer.addEventListener('fullscreenchange', function(event){
-                inFullScreen ? toggleFullScreenOff() : toggleFullScreenOn();
-                inFullScreen = !inFullScreen;
-            })
+            // videoContainer.addEventListener('fullscreenchange', function(event){
+            //     console.log("FULL SCREEN CHANGE");
+            //     inFullScreen ? activateVideoControls() : deactivateVideoControls();
+            //     inFullScreen = !inFullScreen;
+            // });
 
             videoContainer.addEventListener('click', function(eventi){
                 /*If you click in the video during fullscreen, bring
                 the controls up. After 3 secs, put them away again */
-                if(inFullScreen){
-                    videoContainer.style.flexWrap = "nowrap";                    
-                    controlsToggled = true;
-                    setTimeout(()=>{
-                        controlsToggled = false;
-                        videoContainer.style.flexWrap = "wrap";                    
-                    }, 3000);
-                }
+                // if(inFullScreen){
+                //     videoContainer.style.flexWrap = "nowrap";                    
+                //     controlsToggled = true;
+                //     setTimeout(()=>{
+                //         controlsToggled = false;
+                //         videoContainer.style.flexWrap = "wrap";                    
+                //     }, 3000);
+                // }
             });
 
             document.addEventListener('keypress', function(event){

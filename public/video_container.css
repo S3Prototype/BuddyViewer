@@ -14,6 +14,39 @@
     grid-template-rows: [video-row] 4fr [progress-bar] .5fr [controls-bar] .75fr;
 }
 
+.video-container:fullscreen{
+    background: chartreuse;
+    display: flex;
+    flex-direction: column;
+    align-content: center;
+    justify-content: flex-end;
+}
+
+.video-container:fullscreen #player{
+    /* min-height: 80%; */
+    height: 100%;
+    z-index: 1;
+    position: fixed;
+    order: 1;
+}
+
+.video-container:fullscreen .progress-buffer-container{
+    display: none;
+    z-index: 10;
+    max-height: 10%;
+    order: 2;
+}
+
+.video-container:fullscreen .video-controls{
+    display: none;
+    z-index: 10;
+    order: 3
+}
+
+.video-container:fullscreen #tip-text{
+    display: none;
+}
+
 #player{
     display: block;
     grid-row: video-row;
@@ -21,6 +54,7 @@
     width: 100%;
     height: 80%;
     z-index: 1;
+    pointer-events: none;
 }
 
 .video-controls{

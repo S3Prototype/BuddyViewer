@@ -1,4 +1,7 @@
 DOING:
+* Fix the styles layout for desktop
+* Make it so if unstarted is triggered, it shows recommended
+* Set up the icon-sizing code in scripts.js
 * Make it so search also adds the channel title together with the video title to the search query
 * Right now swapping between the tabs doesn't clear the space. If I click search results, doesn't erase history tab content.
 * Set code to just add and romve fa-2x and other font awesome sizing classes from spans. Wrap text in spans.
