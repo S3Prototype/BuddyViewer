@@ -168,9 +168,7 @@ class YouTubeViewer extends BuddyViewer{
             SyncManager.syncIfNecessary();
         }
 
-        if(event.data == CustomStates.ENDED ||
-           event.data == CustomStates.PAUSED ||
-           event.data == CustomStates.BUFFERING)
+        if(event.data !== CustomStates.PLAYING)
         {
             BuddyViewer.showRecommendedCard();
         } else {

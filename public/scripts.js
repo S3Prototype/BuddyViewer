@@ -735,7 +735,7 @@ $(function(){
             if (requestFullScreen) {
                 inFullScreen = true;
                 videoContainer.style.flexDirection = 'column';
-                buddyPlayer.showContractIcon();
+                buddyPlayer.showContractIcon();                
                 if(requestFullScreen.bind){
                     requestFullScreen.bind(playerElement)().then(data=>{
                         // document.getElementById('video-container').setAttribute('rotate', 90);
@@ -982,15 +982,15 @@ $(function(){
 
     const bigIcon = 'fa-3x';
     const smallIcon = 'fa-lg';
-    window.onresize = function(event){
-        if(window.innerWidth < 1000){
-            setIconsBig();
-            mobileMode = true;
-        } else if (window.innerWidth > 1000) {
-            setIconsSmall();
-            mobileMode = false;
-        }
-    }
+    // window.onresize = function(event){
+    //     if(window.innerWidth < 1000){
+    //         setIconsBig();
+    //         mobileMode = true;
+    //     } else if (window.innerWidth > 1000) {
+    //         setIconsSmall();
+    //         mobileMode = false;
+    //     }
+    // }
 
     function setIconsBig(){
             unsetIconSize(smallIcon);
@@ -1289,6 +1289,30 @@ $(function(){
         });
     }
 
+    function resizeIcons(){
+        let iconSize = 'fa-3x';        
+
+        if(window.innerWidth < 1000){
+            iconSize = 'fa-2x';
+        }
+
+        $('span').each(function(index){
+                //Don't change searcbhar or video-login icons
+            const thisID = $(this).attr('id');
+            if(thisID === 'searchbar-icon' || thisID === 'video-login-icon') return;
+
+            
+            $(this).removeClass('fa-2x fa-3x fa-lg fa-sm');
+            
+            if(inFullScreen && thisID === 'seek-tooltip') iconSize = 'fa-lg';
+            $(this).addClass(iconSize);
+            console.log("SEtting to: "+iconSize);            
+        });        
+    }
+    
+    window.onresize = function(event){
+        resizeIcons();
+    }
 
     let controlsToggled = false;
 
@@ -1401,6 +1425,6 @@ $(function(){
                 }
             });
 
-        // }
+        resizeIcons();
     }
 });

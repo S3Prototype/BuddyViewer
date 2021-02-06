@@ -61,6 +61,9 @@ $('#room-password-button').click(e=>{
     }
 });
 
+$('#searchbar-input').submit(e=>{
+    $('#ytsearch').submit();    
+});
 
 $('#search-button').click(e=>{
     $('#ytsearch').submit();

@@ -43,8 +43,8 @@
     order: 3
 }
 
-.video-container:fullscreen #tip-text{
-    display: none;
+#tip-text{
+    text-transform: none;
 }
 
 #player{
@@ -234,3 +234,20 @@
     /* list-style: none; */
 }
 
+.seek-tooltip{
+    text-align: center;
+    min-width: 325px;
+    max-width: 375px;
+}
+
+@media (max-width: 1000px){
+    .video-container:fullscreen #tip-text{
+        display: none;
+    }
+
+    .seek-tooltip{
+        text-align: center;
+        min-width: 225px;
+        max-width: 250px;
+    }
+}
