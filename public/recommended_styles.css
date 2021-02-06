@@ -17,7 +17,7 @@
     color: white;    
     grid-column: 1 / -1;
     grid-row: video-row / progress-bar;
-    z-index: 10;
+    z-index: 20;
     display: none;
     flex-direction: column;
     background-color: var(--base-text-color);
@@ -87,6 +87,7 @@
     width: 100%;
     margin-bottom: 20px;
     margin-left: 30px;
+    color: yellow;
 }
 
 .card-descr{
@@ -107,6 +108,79 @@
     text-align: center;
 }
 
+@media (min-width: 1001px){
+
+    .tip-text{
+        font-size: var(--sort-font-size);
+    }
+
+    .rec-div{
+        min-width: 240px;
+        max-width: 240px;
+
+        min-height: 300px;
+        max-height: 300px;
+        margin: 10px;
+        justify-items: flex-start;
+    }
+
+    .rec-description{
+        display: none;
+    }
+
+    .rec-title{
+        font-size: var(--base-room-name-font-size);
+        overflow: hidden;
+        max-height: 55px;
+        min-height: 55px;
+        width: 100%;
+    }
+
+    .video-container:fullscreen .rec-title{
+        font-size: 10px;
+        max-height: 20px;
+        min-height: 20px;        
+    }
+
+    .video-container:fullscreen .rec-div{
+        min-width: 120px;
+        max-width: 120px;
+
+        min-height: 150px;
+        max-height: 150px;
+    }
+
+    .rec-thumbnail-div{
+        width: 100%;
+        min-height: 140px;
+        flex-basis: 0;
+        flex-grow: 0;
+    }
+
+    .video-container:fullscreen .rec-thumbnail-div{
+        height: 70px;
+    }
+
+    .rec-thumbnail{
+        min-height: 140px;
+        width: 100%;
+    }
+
+    .channel-title{
+        font-size: var(--base-room-name-font-size);
+        overflow: hidden;
+        min-height: 40px;
+        max-height: 40px;
+        color: var(--base-button-color);
+    }
+
+    .video-container:fullscreen .channel-title{
+        font-size: 10px;
+        max-height: 20px;
+    }
+
+
+}
 
 @media (max-width: 1000px){
 

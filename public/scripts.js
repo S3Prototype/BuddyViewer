@@ -134,6 +134,7 @@ $(function(){
             
             const channelTitle = document.createElement('span');
             channelTitle.setAttribute('class', 'channel-title');            
+            channelTitle.setAttribute('id', 'channel-title');            
             channelTitle.innerHTML = results[i].channelTitle;
             recDiv.append(channelTitle);
         
@@ -1079,7 +1080,10 @@ $(function(){
             }
         }
 
-        youtubeSearch(data.title || videoTitle || videoID || "Benjamin August");
+        // let searchQuery =  data.title || videoTitle || videoID || "Benjamin August";
+        // searchQuery += ' ';
+        // searchQuery += data.channelTitle || "Cormac McCarthy";
+        youtubeSearch(data.channelTitle || data.title || videoTitle || videoID || "Benjamin August");
     }
 
     function createRoomHistory(history){
@@ -1301,10 +1305,14 @@ $(function(){
             const thisID = $(this).attr('id');
             if(thisID === 'searchbar-icon' || thisID === 'video-login-icon') return;
 
+                //Don't change anything in the history or search result tabs
+            if($(this).parents('div#history-search-results')) return;
             
             $(this).removeClass('fa-2x fa-3x fa-lg fa-sm');
             
-            if(inFullScreen && thisID === 'seek-tooltip') iconSize = 'fa-lg';
+            if(inFullScreen && thisID === 'seek-tooltip'){
+                    iconSize = 'fa-lg';
+            }
             $(this).addClass(iconSize);
             console.log("SEtting to: "+iconSize);            
         });        

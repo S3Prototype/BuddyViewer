@@ -19,6 +19,7 @@
     align-content: center;
     font-size: var(--base-button-font-size);
     background: none;
+    max-height: 80px;
 }
 
 .results-tab{

@@ -2,7 +2,7 @@ body {
     color: var(--base-text-color);
     background-color: var(--base-bg-color);
     display: grid;
-    grid-template-rows: [searchbar-row] minmax(40px, 60px) [create-room] 200px [join-room] 700px [bottom-row] 50px;
+    grid-template-rows: /*[searchbar-row] minmax(40px, 60px)*/ [create-room] 200px [join-room] 700px [bottom-row] 50px;
     grid-template-columns: [left-sidebar] 1fr [main] 28fr [right-sidebar] 1fr;
 }
 

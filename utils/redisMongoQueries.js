@@ -438,8 +438,7 @@ function getRoomsList(res, isForList){
                     else{
                         res.render('homepage', {allRooms,
                             successMessage, pageErrors});
-                    }
-                    
+                    }                    
                 })
                 .catch(error=>{
                     res.render('errorPage', {error});//Show error page                    

@@ -278,16 +278,20 @@ async function ytsrSearch(query, res){
 
 async function ytsrGetOneResult(query, res){
     if(!query) return;
-    const searchResults = await ytsr(query, {pages: 1});
-    const searchData = searchResults.items.filter(item=>item.type === 'video');
-    const item = searchData[0];
-    item.thumbnail = item.bestThumbnail.url;
-    item.videoID = item.id;
-    item.title = decode(item.title);
-    item.videoTitle = item.title;
-    item.channelTitle = decode(item.author.name);
-    item.description = decode(item.description);        
-    res.send(item);
+    try{
+        const searchResults = await ytsr(query, {pages: 1});
+        const searchData = searchResults.items.filter(item=>item.type === 'video');
+        const item = searchData[0];
+        item.thumbnail = item.bestThumbnail.url;
+        item.videoID = item.id;
+        item.title = decode(item.title);
+        item.videoTitle = item.title;
+        item.channelTitle = decode(item.author.name);
+        item.description = decode(item.description);        
+        res.send(item);
+    } catch(error){
+        res.error(error);
+    }
 }
 
 app.post('/search', function(req, response){

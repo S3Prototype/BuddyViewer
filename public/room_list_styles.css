@@ -120,27 +120,6 @@ grid-template-columns: [left-sidebar] 1fr [main] 30fr [right-sidebar] 1fr; */
     font-size: var(--base-room-descr-font-size);
     margin-bottom: 2px;
 }
-
-/* width */
-::-webkit-scrollbar {
-    width: 10px;
-  }
-  
-  /* Track */
-  ::-webkit-scrollbar-track {
-    background: var(--base-input-color);
-  }
-  
-  /* Handle */
-  ::-webkit-scrollbar-thumb {
-    background: var(--base-text-color);
-  }
-  
-  /* Handle on hover */
-  ::-webkit-scrollbar-thumb:hover {
-    background: var(--base-text-color);
-  }
-
   
 @media(min-width:1181px){
 

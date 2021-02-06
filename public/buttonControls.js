@@ -65,6 +65,15 @@ $('#searchbar-input').submit(e=>{
     $('#ytsearch').submit();    
 });
 
+$('#searchbar-input').keypress(function(e){
+    //detect enter button
+    var keycode = (e.keyCode ? e.keyCode : e.which);
+    if(keycode == '13'){
+        e.preventDefault();
+        $('#ytsearch').submit();
+    }
+});
+
 $('#search-button').click(e=>{
     $('#ytsearch').submit();
 });

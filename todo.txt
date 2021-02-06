@@ -1,21 +1,13 @@
 DOING:
-* Fix the styles layout for desktop
-* Set up the icon-sizing code in scripts.js
-* Make it so search also adds the channel title together with the video title to the search query
-* Right now swapping between the tabs doesn't clear the space. If I click search results, doesn't erase history tab content.
-* Set code to just add and romve fa-2x and other font awesome sizing classes from spans. Wrap text in spans.
-* redo everything using the chrome iphone emulator. Design it just for the iphone 6/7/8, and then just do a single media query for anything bigger than that.
-* Add into js code that we import the user png logo for user count. User count div will contain the logo and count in a column flex.
 * Put in options to sort rooms from newest to oldest. (means have to add creation date to hash we create in redis.)
     * Also other sorting abilities, like name, num users, most recent activity (update time added to hash);
-* Uhhh why the fuck does the searchbar disappear when the window dimensions get small?
-* Make it so the paste a link/search bar actually creates a room with a video of that url.
 =====
 
 *THOUGHTS:
 
 **MOST IMPORTANT TODO**
 * Give rooms logos. Would be cool.
+    ** No.
 
 ** Sequence to follow:
 * Tweak the features of the core site to completion.
@@ -79,8 +71,14 @@ DONE
 
 2/6/21
 
+* Set code to just add and romve fa-2x and other font awesome sizing classes from spans. Wrap text in spans.
+* redo everything using the chrome iphone emulator. Design it just for the iphone 6/7/8, and then just do a single media query for anything bigger than that.
+* Add into js code that we import the user png logo for user count. User count div will contain the logo and count in a column flex.
+* Right now swapping between the tabs doesn't clear the space. If I click search results, doesn't erase history tab content.
+* Make it so search also adds the channel title together with the video title to the search query
 * Make it so if unstarted event is triggered, it shows recommended
-
+* Fix the styles layout for desktop
+* Set up the icon-sizing code in scripts.js
 
 ====
 

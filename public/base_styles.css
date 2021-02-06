@@ -113,6 +113,25 @@ button{
     font-size: var(--base-input-font-size);
 }
 
+/* width */
+::-webkit-scrollbar {
+    width: 10px;
+  }
+  
+  /* Track */
+  ::-webkit-scrollbar-track {
+    background: var(--base-input-color);
+  }
+  
+  /* Handle */
+  ::-webkit-scrollbar-thumb {
+    background: var(--base-text-color);
+  }
+  
+  /* Handle on hover */
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--base-text-color);
+  }
 
 @media (min-width: 1181px){
     :root{
@@ -239,5 +258,12 @@ button{
         align-self: flex-start;
         font-size: var(--base-room-name-font-size);
         overflow: auto;
+    }
+}
+
+
+@media(max-width: 400px){
+    :root{
+        --sort-font-size: 12px;
     }
 }
