@@ -1,6 +1,5 @@
 DOING:
-* Put in options to sort rooms from newest to oldest. (means have to add creation date to hash we create in redis.)
-    * Also other sorting abilities, like name, num users, most recent activity (update time added to hash);
+* Still have to style the modals.
 =====
 
 *THOUGHTS:
@@ -19,6 +18,9 @@ DOING:
 TODO:
 * REFACTOR/CLEAN UP CODE/ORGANIZE FOLDERS
 * Document code. How to design a new player class.
+
+KNOWN ISSUES:
+* When you refresh the rooms list on the homepage, it does not automatically sort to the options you have selected;
 
 +++++++++++++++++++++++++++++++++++++
 UI Stuff:
@@ -79,6 +81,9 @@ DONE
 * Make it so if unstarted event is triggered, it shows recommended
 * Fix the styles layout for desktop
 * Set up the icon-sizing code in scripts.js
+
+* Put in options to sort rooms from newest to oldest. (means have to add creation date to hash we create in redis.)
+    * Also other sorting abilities, like name, num users, most recent activity (update time added to hash)
 
 ====
 

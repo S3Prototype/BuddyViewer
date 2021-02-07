@@ -68,6 +68,28 @@ function convertRedisRoomToObject(reply){
     return reply;
 }
 
+function updateRoomPassword(roomID, newPassword){
+    redisClient.hmset(roomID,
+        'password', newPassword,
+        (err, reply)=>{
+            console.log("Updating room state. Status:");
+            if(err || !reply){
+                    //If err, print that as reason. Else, print generic response.
+                logFailure(`change password for room ${roomID}`, err || "Couldn't find room.");                
+                // mongoUpdate(roomID, updateInfo);
+            }
+            redisClient.expire(roomID, roomLifeSpan, ()=>{});
+            RoomModel.updateOne(
+                {roomID: roomID}, //query for the room to update
+                {$set: {
+                    password: newPassword
+                }}, //value to update
+                (err, newRoom)=>{}
+            ).catch(err=>{ });
+        }
+    );
+}
+
 function updateRoomState(data, roomID){
     const {videoSource, videoTitle,
            videoTime, videoID, playRate,
@@ -510,5 +532,6 @@ module.exports = {
     getRoomsList,
     removeFromRoom,
     getRedisClient,
-    convertRedisRoomToObject
+    convertRedisRoomToObject,
+    updateRoomPassword
 }

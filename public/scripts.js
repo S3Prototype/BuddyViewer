@@ -1178,7 +1178,7 @@ $(function(){
 
         socket.on('wrongPassword', message=>{
             if(!message) message = 'Wrong password. Please try again.';
-            $('#room-password-status').val(message);
+            $('#room-password-status').html(message);
             $('#room-password-input').val('');
         })
 

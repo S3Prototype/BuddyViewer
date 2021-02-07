@@ -24,7 +24,7 @@ $(function(){
     const roomListContainer = document.getElementById('room-list-container');
 
     function createRoomsList(roomsList){
-        console.log(roomsList);
+        // console.log(roomsList);
         roomListContainer.innerHTML = "";
         const url = "/room";
         roomsList.forEach((room)=>{
@@ -155,16 +155,23 @@ $(function(){
             contentType: 'application/json',
             data: JSON.stringify({isForList: true}),
             success: res=>{
-                //use res.rooms
-                // console.log(`ROOMS ARE: ${JSON.stringify(res.rooms, null, 2)}`);
-                    //Fill the container div with divs that have
-                    //display mode of grid, with their contents
-                    //aligned to inner grids. The results will be
-                    //flex items, because the container div is a
-                    //flexbox
-                    // console.log(res.rooms);
-                    roomsArray = res.allRooms;
+                let sortOptionSelected;
+                $('#room-sort-controls label').each(function(){
+                    if($(this).hasClass('selected-option')){
+                        sortOptionSelected = $(this).attr('id');
+                    }
+                });
+                roomsArray = res.allRooms;
+                //Sort the array if an option is selected. Otherwise,
+                //just throw it in the rooms list.
+                if(sortOptionSelected){
+                    sortOptionSelected = sortOptionSelected.substring(
+                        0, sortOptionSelected.indexOf('-label')
+                    );
+                    $(`#${sortOptionSelected}`).click();
+                } else {
                     createRoomsList(roomsArray);
+                }
             }
         });
     });
@@ -237,8 +244,94 @@ $(function(){
         resizeIcons();
     }
 
-    resizeIcons();
+    resizeIcons(); 
 
+    function getTimeFormattedRoom(timeInfo){
+        return {
+            LocaleTimeString : new Date(timeInfo).toLocaleString(),
+            year : new Date(timeInfo).getFullYear(),
+            month : new Date(timeInfo).getMonth(),
+            date : new Date(timeInfo).getDate(),
+            hours : new Date(timeInfo).getHours(),
+            minutes : new Date(timeInfo).getMinutes(),
+            seconds : new Date(timeInfo).getSeconds()
+        }
+    }
     
+    $('#newest-sort').click(function(e){
+        createRoomsList(roomsArray.sort((a, b)=>{
+            //Convert a.createdAt() with new Date().toLocale etc
+            // then compare. If it's a more recent time, return
+            //-1. If it's older, return 1. If the same somehow,
+            //return 0
+            if(!a.createdAt || !b.createdAt) return 1;
+
+            const aFormatted = getTimeFormattedRoom(a.createdAt);
+            const bFormatted = getTimeFormattedRoom(b.createdAt);
+
+                //First check years                
+            if(aFormatted.year > bFormatted.year) return -1;
+            else if(aFormatted < bFormatted.year) return 1;
+
+            if(aFormatted.month > bFormatted.month) return -1;
+            else if(aFormatted.month < bFormatted.month) return 1;
+
+            if(aFormatted.date > bFormatted.date) return -1;
+            else if(aFormatted.date < bFormatted.date) return 1;
+
+            if(aFormatted.hours > bFormatted.hours) return -1;
+            else if(aFormatted.hours < bFormatted.hours) return 1;
+
+            if(aFormatted.minutes > bFormatted.minutes) return -1;
+            else if(aFormatted.minutes < bFormatted.minutes) return 1;
+
+            if(aFormatted.seconds > bFormatted.seconds) return -1;
+            else if(aFormatted.seconds < bFormatted.seconds) return 1;
+            
+            return 0;
+        }));
+    });
+
+    $('#name-sort').click((event)=>{
+        createRoomsList(roomsArray.sort((a, b)=>{
+            return a.roomName.localeCompare(b.roomName);
+        }));
+    });
+
+    $('#users-sort').click((event)=>{
+        createRoomsList(roomsArray.sort((a, b)=>{
+            if(a.users.length > b.users.length) return -1;
+            else if(a.users.length < b.users.length) return 1;
+            else return 0;
+        }));
+    });
     
+    $('#activity-sort').click((event)=>{
+        createRoomsList(roomsArray.sort((a, b)=>{           
+            if(!a.updatedAt || !b.updatedAt) return 1;
+
+            const aFormatted = getTimeFormattedRoom(a.updatedAt);
+            const bFormatted = getTimeFormattedRoom(b.updatedAt);
+            
+            if(aFormatted.year > bFormatted.year) return -1;
+            else if(aFormatted < bFormatted.year) return 1;
+
+            if(aFormatted.month > bFormatted.month) return -1;
+            else if(aFormatted.month < bFormatted.month) return 1;
+
+            if(aFormatted.date > bFormatted.date) return -1;
+            else if(aFormatted.date < bFormatted.date) return 1;
+
+            if(aFormatted.hours > bFormatted.hours) return -1;
+            else if(aFormatted.hours < bFormatted.hours) return 1;
+
+            if(aFormatted.minutes > bFormatted.minutes) return -1;
+            else if(aFormatted.minutes < bFormatted.minutes) return 1;
+
+            if(aFormatted.seconds > bFormatted.seconds) return -1;
+            else if(aFormatted.seconds < bFormatted.seconds) return 1;
+            
+            return 0;
+        }));    
+    });
 });

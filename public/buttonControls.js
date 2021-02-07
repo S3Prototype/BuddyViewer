@@ -27,10 +27,13 @@ $('#sync-button').click(e=>{
 function enablePasswordModal(roomName, setUp){
     $('#password-modal').addClass('active');
     $('#password-modal-overlay').addClass('active');
+    let passwordNeed = "to enter";
     if(setUp){
         $('#confirm-room-password-input').addClass('active');
+        passwordNeed = "to be initialized."
     }
-    $('#password-modal-name').val(`${roomName} requires a password to enter.`);
+    $('#password-modal-name').html(`${roomName} requires a password ${passwordNeed}.`);
+    // console.log($('#password-modal-name').val());
 }
 
 function disablePasswordModal(){
@@ -46,7 +49,7 @@ $('#room-password-button').click(e=>{
     if(!pWord) return;
     if(confirmPass.hasClass('active')){        
         if(confirmPass.val() != pWord.val()){
-            $('#room-password-status').val('Passwords do not match. Please try again.');
+            $('#room-password-status').html('Passwords do not match. Please try again.');
             pWord.val('');
             confirmPass.val('');
         } else {
@@ -65,13 +68,19 @@ $('#searchbar-input').submit(e=>{
     $('#ytsearch').submit();    
 });
 
-$('#searchbar-input').keypress(function(e){
-    //detect enter button
+function enterPressed(e){
     var keycode = (e.keyCode ? e.keyCode : e.which);
     if(keycode == '13'){
         e.preventDefault();
-        $('#ytsearch').submit();
+        return true;
+    } else {
+        return false;
     }
+}
+
+$('#searchbar-input').keypress(function(e){
+    //detect enter button=
+    if(enterPressed(e)) $('#ytsearch').submit();
 });
 
 $('#search-button').click(e=>{
@@ -150,3 +159,7 @@ tabs.forEach(tab=>{
         console.log(tab.dataset.tabTarget);
     });
 });
+
+$('#room-password-input').keypress((e)=>{
+    if(enterPressed(e)) $('#room-password-button').click();
+})

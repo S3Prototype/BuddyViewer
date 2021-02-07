@@ -6,11 +6,11 @@
     transition: 200ms ease-in-out;
     border-radius: 10px;
     z-index: 10;
-    background-color: white;
+    background-color: var(--base-bg-color);
     width: 500px;
     max-width: 80%;
-    height: 100px;
-    max-height: 200px;
+    height: 100px;    
+    max-height: 400px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -22,14 +22,16 @@
 
 .join-room-modal-header{
     padding: 10px 15px;
-    width: 50%;
+    width: 80%;
+    height: 100px;
+    max-height: 400px;
 }
 
 .join-room-button{
     width: 100%;
     height: 100%;
-    background-color: rgb(14, 24, 64);
-    color: white;
+    background-color: var(--base-button-color);
+    color: var(--base-bg-color);
     border-radius: 30px;
 }
 
@@ -60,29 +62,45 @@
     transition: 200ms ease-in-out;
     border-radius: 10px;
     z-index: 10;
-    background-color: white;
+    background-color: var(--base-bg-color);
     width: 500px;
     max-width: 80%;
     height: 400px;
     max-height: 400px;
     display: inline-flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: space-around;
     align-items: center;
 }
 
 .password-modal-name{
     width: 100%;
+    height: 80px;
     text-align: center;
+    color: var(--base-text-color);
+    font-size: var(--base-input-font-size);
 }
 
 .room-password-status{
-    width: 100%;
+    width: 80%;
+    max-height: 80px;
     text-align: center;
+    color: red;
+    font-size: var(--base-input-font-size);
 }
 
-.room-password-input{
-    width: 100%;
+.password-modal input{
+    width: 80%;
+    background: none;
+    font-size: var(--base-input-font-size);
+    color: var(--base-input-color);
+    border: none;
+}
+
+.password-modal input::placeholder{
+    text-align: center;
+    font-size: var(--base-input-font-size);
+    color: var(--base-input-color);
 }
 
 .confirm-room-password-input{
@@ -106,11 +124,14 @@
 }
 
 .room-password-button{
-    width: 100%;
-    height: 100%;
-    background-color: rgb(14, 24, 64);
-    color: white;
+    width: 400px;
+    height: 100px;
+    background-color: var(--base-button-color);
+    color: var(--base-bg-color);
     border-radius: 30px;
+    font-size: var(--base-input-font-size);
+    align-self: center;
+    justify-self: center;
 }
 
 #password-modal-overlay{
@@ -140,16 +161,15 @@
     transition: 200ms ease-in-out;
     border-radius: 10px;
     z-index: 10;
-    background-color: white;
-    width: 500px;
+    background-color: var(--base-bg-color);
+    width: 80%;
     max-width: 80%;
-    height: 300px;
-    max-height: 400px;
+    height: 800px;
+    max-height: 800px;
     display: inline-flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: space-evenly;
     align-items: center;
-    color: black;
 }
 
 .video-login-modal.active{
@@ -158,54 +178,70 @@
     transform: translate(-50%, -50%) scale(1);
 }
 .video-login-modal input{
-    width: 50%;
-    text-align: center;
-    margin-bottom: 5px;
+    width: 80%;
+    background: none;
+    font-size: var(--base-input-font-size);
+    color: var(--base-input-color);
     border: none;
 }
 
+.video-login-modal input::placeholder{
+    text-align: center;
+    font-size: var(--base-input-font-size);
+    color: var(--base-input-color);
+}
+
 .video-login-modal-header{
-    padding: 10px 15px;
-    width: 50%;
+    width: 100%;
+    height: 80px;
+    text-align: center;
+    color: var(--base-text-color);
+    font-size: var(--base-input-font-size);
 }
 
 .video-login-submit{
     width: 80%;
-    height: 10%;
-    margin-left: auto;
-    margin-right: auto;
-    background-color: rgb(14, 24, 64);
-    color: white;
+    height: 100px;
+    background-color: var(--base-button-color);
+    color: var(--base-bg-color);
     border-radius: 30px;
+    font-size: var(--base-input-font-size);
+}
+
+.fa-key{
+    color: var(--base-bg-color);
+}
+
+.fa-door-open{
+    color: var(--base-bg-color);
 }
 
 @media (max-width: 1000px){
+    .join-room-modal{
+        height: 300px;    
+        max-height: 400px;
+        width: 80%;
+    }
+
+    .join-room-button{
+        font-size: var(--base-input-font-size);        
+    }
 
     .password-modal{
-        height: 400px;
-        width: 600px;
-        max-height: 400px;
-        max-width: 600px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+        height: 600px;
+        max-height: 800px;
     }
 
     .password-modal-header{
-        align-self: center;
+        /* align-self: center;
         justify-self: center;
         padding-right: 100px;
-        border-radius: 20px;
+        border-radius: 20px; */
     }
+}
 
-    .room-password-button{
-        width: 400px;
-        height: 200px;
-        background-color: rgb(14, 24, 64);
-        color: white;
-        border-radius: 30px;
-        font-size: 48px;
-        align-self: center;
-        justify-self: center;
+@media (min-width: 1001px){
+    .join-room-modal-header{
+        height: 60px;
     }
 }

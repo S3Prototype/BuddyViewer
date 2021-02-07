@@ -37,7 +37,7 @@ function initIO(socket){
         socket.on('checkRoomPassword', data=>{
             redisMongoQueries.findRoom(data.roomID)
             .then(room=>{
-                const failMessage = "Something went wrong. Please create a new room.";
+                let failMessage = "Something went wrong. Please create a new room.";
                 if(room && room.password){
                     //if room
                     bcrypt.compare(data.password, room.password,
@@ -85,13 +85,7 @@ function initIO(socket){
                                 console.log(err);
                                 io.to(socket.id).emit('wrongPassword', 'Error hashing room password.');
                             } else {
-                                RoomModel.updateOne(
-                                    {roomID: data.roomID}, //query for the room to update
-                                    {$set: {
-                                        password: hash
-                                    }}, //value to update
-                                    (err, newRoom)=>{}
-                                ).catch(err=>{ });
+                                redisMongoQueries.updateRoomPassword(room.roomID, hash);                                
                                 io.to(socket.id).emit('accessRoom', true);                    
                             }
                         });
