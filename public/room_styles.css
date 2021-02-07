@@ -27,6 +27,18 @@ span {
     margin-left: 10px;
 }
 
+.search-home-container{
+    grid-row: searchbar-area;
+    grid-column: main;
+    width: 100%;
+}
+
+.home-logo{
+    max-width: 100px;
+    max-height: 100px;
+    margin-left: 20px;
+    margin-right: 20px;
+}
 
 /* .history{
     grid-row: history-search;
