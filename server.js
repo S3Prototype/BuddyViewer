@@ -52,8 +52,8 @@ var app = express();
 require('./config/passport')(passport);
 const server = http.createServer(app);
 
-var port = process.env.PORT || 8092;
-var redisPort = process.env.REDIS_PORT || 6379;
+// var port = process.env.PORT || 8092;
+// var redisPort = process.env.REDIS_PORT || 6379;
 
 const redisClient = redisMongoQueries.createRedisClient();
 const getRoomFromRedis = promisify(redisClient.hgetall).bind(redisClient);
@@ -66,14 +66,14 @@ redisClient.on('connect', _=>{
 const dbURI = 'mongodb+srv://'+process.env.DB_USERNAME+':'+process.env.DB_PASS+'@cluster0.agmjg.mongodb.net/'+process.env.DB_NAME+'?retryWrites=true&w=majority';
 mongoose.connect(dbURI, {useNewUrlParser: true, useUnifiedTopology: true})
     .then((result)=>{
-        server.listen(port, function(){
+        server.listen(function(){
             // RoomModel.find().then((result)=>{
             //     if(!rooms) console.log("FATAL ERROR! Could not find rooms!");
             // }).catch((err)=>{
             //     console.log(`Failed to get rooms from DB\n${err}`);
             // });
             console.log('Connected to DB...');
-            console.log(`Server listening on: ${port}`);
+            console.log(`Server listening...`);
             console.log("Server start date/time: "+new Date().toLocaleDateString() + " / " + new Date().toLocaleTimeString());
             console.log("======");
         });
