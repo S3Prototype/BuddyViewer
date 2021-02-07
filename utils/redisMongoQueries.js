@@ -515,7 +515,7 @@ function getRedisClient(){
 }
 
 function createRedisClient(){
-    redisClient = redis.createClient();
+    redisClient = redis.createClient(6379, 'redis');
     getRoomFromRedis = promisify(redisClient.hgetall).bind(redisClient);
     return redisClient;
 }
