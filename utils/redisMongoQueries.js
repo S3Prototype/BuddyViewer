@@ -517,7 +517,7 @@ function getRedisClient(){
 function createRedisClient(){
     redisClient = redis.createClient({
         port      : 6379,               // replace with your port
-        host      : 'https://practical-elion-41f9cb.netlify.app/',        // replace with your hostanme or IP address
+        host      : '127.0.0.1',        // replace with your hostanme or IP address
         password  : 'your password'    // replace with your password
       });
     getRoomFromRedis = promisify(redisClient.hgetall).bind(redisClient);
