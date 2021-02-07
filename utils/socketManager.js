@@ -1,6 +1,5 @@
 const RoomModel = require('../models/room');
 const {v4: uuidV4} = require('uuid');
-const isUuid = require('isuuid');
 const randomWords = require('random-words');
 const redisMongoQueries = require('./redisMongoQueries');
 const bcrypt = require('bcryptjs');

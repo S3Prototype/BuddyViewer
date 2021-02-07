@@ -25,19 +25,19 @@ const e = require('express');
 const request = require('request');
 // const cheerio = require('cheerio');
 require('dotenv').config();
-const { google } = require('googleapis');
-const { title } = require('process');
-const { youtube } = require("googleapis/build/src/apis/youtube");
-const { youtubeAnalytics } = require("googleapis/build/src/apis/youtubeAnalytics");
+// const { google } = require('googleapis');
+// const { title } = require('process');
+// const { youtube } = require("googleapis/build/src/apis/youtube");
+// const { youtubeAnalytics } = require("googleapis/build/src/apis/youtubeAnalytics");
 
 const youtubedl = require('youtube-dl');
 
-const expressLayouts = require('express-ejs-layouts');
+// const expressLayouts = require('express-ejs-layouts');
 
 const RoomModel = require('./models/room');
 
 const {v4: uuidV4} = require('uuid');
-const isUuid = require('isuuid');
+// const isUuid = require('isuuid');
 
 const socketio = require('socket.io');
 
@@ -132,9 +132,10 @@ io.on('connection', socket=>{
 });
 
 app.post('/check-saved-roomID', (req, res)=>{
-    console.log("GET FIRED");
-    const shouldRedirect = isUuid(req.body.currRoomID) && redisMongoQueries.findRoom(req.body.storedRoomID);
-    res.send(shouldRedirect);
+    // console.log("GET FIRED");
+    // const shouldRedirect = isUuid(req.body.currRoomID) && redisMongoQueries.findRoom(req.body.storedRoomID);
+    // res.send(shouldRedirect);
+    res.send("This shouldn't be happening. /check-saved-roomID");
 });
 
 app.get('/room/', (req, res)=>{
