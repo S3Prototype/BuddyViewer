@@ -20,7 +20,7 @@ TODO:
 * Document code. How to design a new player class.
 
 KNOWN ISSUES:
-* When you refresh the rooms list on the homepage, it does not automatically sort to the options you have selected;
+* Putting in your login credentials for other sites does not send that data through securely. Must either use secure ajax call, or hash the data before sending it to the server through ajax.
 
 +++++++++++++++++++++++++++++++++++++
 UI Stuff:
@@ -73,6 +73,7 @@ DONE
 
 2/6/21
 
+* When you refresh the rooms list on the homepage, it does not automatically sort to the options you have selected;
 * Set code to just add and romve fa-2x and other font awesome sizing classes from spans. Wrap text in spans.
 * redo everything using the chrome iphone emulator. Design it just for the iphone 6/7/8, and then just do a single media query for anything bigger than that.
 * Add into js code that we import the user png logo for user count. User count div will contain the logo and count in a column flex.

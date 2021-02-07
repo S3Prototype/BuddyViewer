@@ -110,7 +110,7 @@ function initIO(socket){
             .then(room=>{
                 if(room){
                     //Find a random user.
-                    newHostID = room.users.find(user=>user.socketID != socket.id)?.socketID;                
+                    newHostID = room.users.find(user=>user.socketID != socket.id).socketID;                
                     if(newHostID === undefined){
                         io.to(socket.id).emit('noOneElseInRoom', false);
                         return;
