@@ -516,9 +516,10 @@ function getRedisClient(){
 
 function createRedisClient(){
     redisClient = redis.createClient({
-        port      : 6379,               // replace with your port
-        host      : '127.0.0.1'        // replace with your hostanme or IP address
-      });
+        port: process.env.REDIS_PORT,
+        host: process.env.REDIS_HOST,
+        password: process.env.REDIS_PASSWORD
+    });
     getRoomFromRedis = promisify(redisClient.hgetall).bind(redisClient);
     return redisClient;
 }
