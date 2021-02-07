@@ -65,6 +65,7 @@ UNRESOLVED/DISAPPEARED:
 * Have to learn more about passport. req.isAuthenticated() checks if user is logged in, I think? From there, you have to show each page with the user profile pic or not.
 * Gotta implement a different session store from the default.
     ** https://github.com/expressjs/session#compatible-session-stores
+* 
 
 ~~~~~~~~~~~
 DONE
