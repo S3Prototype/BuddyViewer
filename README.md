@@ -2,6 +2,8 @@
 
 # This is BuddyViewer
 
+<img src="https://github.com/S3Prototype/BuddyViewer/blob/master/public/icons/buddyviewer_logo.png" width="200" height="200" />
+
 A platform for synchronously watching videos from (almost) any website with your friends remotely.
 
 This app uses socket.io to connect users within rooms and synchronize their video playback. The backend uses expressJS for routing, bcrypt for encrypting data, mongodb for longterm data storage, redis for caching, passportJS for user authentication, and various youtube web scraping libraries for collecting data on videos and serving up recommended videos and search results. On the front end, the site is built on jQuery and vanilla JS and CSS.
