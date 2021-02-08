@@ -52,7 +52,7 @@ var app = express();
 require('./config/passport')(passport);
 const server = http.createServer(app);
 
-var port = process.env.PORT || 8092;
+var port = process.env.PORT || '0.0.0.0';
 // var redisPort = process.env.REDIS_PORT || 6379;
 
 const redisClient = redisMongoQueries.createRedisClient();
@@ -66,7 +66,7 @@ redisClient.on('connect', _=>{
 const dbURI = 'mongodb+srv://'+process.env.DB_USERNAME+':'+process.env.DB_PASS+'@cluster0.agmjg.mongodb.net/'+process.env.DB_NAME+'?retryWrites=true&w=majority';
 mongoose.connect(dbURI, {useNewUrlParser: true, useUnifiedTopology: true})
     .then((result)=>{
-        server.listen(function(){
+        server.listen(port, function(){
             // RoomModel.find().then((result)=>{
             //     if(!rooms) console.log("FATAL ERROR! Could not find rooms!");
             // }).catch((err)=>{
