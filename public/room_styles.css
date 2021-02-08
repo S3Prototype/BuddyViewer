@@ -17,6 +17,7 @@ span {
 
 .searchbar-input::placeholder{
     font-size: 48px;
+    vertical-align: middle;
 }
 
 .video-login-button{

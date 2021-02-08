@@ -163,7 +163,7 @@ $(function(){
                 changeVolumeSettings(VideoSource.YOUTUBE);
                 data.volume = volumeSlider.value;
                 alignPlayerWithData(data);
-                // socket.emit('startNew', data, roomID);
+                socket.emit('startNew', data, roomID);
             });
 
             recommendedContainer.append(recDiv);
@@ -211,7 +211,7 @@ $(function(){
                 changeVolumeSettings(VideoSource.YOUTUBE);
                 data.volume = volumeSlider.value;
                 alignPlayerWithData(data);
-                // socket.emit('startNew', data, roomID);
+                socket.emit('startNew', data, roomID);
             }
 
             resultDiv.addEventListener('click', function(event){
@@ -1146,7 +1146,7 @@ $(function(){
             alignPlayerWithData(data);
             // $('body').scrollTop(0);
             document.getElementById("video-container").scrollIntoView();
-            // socket.emit('startNew', data, roomID);                
+            socket.emit('startNew', data, roomID);                
         });
 
         historyContainer.append(itemDiv);
