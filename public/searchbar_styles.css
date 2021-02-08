@@ -17,7 +17,7 @@
 }
 
 .searchbar-container span{
-    color: white;
+    color: var(--base-bg-color);
 }
 
 .searchbar-container button{

@@ -103,6 +103,7 @@ button{
     border: none;
     text-align: center;
     height: 100%;
+    vertical-align: middle;
 
     color: var(--base-text-color);
 
@@ -110,7 +111,13 @@ button{
 }
 
 .searchbar-input::placeholder{
-    font-size: var(--base-input-font-size);
+    font-size: var(--base-button-font-size);
+}
+
+.searchbar-input::-moz-placeholder{
+    font-size: var(--base-button-font-size);
+    /* font-size: 48px; */
+    line-height: 150px;
 }
 
 /* width */

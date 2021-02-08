@@ -14,11 +14,11 @@ span {
     border-radius: 80px;
     border-width: 5px;
 }
-
+/* 
 .searchbar-input::placeholder{
     font-size: 48px;
     vertical-align: middle;
-}
+} */
 
 .video-login-button{
     margin-right: 10px;

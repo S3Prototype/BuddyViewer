@@ -117,7 +117,7 @@
     width: 100%;
     /* background: var(--base-bg-color); */
     z-index: 15;
-
+    background: var(--base-bg-color);
 } 
 
 /* For Chrome or Safari */ 

@@ -150,13 +150,15 @@ $(function(){
 
             recDiv.addEventListener('click', (event)=>{
                 data = {       
-                    videoTime: 0,
+                    channelTitle: results[i].channelTitle,
                     thumbnail: results[i].thumbnail,                    
-                    videoID: results[i].videoID,
-                    videoState: CustomStates.PLAYING,
+                    playrate: buddyPlayer?.getPlayRate() || 1,
                     videoTitle: results[i].title,
                     videoSource: VideoSource.YOUTUBE,
-                    channelTitle: results[i].channelTitle,
+                    videoDuration: 0,
+                    videoID: results[i].videoID,
+                    videoTime: 0,
+                    videoState: CustomStates.PLAYING,
                     username: playerUsername,
                     password: playerPassword
                 }
@@ -198,13 +200,15 @@ $(function(){
 
             function addFromResult(){
                 data = {       
-                    videoTime: 0,
+                    channelTitle: result.channelTitle,
                     thumbnail: result.thumbnail,                    
-                    videoID: result.videoID,
-                    videoState: CustomStates.PLAYING,
+                    playrate: buddyPlayer?.getPlayRate() || 1,                    
                     videoTitle: result.title,
                     videoSource: VideoSource.YOUTUBE,
-                    channelTitle: result.channelTitle,
+                    videoDuration: 0,
+                    videoID: result.videoID,
+                    videoTime: 0,
+                    videoState: CustomStates.PLAYING,
                     username: playerUsername,
                     password: playerPassword
                 }
@@ -621,6 +625,7 @@ $(function(){
                 loadPlayerScript('../youtubeViewer.js', _=>{
                     console.log("Loading up new youtubeviewer");
                     buddyPlayer = new YouTubeViewer(data);
+                    buddyPlayer.newVideo(data);
                 });
             });
             loadPlayerScript(PlayerScripts.YOUTUBE_A, ()=>{
@@ -636,6 +641,7 @@ $(function(){
                 console.log("Trying to start URL: "+data.videoID);
                 console.log("URL before change: "+buddyPlayer.getID());                
                 buddyPlayer = new YouTubeViewer(data);
+                buddyPlayer.newVideo(data);
             }
         }//else
         ytInterval = setInterval(updateVideoTime, 250);
@@ -1133,16 +1139,20 @@ $(function(){
 
         itemDiv.addEventListener('click', (event)=>{
             data = {       
-                videoTime: 0,
+                channelTitle: historyItem.channelTitle,
                 thumbnail: historyItem.thumbnail,                    
-                videoID: historyItem.videoID,
-                videoState: CustomStates.PLAYING,
+                playrate: buddyPlayer?.getPlayRate() || 1,
                 videoTitle: historyItem.videoTitle,
                 videoSource: historyItem.videoSource,
-                channelTitle: historyItem.channelTitle,
+                videoDuration: 0,
+                videoID: historyItem.videoID,
+                videoTime: 0,
+                videoState: CustomStates.PLAYING,
                 username: playerUsername,
                 password: playerPassword
             }            
+            changeVolumeSettings(VideoSource.YOUTUBE);
+            data.volume = volumeSlider.value;
             alignPlayerWithData(data);
             // $('body').scrollTop(0);
             document.getElementById("video-container").scrollIntoView();

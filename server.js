@@ -291,7 +291,7 @@ async function ytsrGetOneResult(query, res){
         item.description = decode(item.description);        
         res.send(item);
     } catch(error){
-        res.error(error);
+        res.send(null);
     }
 }
 

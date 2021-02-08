@@ -5,7 +5,7 @@
     transform: translate(-50%, -50%) scale(0);
     transition: 200ms ease-in-out;
     border-radius: 10px;
-    z-index: 10;
+    z-index: 101;
     background-color: var(--base-bg-color);
     width: 500px;
     max-width: 80%;
@@ -61,7 +61,7 @@
     transform: translate(-50%, -50%) scale(0);
     transition: 200ms ease-in-out;
     border-radius: 10px;
-    z-index: 10;
+    z-index: 90;
     background-color: var(--base-bg-color);
     width: 500px;
     max-width: 80%;
@@ -160,7 +160,7 @@
     transform: translate(-50%, -50%) scale(0);
     transition: 200ms ease-in-out;
     border-radius: 10px;
-    z-index: 10;
+    z-index: 100;
     background-color: var(--base-bg-color);
     width: 80%;
     max-width: 80%;

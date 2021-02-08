@@ -72,7 +72,7 @@ function updateRoomPassword(roomID, newPassword){
     redisClient.hmset(roomID,
         'password', newPassword,
         (err, reply)=>{
-            console.log("Updating room state. Status:");
+            // console.log("Updating room state. Status:");
             if(err || !reply){
                     //If err, print that as reason. Else, print generic response.
                 logFailure(`change password for room ${roomID}`, err || "Couldn't find room.");                
@@ -95,7 +95,7 @@ function updateRoomState(data, roomID){
            videoTime, videoID, playRate,
            videoDuration} = data;
     let {thumbnail} = data;
-    console.log("We're in room update");
+    // console.log("We're in room update");
     findRoom(roomID)
     .then(room=>{
         let history = room.history;
@@ -135,7 +135,7 @@ function updateRoomState(data, roomID){
         const updateInfo = {
             history,
             thumbnail,
-            playRate,
+            playRate: playRate ?? 1,
             videoTitle,
             videoSource,
             videoDuration: videoDuration ?? 0,
@@ -157,17 +157,17 @@ function updateRoomState(data, roomID){
         redisClient.hmset(room.roomID,
             'history', JSON.stringify(history),
             'thumbnail', thumbnail,
-            'playRate', JSON.stringify(playRate),
+            'playRate', JSON.stringify(updateInfo.playRate),
             'videoTitle', videoTitle,
             'videoSource', JSON.stringify(videoSource),
-            'videoDuration', JSON.stringify(videoDuration),
+            'videoDuration', JSON.stringify(updateInfo.videoDuration),
             'videoID', videoID, //holds id most recently played video
             'videoTime', JSON.stringify(videoTime), //most recent video time,
             'videoState', JSON.stringify(CustomStates.UNSTARTED),//most recent state
             'roomUpdateCount', roomUpdateCount,
             'updatedAt', new Date().toString(),
             (err, reply)=>{
-                console.log("Updating room state. Status:");
+                // console.log("Updating room state. Status:");
                 if(err || !reply){
                         //If err, print that as reason. Else, print generic response.
                     logFailure(`update room ${roomID}`, err || "Couldn't find room.");                
@@ -212,7 +212,7 @@ function updateRoomState(data, roomID){
 }
 
 function findRoom(roomID){
-    console.log("We were given room");
+    // console.log("We were given room");
     console.log(roomID);
     return new Promise((resolve, reject)=>{
         getRoomFromRedis(roomID)
@@ -237,7 +237,7 @@ function becomeHost(roomID, socketID, io){
     //     console.log("Becoming host of "+roomID);
         let isHost = false;
         let finalHostID = null;
-        console.log("Trying to become the host");
+        // console.log("Trying to become the host");
         findRoom(roomID)
         .then(room=>{
             if(room){          
@@ -332,8 +332,8 @@ async function createEmptyRoom(securitySetting, roomName,
             'createdAt', new Date().toString(),
             'updatedAt', new Date().toString(),
             (err, reply)=>{
-                console.log("Reply when setting room:");
-                console.log(reply);
+                // console.log("Reply when setting room:");
+                // console.log(reply);
                 
                 if(reply){                    
                     resolve({roomID: newRoomID});
@@ -431,10 +431,10 @@ function getRoomsList(res, isForList){
                         .then(rooms=>{
                             rooms.forEach(room=>{
                                 if(room.securitySetting != RoomSecurity.PRIVATE){
-                                    console.log(`Mongo Private ${room.roomName}`)
+                                    // console.log(`Mongo Private ${room.roomName}`)
                                     roomArray.push(room);
                                 } else {
-                                    console.log(`Mongo Not private ${room.roomName}`)
+                                    // console.log(`Mongo Not private ${room.roomName}`)
                                 }
                             });
                             resolve(roomArray = rooms.filter(
@@ -442,7 +442,7 @@ function getRoomsList(res, isForList){
                             ));
                         })
                         .catch(err=>{
-                            reject("Could not get rooms from redis or mongodb.");
+                            reject("Could not get rooms from redis or mongodb. Error: "+err);
                         });
                     });
                 })
@@ -466,7 +466,7 @@ function getRoomsList(res, isForList){
                     res.render('errorPage', {error});//Show error page                    
                 });
             } else {
-                console.log("Sending rooms to index");
+                // console.log("Sending rooms to index");
                 if(isForList){
                     res.send({allRooms: roomArray});                
                 } else {
@@ -483,7 +483,7 @@ function getRoomsList(res, isForList){
 
 function removeFromRoom(socketID, roomID, io){
     return new Promise((resolve, reject)=>{
-        console.log(`${socketID} is leaving room: ${roomID}`);
+        // console.log(`${socketID} is leaving room: ${roomID}`);
         findRoom(roomID)
         .then(room=>{            
             if(room){

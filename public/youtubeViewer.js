@@ -34,7 +34,7 @@ class YouTubeViewer extends BuddyViewer{
         this.volume = data.volume;
         this.muted = true;        
         this.initialized = false;
-        this.createPlayer(data);      
+        // this.createPlayer(data);      
     }
 
     createPlayer(data){

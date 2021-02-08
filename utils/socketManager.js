@@ -65,7 +65,7 @@ function initIO(socket){
                 io.to(socket.id).emit('wrongPassword', "Passwords do not match.");
                 return;
             }
-            console.log("Trying to find room: "+data.roomID);
+            // console.log("Trying to find room: "+data.roomID);
             redisMongoQueries.findRoom(data.roomID)
             .then(room=>{
                 if(room){
@@ -101,8 +101,8 @@ function initIO(socket){
         });
     
         socket.on('releaseHost', roomID=>{
-            console.log("*****************");
-            console.log("Releasing host of "+roomID);
+            // console.log("*****************");
+            // console.log("Releasing host of "+roomID);
             let isHost = false;
             let newHostID;
             redisMongoQueries.findRoom(roomID)
@@ -126,7 +126,7 @@ function initIO(socket){
             })
             .finally(_=>{   
                 if(!newHostID) newHostID = "unchanged, because no one else is in the room.";
-                console.log(`Our final host ID is ${newHostID} | The one we sent was ${socket.id}`);
+                // console.log(`Our final host ID is ${newHostID} | The one we sent was ${socket.id}`);
             });
         });
     
@@ -141,10 +141,10 @@ function initIO(socket){
                 
                 room.messages.push(messageData);
                 
-                console.log("======");
-                console.log("Now the messages are:")
-                console.log(room.messages);
-                console.log("======");
+                // console.log("======");
+                // console.log("Now the messages are:")
+                // console.log(room.messages);
+                // console.log("======");
                 RoomModel.updateOne(
                     {roomID}, //query for the room to update
                     {$set: {
@@ -178,7 +178,7 @@ function initIO(socket){
                 hostTimeout = null;
             }
             io.to(data.requesterSocketID).emit('initPlayer', data);
-            console.log(`STATE SENT TO ${data.requesterSocketID}`);
+            // console.log(`STATE SENT TO ${data.requesterSocketID}`);
         });
     
         socket.on('requestSync', roomID=>{
@@ -235,7 +235,7 @@ function initIO(socket){
         });
     
         socket.on('seek', (data, roomID)=>{
-            socket.to(roomID).broadcast.emit('seek', data.videoTime);
+            socket.to(roomID).broadcast.emit('seek', data);
             if(data.isHost){
                 redisMongoQueries.updateRoomState(data, roomID);
             }
@@ -249,7 +249,7 @@ function initIO(socket){
         });
     
         socket.on('message', (letterArray, roomID)=>{
-            console.log(letterArray);
+            // console.log(letterArray);
         });
     
         socket.on('startOver', (roomID)=>{
@@ -257,7 +257,7 @@ function initIO(socket){
         });
     
         socket.on('startNew', (data, roomID)=>{
-            console.log("START NEW CALLED");
+            // console.log("START NEW CALLED");
             redisMongoQueries.updateRoomState(data, roomID);
             data.roomID = roomID;        
             socket.to(roomID).broadcast.emit('startNew', data);
@@ -269,7 +269,7 @@ function initIO(socket){
         // });
     
         socket.on('disconnecting', _=>{
-            console.log("DISCONNECTING!!");
+            // console.log("DISCONNECTING!!");
             socket.rooms.forEach(roomID=>{
                 if(roomID != socket.id){
                     redisMongoQueries.removeFromRoom(socket.id, roomID, io);
@@ -286,17 +286,17 @@ function addToRoom(socketID, userData, currRoom){
             isHost = true;
             currRoom.hostSocketID = socketID;
             io.to(socketID).emit('noOneElseInRoom', false);
-            console.log("No one else in room, so initting player with room");
+            // console.log("No one else in room, so initting player with room");
             io.to(socketID).emit('initPlayer', currRoom);
         } else {
             // If we're not the host, request state from the host.
-            console.log(`Trying to get state from host (${
-                currRoom.hostSocketID})`);                            
+            // console.log(`Trying to get state from host (${
+            //     currRoom.hostSocketID})`);                            
                 //Request state from the host, and set a timer.
                 //If timer goes off, make new host. If host
                 //responds before then, clear timer.
-                console.log(`Current host is ${currRoom.hostSocketID}`);
-                console.log(`Our socket ID is: ${socketID}`);
+                // console.log(`Current host is ${currRoom.hostSocketID}`);
+                // console.log(`Our socket ID is: ${socketID}`);
             io.to(currRoom.hostSocketID).emit('requestState', {socketID});            
         }
         
@@ -326,13 +326,13 @@ function joinRoom(socket, userData, roomID){
         socket.join(roomID);
         if(currRoom){
             //Check if the room is locked. If so, ask for credentials.
-            console.log("Joining a pre-existing room.");
+            // console.log("Joining a pre-existing room.");
             addToRoom(socket.id, userData, currRoom);
             io.to(socket.id).emit('initHistory', currRoom.history);            
             if(currRoom.users.length > 1){
                 hostTimeout = setTimeout(() => {
 
-                    console.log(socket.id+' trying to become Host');
+                    // console.log(socket.id+' trying to become Host');
                     redisMongoQueries.becomeHost(currRoom.roomID, socket.id, io);
                     io.to(socket.id).emit('initPlayer', currRoom);
 
