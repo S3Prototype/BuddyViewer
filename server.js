@@ -111,10 +111,7 @@ app.use(router);
 // app.use(bodyparser.json());
 // app.use(bodyparser.urlencoded({extended: true}));
 
-const NSFW_THUMBNAIL = 'http://localhost:8092/images/thumbs/nsfw_thumb.jpg';
-const PRIVATE_THUMBNAIL = 'http://localhost:8092/images/thumbs/private_thumb.jpg';
-const LOCKED_DEFAULT_THUMBNAIL = 'http://localhost:8092/images/thumbs/lock_thumb.jpg';
-const DEFAULT_THUMBNAIL = 'http://localhost:8092/images/thumbs/default_thumb.jpg';
+const NSFW_THUMBNAIL = 'https://buddyviewer.com/images/thumbs/nsfw_thumb.jpg';
 
 const io = socketManager.createIO(server);
 
@@ -185,10 +182,10 @@ app.post('/create-new-room', (req, res)=>{
 
     const rawID = uuidV4();
 
-    console.log("SECURITY SETTING: "+securitySetting+`(${securityResult})`);
+    // console.log("SECURITY SETTING: "+securitySetting+`(${securityResult})`);
     redisMongoQueries.createEmptyRoom(securityResult, roomName, roomDescription, rawID)
     .then(({roomID})=>{
-        console.log(`Creating room ${roomID}`);
+        // console.log(`Creating room ${roomID}`);
         res.redirect(`/room/${roomID}`);
     })
     .catch(err=> console.log(err));
@@ -263,18 +260,23 @@ app.post('/otherone', (req, res)=>{
 });
 
 async function ytsrSearch(query, res){    
-    const searchResults = await ytsr(query, {pages: 1});
-    const searchData = searchResults.items.filter(item=>item.type === 'video');    
-    searchData.forEach(item=>{
-        // console.log(JSON.stringify(item, null, 2));
-        item.thumbnail = item.bestThumbnail.url;
-        item.videoID = item.id;
-        item.title = decode(item.title);
-        item.videoTitle = item.title;
-        item.channelTitle = decode(item.author.name);
-        item.description = decode(item.description);        
-    });
-    res.send(searchData);
+    try{
+        const searchResults = await ytsr(query, {pages: 1});
+        const searchData = searchResults.items.filter(item=>item.type === 'video');    
+        searchData.forEach(item=>{
+            // console.log(JSON.stringify(item, null, 2));
+            item.thumbnail = item.bestThumbnail.url;
+            item.videoID = item.id;
+            item.title = decode(item.title);
+            item.videoTitle = item.title;
+            item.channelTitle = decode(item.author.name);
+            item.description = decode(item.description);        
+        });
+        res.send(searchData);
+    } catch (error){
+        logFailure('get search results', error);
+        res.send(null);
+    }
 }
 
 async function ytsrGetOneResult(query, res){

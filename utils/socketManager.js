@@ -286,18 +286,11 @@ function addToRoom(socketID, userData, currRoom){
             isHost = true;
             currRoom.hostSocketID = socketID;
             io.to(socketID).emit('noOneElseInRoom', false);
-            // console.log("No one else in room, so initting player with room");
             io.to(socketID).emit('initPlayer', currRoom);
         } else {
-            // If we're not the host, request state from the host.
-            // console.log(`Trying to get state from host (${
-            //     currRoom.hostSocketID})`);                            
-                //Request state from the host, and set a timer.
-                //If timer goes off, make new host. If host
-                //responds before then, clear timer.
-                // console.log(`Current host is ${currRoom.hostSocketID}`);
-                // console.log(`Our socket ID is: ${socketID}`);
-            io.to(currRoom.hostSocketID).emit('requestState', {socketID});            
+            io.in(currRoom.roomID).emit('addUser', userData);
+            io.to(socketID).emit('addAllUsers', currRoom.users);
+            io.to(currRoom.hostSocketID).emit('requestState', {socketID});                        
         }
         
         currRoom.users.push({

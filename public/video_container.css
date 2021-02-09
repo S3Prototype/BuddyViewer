@@ -22,7 +22,7 @@
     justify-content: flex-end;
 }
 
-.video-container:fullscreen #player{
+.video-container:fullscreen .player-container{
     /* min-height: 80%; */
     height: 100%;
     z-index: 1;
@@ -47,12 +47,26 @@
     text-transform: none;
 }
 
+.player-container{
+    grid-row: video-row;
+    height: 100%;
+    width: 100%;
+}
+
 #player{
     display: block;
-    grid-row: video-row;
     background-color: black;
     width: 100%;
-    height: 80%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+}
+
+#otherone{
+    display: block;
+    background-color: black;
+    width: 100%;
+    height: 100%;
     z-index: 1;
     pointer-events: none;
 }
@@ -87,6 +101,7 @@
     grid-column: 1 / -1;
     width: 100%;
     height: 100%;
+    background-color: var(--base-input-color);
 }
 
 .video-progress {

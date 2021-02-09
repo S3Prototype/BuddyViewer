@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Test Chatroom</title>
+        <title>Watch Videos Synchronized With Your Friends</title>
         <meta charset="utf-8" />
         <link rel="stylesheet" href="../base_styles.css">
         <link rel="stylesheet" href="../room_styles.css">
@@ -18,8 +18,19 @@
         </script>
     </head>
     <body>
+        <div id="user-list-container" class="user-list-container">
+            <div class="user-list-interface" id="user-list-interface">
+                <span class='user-list-title' id='user-list-title'>Users:</span>
+                <button id="user-list-close-button" class="user-list-close-button">                
+                    <span class="fas fa-user fa-2x user-list-close-icon" id="user-list-close-icon"></span>
+                </button>
+            </div>
+            <div class="user-list" id="user-list">
+                <!-- JS inserts the names here inside spans. -->
+            </div>
+        </div>
         <div class="searchbar-container" id="searchbar-container">
-            <a href="http://localhost:8092/">
+            <a href="https://buddyviewer.com">
                 <img src="../icons/buddyviewer_logo.png" id="home-logo" class="home-logo">
             </a>
             <button class="search-button" id="search-button">
@@ -33,7 +44,9 @@
         </div>
 
         <div class='video-container' id="video-container">
-            <div id="player" class="player"></div>
+            <div id="player-container" class="player-container">
+                <div id="player" class="player"></div>
+            </div>                
             
             <div class="progress-buffer-container" id="progress-buffer-container">
                 <div class="video-progress">
@@ -110,14 +123,9 @@
             </div>
             
             <div id="history-results" class="history-results active" data-tab-content>
-                <span id="default-history-text" class="fa-3x">
-                </span>
             </div>
                 
-            <div id="search-results" class="search-results" data-tab-content>
-                <!-- <span id="default-search-text" class="fa-3x">
-                    SEARCH RESULTS
-                </span> -->
+            <div id="search-results" class="search-results" data-tab-content>                
             </div>
     
         </div>

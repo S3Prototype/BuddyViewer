@@ -163,3 +163,12 @@ tabs.forEach(tab=>{
 $('#room-password-input').keypress((e)=>{
     if(enterPressed(e)) $('#room-password-button').click();
 })
+
+$('#user-list-container').click(e=>{
+    const userList = $('#user-list-container');
+    if(userList.hasClass('hide-container')){
+        userList.removeClass('hide-container');
+    } else {
+        userList.addClass('hide-container');
+    }
+});

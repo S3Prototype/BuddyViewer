@@ -46,6 +46,7 @@
     pointer-events: none;
     transform: scale(0);
     transition: 200ms ease-in-out;
+    z-index: 100;
 }
 
 #join-room-modal-overlay.active{
@@ -145,6 +146,7 @@
     pointer-events: none;
     transform: scale(0);
     transition: 200ms ease-in-out;
+    z-index: 89;
 }
 
 #password-modal-overlay.active{

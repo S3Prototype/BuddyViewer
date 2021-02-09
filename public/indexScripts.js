@@ -1,25 +1,4 @@
 $(function(){
-
-    $('#sorting-options').change(()=>{        
-        $('#sorting-options option:selected').each(()=>{
-            //You can just change the order attribute of
-            //items in a flexbox. Sort through them that way.
-            switch($(this).val()){
-                case `lastCreated`:
-
-                break;
-
-                case `lastUpdated`:
-                break;
-
-                case `rAlphabetical`:
-                break;
-
-                case `alphabetical`:
-                break;
-            }
-        });
-    });
     
     const roomListContainer = document.getElementById('room-list-container');
 
@@ -30,8 +9,12 @@ $(function(){
         roomsList.forEach((room)=>{
             if(room.securitySetting != 2){
                     //Create the div that holds everything.
+                const resultLink = document.createElement('a');
+                resultLink.setAttribute('href', url+"/"+room.roomID);                    
+                
                 const resultDiv = document.createElement('div');
                 resultDiv.setAttribute('class', 'room-result');
+                resultLink.append(resultDiv);
             
                     //Create the div that holds the thumbnail
                 const thumbDiv = document.createElement('div');
@@ -138,6 +121,7 @@ $(function(){
     }//createRoomsList()
 
     createRoomsList(roomsArray);
+    // $('#newest-sort').click();//Create the list of rooms sorted by newest.
 
     $('#refresh-button').click(e=>{
         //Temporarily disable the button to prevent

@@ -71,7 +71,7 @@ class OtherPlayer extends BuddyViewer{
     }
 
     createVideoElement({url, thumbnail}){
-        const playerDiv = document.getElementById('player');
+        const playerDiv = document.getElementById('player-container');
         this.player = document.createElement('video');
         const source = [
             document.createElement('source'),
@@ -86,11 +86,12 @@ class OtherPlayer extends BuddyViewer{
 
         source.forEach(src=>this.player.appendChild(src));
 
-        this.player.setAttribute('width', '100%');
-        this.player.setAttribute('height', '100%');
+        // this.player.setAttribute('width', '100%');
+        // this.player.setAttribute('height', '100%');
         this.player.setAttribute('muted', "");
         this.player.setAttribute('poster', thumbnail);
-        this.player.setAttribute('id', 'otherone');
+        this.player.setAttribute('id', 'player');
+        this.player.classList.add('otherone');
         playerDiv.append(this.player);
     }
 
@@ -187,6 +188,6 @@ class OtherPlayer extends BuddyViewer{
     }
 
     destroy(){
-        $('#player').html('');
+        $('#player-container').html('<div id="player"></div>');
     }
 }

@@ -37,10 +37,10 @@ const roomLifeSpan = 60 * 60 * 24; //rooms 24 hours to live in redis
 const defaultDescription = "A lovely room for watching videos! Join!";
 const defaultSecuritySetting = RoomSecurity.OPEN;
 
-const NSFW_THUMBNAIL = 'http://localhost:8092/images/thumbs/nsfw_thumb.jpg';
-const PRIVATE_THUMBNAIL = 'http://localhost:8092/images/thumbs/private_thumb.jpg';
-const LOCKED_DEFAULT_THUMBNAIL = 'http://localhost:8092/images/thumbs/lock_thumb.jpg';
-const DEFAULT_THUMBNAIL = 'http://localhost:8092/images/thumbs/default_thumb.jpg';
+const NSFW_THUMBNAIL = 'https://buddyviewer.com/images/thumbs/nsfw_thumb.jpg';
+const PRIVATE_THUMBNAIL = 'https://buddyviewer/images.com/thumbs/private_thumb.jpg';
+const LOCKED_DEFAULT_THUMBNAIL = 'https://buddyviewer.com/images/thumbs/lock_thumb.jpg';
+const DEFAULT_THUMBNAIL = 'https://buddyviewer.com/images/thumbs/default_thumb.jpg';
 
 function logFailure(goal, error){
     console.log(`Failed to ${goal} becuase: \n${error}`);
@@ -488,7 +488,7 @@ function removeFromRoom(socketID, roomID, io){
         .then(room=>{            
             if(room){
                 //reassign the host if necessary
-                if(room.users.length < 1){
+                if(room.users.length <= 1){
                     room.hostSocketID = "";
                 } else if(room.hostSocketID == socketID){
                     room.hostSocketID = room.users[
@@ -497,6 +497,7 @@ function removeFromRoom(socketID, roomID, io){
                     io.in(room.roomID).emit('setHost', room.hostSocketID);       
                 }
                     //now remove the user
+                    io.in(room.roomID).emit('removeUser', room.users.find(user=>user.socketID == socketID));       
                     room.users = room.users.filter(user=>user.socketID != socketID);
                 updateRoomUsers(room);    
             } else {

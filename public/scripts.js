@@ -111,8 +111,7 @@ $(function(){
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify({user_id: userID, query: query}, null, 2),
-            success: function (results){       
-                // console.log(JSON.stringify(results, null, 2));
+            success: function (results){                       
                 addRecommendedVideos(results);
                 addSearchResults(results);
             }
@@ -249,6 +248,11 @@ $(function(){
     joinButton.addEventListener('click', function(event){
         document.getElementById('join-room-modal').classList.remove('active');
         document.getElementById('join-room-modal-overlay').classList.remove('active');
+        // startNewVideo(
+        //     'https://stream.mux.com/gMp02q8V6Ta6eY3XxwqUjd7su2zD8Sg44/high.mp4?token=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InQ5UHZucm9ZY0hQNjhYSmlRQnRHTEVVSkVSSXJ0UXhKIn0.eyJleHAiOjE2MTI4NDY1NTksImF1ZCI6InYiLCJzdWIiOiJnTXAwMnE4VjZUYTZlWTNYeHdxVWpkN3N1MnpEOFNnNDQifQ.PUffAPH-zuwCGuw-9So2gNXvdlfVi2-5BhXJZdwDQy7hstFDGZrVOecx7gPL_jVqW0egm3-FODpUh_DCHWDiHkDPz0538LzrfOD5EWEIGeJkEwAKh1fO7abQej-2zeinHs44mHHjrFjjcWGcCTG9P4A4jYCf_VA-EC4nysH8APG5UAd_DZkoyDWgx5yX-dG_uMcLmtqjBu3aoE5MIJdchgMEarWLpkcSvv71PO0M-FbwoRJSH_qX-F0khL2i0C_uTw4-cX2dzUPDxV2UTlOcgyejx2LkbbWnNOnnl-yH76JTWHQV8CFFYxNrl2nAMP4WUnmxGW5hUwPpLb71w0t3Pg',
+        //     VideoSource.OTHERONE,
+        //     0
+        // ); 
         initSocket();
     });
 
@@ -759,6 +763,7 @@ $(function(){
             // document.getElementById('ytsearch').style.display = '';
             // document.getElementById('ytsearch').style.removeProperty('display');
         }
+        resizeIcons();
         document.activeElement.blur();
         activateVideoControls();
         // inFullScreen = !inFullScreen;
@@ -1162,6 +1167,24 @@ $(function(){
         historyContainer.append(itemDiv);
     }
 
+    function addToUserList(name){
+        const userList = document.getElementById('user-list');
+        const newUser = document.createElement('span');
+        newUser.className = "user-list-name";
+        if(name === localName){
+            name += ' (you)';
+            newUser.classList.add('user-list-self');
+        }
+        const userName = document.createTextNode(name);
+        newUser.appendChild(userName);
+        userList.append(newUser);
+        console.log(name);
+    }
+
+    function removeFromUserList(name){
+        $("span:contains("+name+")").remove();
+    }
+
     function initSocket(){
         socket = io();
         const userData = {
@@ -1178,6 +1201,23 @@ $(function(){
         socket.on('getMessage', messageData=>{
             messageData.timeStamp = new Date().toLocaleTimeString();
             addMessageToChat(messageData);
+        });
+
+        socket.on('addUser', data=>{
+            console.log("Add user: "+data.localName);
+            if(data.localName != localName){
+                addToUserList(data.localName);
+            }
+        });
+
+        socket.on('addAllUsers', users=>{
+            users.forEach(user=>{
+                addToUserList(user.localName);
+            });
+        })
+
+        socket.on('removeUser', data=>{
+            removeFromUserList(data.localName);
         });
 
         socket.on('accessRoom', _=>{
@@ -1340,6 +1380,9 @@ $(function(){
         // When window loaded ( external resources are loaded too- `css`,`src`, etc...) 
         // if(document.readyState === "complete"){
             console.log("ready state changed!");
+            
+            validateUserID();       
+            addToUserList(localName);            
 
             document.addEventListener('addToRoomHistory', event=>{
                 console.log("Should be adding history item: ");
@@ -1390,7 +1433,6 @@ $(function(){
                 }
             });
                                   
-            validateUserID();        
             volumeSlider.addEventListener("change", changeVolume);
             volumeSlider.addEventListener("input", changeVolume);
             // player.addEventListener("onStateChange", stopYTEvent);
