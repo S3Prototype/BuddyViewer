@@ -162,13 +162,18 @@ tabs.forEach(tab=>{
 
 $('#room-password-input').keypress((e)=>{
     if(enterPressed(e)) $('#room-password-button').click();
-})
+});
 
-$('#user-list-container').click(e=>{
+$('#user-list-interface').click(e=>{
     const userList = $('#user-list-container');
+    const listIcon = $('#user-list-close-icon');
     if(userList.hasClass('hide-container')){
         userList.removeClass('hide-container');
+        listIcon.removeClass('fa-sort-up');
+        listIcon.addClass('fa-sort-down');
     } else {
         userList.addClass('hide-container');
+        listIcon.removeClass('fa-sort-down');
+        listIcon.addClass('fa-sort-up');
     }
 });

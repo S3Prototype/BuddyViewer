@@ -260,6 +260,7 @@ $(function(){
     const reducePlayrateButton = document.getElementById('reduce-playrate-button');
 
     increasePlayrateButton.addEventListener('click', function(event){
+        if(!buddyPlayer) return;
         const currRate = buddyPlayer.getPlayRate();
         if(currRate == 2) return;
         let nextRate = currRate + 0.25;
@@ -271,6 +272,7 @@ $(function(){
     });
 
     reducePlayrateButton.addEventListener('click', function(event){
+        if(!buddyPlayer) return;
         const currRate = buddyPlayer.getPlayRate();
         if(currRate == 0.25) return;
         let nextRate = currRate - 0.25;
@@ -286,7 +288,7 @@ $(function(){
     const playrateButton = document.getElementById('playrate-button');
     let playRateOptionsShowing = false;
     playrateButton.addEventListener('click', function(event){
-        if(inFullScreen) return;
+        if(!buddyPlayer || inFullScreen) return;
         
         const playrateButtonChildren = document.getElementById('playrate-options').children;
         const playrateButtonArray = Array.from(playrateButtonChildren);
@@ -330,6 +332,7 @@ $(function(){
 
     const loopButton = document.getElementById('loop-button');
     loopButton.addEventListener('click', function(event){
+        if(!buddyPlayer) return;
         const alreadyLooping = buddyPlayer.getLooping();
         if(alreadyLooping){
             disableLoopingIcon();
@@ -723,7 +726,7 @@ $(function(){
 
     let showControlsTimeout;
     $('#video-container').click((event)=>{
-        if(!inFullScreen) return;
+        if(!inFullScreen || !buddyPlayer) return;
         console.log("Clocked in full screen");
 
         activateVideoControls();
@@ -737,7 +740,7 @@ $(function(){
     });
     
     let inFullScreen = false;
-    $('#fullscreen-button').click(function(event){
+    $('#fullscreen-button').click(function(event){        
         if(!buddyPlayer) return;
         if(showControlsTimeout) clearTimeout(showControlsTimeout);
         if(!document.fullscreenElement){
@@ -770,10 +773,13 @@ $(function(){
     });
 
     $('#closed-captions-button').click(function(event){
+        if(!buddyPlayer) return;
         buddyPlayer.toggleCaptions();
     });
 
     $('#mute-button').click(function(event){
+        if(!buddyPlayer) return;
+
         if(buddyPlayer.isMuted()){
             // stayMuted = false;
             buddyPlayer.unMute();         
@@ -786,6 +792,7 @@ $(function(){
 
     $('#play-pause-button').click(function(event){
         event.preventDefault();
+        if(!buddyPlayer) return;
         buddyPlayer.playPause();
         socket.emit('playPause', buddyPlayer.generateData(), roomID);
     });
