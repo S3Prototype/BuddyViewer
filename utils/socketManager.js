@@ -19,7 +19,14 @@ let io;
 function createIO(server){
     let redisClient = redisMongoQueries.getRedisClient();
     getRoomFromRedis = promisify(redisClient.hgetall).bind(redisClient);
-    io = socketio(server);    
+    io = socketio(server, {
+        cors: {
+          origin: "http://localhost:3000",
+          methods: ["GET", "POST"],
+          allowedHeaders: ["Access-Control-Allow-Origin"],
+          credentials: true
+        }
+      });    
     return io;
 }
 
@@ -27,7 +34,32 @@ function getIO(){
     return io;
 }
 
+function testIO(socket){
+
+    socket.on('connect', ({roomID})=>{
+        console.log('joinTestRoom done')
+    })
+
+    socket.on('playPauseTest', playerData=>{
+        console.log("playPauseTest done")
+        // socket.to(playerData.roomID).emit('playPause');
+    })
+
+    socket.on('newVideo', playerData=>{
+        console.log('newvideo called')
+        // socket.to(playerData.roomID).emit('newVideo');
+    })
+
+}
+
 function initIO(socket){
+
+    testIO(socket)
+
+        socket.on('connection', ()=>{
+            console.log("Testing it")
+            io.to(socket.id).emit('test', "You did it");
+        })
 
         socket.on('joinRoom', (userData, roomID)=>{
             joinRoom(socket, userData, roomID);
@@ -317,7 +349,8 @@ function joinRoom(socket, userData, roomID){
         }
 
         socket.join(roomID);
-        if(currRoom){
+
+        function addNewUser(){            
             //Check if the room is locked. If so, ask for credentials.
             // console.log("Joining a pre-existing room.");
             addToRoom(socket.id, userData, currRoom);
@@ -331,13 +364,22 @@ function joinRoom(socket, userData, roomID){
 
                 }, hostTimeoutLimit);
             }
+        }
+
+        if(currRoom){
+            addNewUser()
         } else {
             //THis code will basically never run,
             //because we call createEmptyRoom when people
             //take the route to even get here.
-            console.log(`Major error. Possible database failure. In joinRoom(), we didn't find a room at the roomID provided by the client. ID (${roomID}). Creating an empty room`);            
             redisMongoQueries.createEmptyRoom(RoomSecurity.PRIVATE, randomWords(),
-                roomUtils.defaultDescription, uuidV4());
+                roomUtils.defaultDescription, uuidV4())
+            .then(({roomID})=>{
+                addNewUser()                
+            })
+            .catch(err=>{
+                console.log(`Major error. Possible database failure. In joinRoom(), we didn't find a room at the roomID provided by the client. ID (${roomID}). Creating an empty room`, err);            
+            })
         }
     })
     .catch(err=>{

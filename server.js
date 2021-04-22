@@ -8,6 +8,7 @@ var express = require('express');
 var bodyparser = require('body-parser');
 const router = express.Router();
 const {decode} = require('html-entities');
+const cors = require('cors')
 const bcrypt = require('bcryptjs');
 
 const socketManager = require('./utils/socketManager');
@@ -82,6 +83,7 @@ mongoose.connect(dbURI, {useNewUrlParser: true, useUnifiedTopology: true})
 // app.use(expressLayouts);
 app.set('views', './views');
 app.set('view engine', 'ejs');
+app.use(cors())
 app.use(express.static('public'));
 app.use(express.urlencoded({extended: false}));
 app.use(express.json());
@@ -125,6 +127,7 @@ const defaultDescription = "A lovely room for watching videos! Join!";
 const defaultSecuritySetting = RoomSecurity.OPEN;
 
 io.on('connection', socket=>{
+    console.log(socket.id, 'has connected')
     socketManager.initIO(socket);
 });
 
@@ -159,7 +162,7 @@ app.get('/room/:roomID', (req, res)=>{
 
 app.post('/create-new-room', (req, res)=>{
     const {securitySetting, roomDescription} = req.body;
-    let {roomName} = req.body;
+    let roomName = req.body.roomName || randomWords();
     let securityResult = RoomSecurity.PRIVATE;
     switch(securitySetting){
         case "open":
@@ -186,7 +189,10 @@ app.post('/create-new-room', (req, res)=>{
     redisMongoQueries.createEmptyRoom(securityResult, roomName, roomDescription, rawID)
     .then(({roomID})=>{
         // console.log(`Creating room ${roomID}`);
-        res.redirect(`/room/${roomID}`);
+        if(!req.body.roomName)
+            res.send({roomID})
+        else 
+            res.redirect(`/room/${roomID}`);
     })
     .catch(err=> console.log(err));
 });
