@@ -112,12 +112,13 @@ button{
 
 .searchbar-input::placeholder{
     font-size: var(--base-input-font-size);
+    line-height: 70px;
 }
 
 .searchbar-input::-moz-placeholder{
-    font-size: var(--base-button-font-size);
+    line-height: 70px;
+    font-size: var(--base-input-font-size);
     /* font-size: 48px; */
-    line-height: 150px;
 }
 
 /* width */
