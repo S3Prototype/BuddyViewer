@@ -189,9 +189,9 @@ app.post('/create-new-room', (req, res)=>{
     redisMongoQueries.createEmptyRoom(securityResult, roomName, roomDescription, rawID)
     .then(({roomID})=>{
         // console.log(`Creating room ${roomID}`);
-        if(!req.body.roomName)
-            res.send({roomID})
-        else 
+        // if(!req.body.roomName)
+            // res.send({roomID})
+        // else 
             res.redirect(`/room/${roomID}`);
     })
     .catch(err=> console.log(err));

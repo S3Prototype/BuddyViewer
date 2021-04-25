@@ -49,7 +49,6 @@ function testIO(socket){
         console.log('newvideo called')
         // socket.to(playerData.roomID).emit('newVideo');
     })
-
 }
 
 function initIO(socket){
