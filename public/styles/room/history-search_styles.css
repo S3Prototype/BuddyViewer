@@ -9,6 +9,8 @@
 
     display: grid;
 
+    margin-top: 20px;
+
     grid-template-rows: [tabs] 15% [data] 85%;
     
 }

@@ -1,11 +1,11 @@
 @font-face {
     font-family: 'Gidole';
-    src: url('./fonts/gidole.eot'); /* IE9 Compat Modes */
-    src: url('./fonts/gidole.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
-         url('./fonts/gidole.woff2') format('woff2'), /* Super Modern Browsers */
-         url('./fonts/gidole.woff') format('woff'), /* Pretty Modern Browsers */
-         url('./fonts/gidole.ttf')  format('truetype'), /* Safari, Android, iOS */
-         url('./fonts/gidole.svg#svgFontName') format('svg'); /* Legacy iOS */
+    src: url('../fonts/gidole.eot'); /* IE9 Compat Modes */
+    src: url('../fonts/gidole.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+         url('../fonts/gidole.woff2') format('woff2'), /* Super Modern Browsers */
+         url('../fonts/gidole.woff') format('woff'), /* Pretty Modern Browsers */
+         url('../fonts/gidole.ttf')  format('truetype'), /* Safari, Android, iOS */
+         url('../fonts/gidole.svg#svgFontName') format('svg'); /* Legacy iOS */
 
 }
 
@@ -19,7 +19,7 @@
     --base-text-color: rgb(30, 30, 93);
     
     --base-font: 'Gidole';
-    --base-input-font-size: 34px;
+    --base-input-font-size: 28px;
     --sort-font-size: 34px;
     --base-button-font-size: 54px;
     --base-room-name-font-size: 24px;
@@ -65,7 +65,7 @@ button{
 }
 
 .searchbar-container{
-    margin-top: 30px;
+    /* margin-top: 30px; */
     display: flex;
     justify-content: flex-start;
     align-items: center;
@@ -111,7 +111,7 @@ button{
 }
 
 .searchbar-input::placeholder{
-    font-size: var(--base-button-font-size);
+    font-size: var(--base-input-font-size);
 }
 
 .searchbar-input::-moz-placeholder{

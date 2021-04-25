@@ -577,7 +577,7 @@ $(function(){
         }
         if(!scriptExists(PlayerScripts.TWITCH)){
             loadPlayerScript(PlayerScripts.TWITCH, ()=>{
-                loadPlayerScript('../twitchPlayer.js', _=>{
+                loadPlayerScript('../scripts/room/twitchPlayer.js', _=>{
                     buddyPlayer = new TwitchPlayer(data);
                     initializeProgressBar(data.videoDuration);
                     initializeToolTip(data.videoDuration);
@@ -629,7 +629,7 @@ $(function(){
         }
         if(!scriptExists(PlayerScripts.YOUTUBE_A)){
             document.addEventListener('ytReady', _=>{
-                loadPlayerScript('../youtubeViewer.js', _=>{
+                loadPlayerScript('../scripts/room/youtubeViewer.js', _=>{
                     console.log("Loading up new youtubeviewer");
                     buddyPlayer = new YouTubeViewer(data);
                     buddyPlayer.newVideo(data);
@@ -663,7 +663,7 @@ $(function(){
         if(!scriptExists(PlayerScripts.VIMEO)){
             loadPlayerScript(PlayerScripts.VIMEO, ()=>{
                 //Initialize a video.
-                loadPlayerScript('../vimeoPlayer.js', _=>{
+                loadPlayerScript('../scripts/room/vimeoPlayer.js', _=>{
                     buddyPlayer = new VimeoViewer(data);
                     initializeProgressBar(data.videoDuration);
                     initializeToolTip(data.videoDuration);

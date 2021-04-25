@@ -3,23 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="base_styles.css" type="text/css" />
-    <link rel="stylesheet" href="index_styles.css" type="text/css" />
-    <link rel="stylesheet" href="room_list_styles.css" type="text/css" />
+    <link rel="stylesheet" href="styles/base_styles.css" type="text/css" />
+    <link rel="stylesheet" href="styles/homepage/index_styles.css" type="text/css" />
+    <link rel="stylesheet" href="styles/homepage/room_list_styles.css" type="text/css" />
     <title>Watch Videos Synchronized With Your Friends</title>    
     <script>
         var roomsArray =<%- JSON.stringify(allRooms) %>;
     </script>
 </head>
 <body>
-    <!-- <div id="searchbar-container" class="searchbar-container">
-        <button class="search-button" id="search-button">
-            <span class="fas fa-search fa-3x searchbar-icon" id="searchbar-icon"></span>
-        </button>
-        <input type="text" name="searchbar-input"
-        placeholder="Search/Paste a video link"
-        id="searchbar-input" class="searchbar-input">
-    </div> -->
     <div id="create-room-container" class="create-room-container">
         <form action="/create-new-room" method="post">
             <button id="create-room-button" class="create-room-button">
